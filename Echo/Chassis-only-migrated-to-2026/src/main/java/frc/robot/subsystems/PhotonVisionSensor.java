@@ -44,8 +44,8 @@ public final class PhotonVisionSensor extends SubsystemBase {
       new Rotation3d(0,0,Math.PI));
 
   static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);    
-  static PhotonPoseEstimator m_EstimatorFront = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCamFront);
-  static PhotonPoseEstimator m_EstimatorBack = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCamBack);
+  static PhotonPoseEstimator m_EstimatorFront = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamFront);
+  static PhotonPoseEstimator m_EstimatorBack = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamBack);
 
   private EstimatedRobotPose m_latestEstimatedPose = new EstimatedRobotPose(new Pose3d(0,0,0,new Rotation3d(0,0,0)), 0,null, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
   private ShuffleboardTab m_matchTab = Shuffleboard.getTab("Match");
@@ -101,13 +101,19 @@ public final class PhotonVisionSensor extends SubsystemBase {
   // }
 
   private Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose, 
-      PhotonPoseEstimator photonPoseEstimator, PhotonCamera camera) {
-    photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
+                                                              PhotonPoseEstimator photonPoseEstimator, 
+                                                              PhotonCamera camera) {
+
+    // Get all available unread results
     List<PhotonPipelineResult> pipelineResults = camera.getAllUnreadResults();
     Optional<EstimatedRobotPose> result = Optional.empty();
 
+    // If results are present, look for targets to try and get a pose estimate
     if (!pipelineResults.isEmpty()) {
-      // System.out.println("MJS: non empty results in getEstimatedGlobalPose");
+
+      // Set an arbitrary maximum number of iterations so that if the results
+      // buffer gets large, we don't spend lots of time looking for targets if there are none
+      // Leaving this out causes the system to get hung up when in scenarios where april tags are not present
       int MAX_NUM_ITERATIONS = 15;
 
       // Set the iterator to the back of the list of results and grab the last result to begin
@@ -125,9 +131,9 @@ public final class PhotonVisionSensor extends SubsystemBase {
         latestPipelineResult = iter.previous();
       }
 
+      // If we were able to find a frame with targets, use that frame to estimate a global pose
       if (latestPipelineResult.hasTargets()) {
-        // System.out.println("MJS: have targets in getEstimatedGlobalPose");
-        result = photonPoseEstimator.update(latestPipelineResult);
+        result = photonPoseEstimator.estimateCoprocMultiTagPose(latestPipelineResult);
         m_poseEstimateAcquired = true;
       }
     }
