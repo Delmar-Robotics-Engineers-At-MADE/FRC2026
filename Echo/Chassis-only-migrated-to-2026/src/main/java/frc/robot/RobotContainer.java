@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import frc.robot.Constants.FlightButtons;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Blinkin;
 import frc.robot.subsystems.DriveSubsystem;
@@ -37,10 +38,10 @@ public class RobotContainer {
   private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
   private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
 
-  private final Blinkin m_blinkin = new Blinkin();
+  // TODO: Add fun LEDs back in if time and weight permit
+  //private final Blinkin m_blinkin = new Blinkin();
 
   // for auto driving
-//   Alliance m_allianceColor = DriverStation.getAlliance().get();
   private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
   Command m_autoDoNothing;
 
@@ -121,14 +122,12 @@ public class RobotContainer {
   private void configureNonButtonTriggers() {
   }
 
-  static final int FlightButtonLEFT = 3;
-  static final int FlightButtonRIGHT = 4;
   private void configureButtonBindings() {
 
     // *************************** DRIVER *****************************
 
-    new JoystickButton(m_driverController, 2) // thumb button on flight controller
-        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(),m_robotDrive));
+    new JoystickButton(m_driverController, FlightButtons.BUTTON_THUMB.getButtonCode()) // thumb button on flight controller
+        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
 
     // reef positions
     m_buttonPadCmd.button(3).and(m_photon::getPoseEstimateAcquired)
@@ -140,13 +139,13 @@ public class RobotContainer {
 
     // drive robot relative in cardinal directions
     m_buttonPadCmd.povUp().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(PovSpeed, 0, 0, false),m_robotDrive));
+        () -> m_robotDrive.drive(PovSpeed, 0, 0, false), m_robotDrive));
     m_buttonPadCmd.povDown().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(-PovSpeed, 0, 0, false),m_robotDrive));
+        () -> m_robotDrive.drive(-PovSpeed, 0, 0, false), m_robotDrive));
     m_buttonPadCmd.povLeft().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(0, PovSpeed, 0, false),m_robotDrive));
+        () -> m_robotDrive.drive(0, PovSpeed, 0, false), m_robotDrive));
     m_buttonPadCmd.povRight().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(0, -PovSpeed, 0, false),m_robotDrive));
+        () -> m_robotDrive.drive(0, -PovSpeed, 0, false), m_robotDrive));
                     
     // ******************************** OPERATOR *********************************
   

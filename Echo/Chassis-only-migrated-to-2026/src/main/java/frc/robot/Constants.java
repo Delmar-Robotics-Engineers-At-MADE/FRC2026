@@ -15,19 +15,19 @@ public final class Constants {
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 4.1;
+    public static final double kMaxSpeedMetersPerSecond = 4.8;
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
 
-    // Slew rate limit is no longer part of template, since the wheels are better now, was...
-    // public static final double kDirectionSlewRate = 1.2; // radians per second
-    // public static final double kMagnitudeSlewRate = 1.8; // percent per second (1 = 100%)
-    // public static final double kRotationalSlewRate = 2.0; // percent per second (1 = 100%)
+    // #####################
+    // Chassis Configuration
+    // #####################
 
-    // Chassis configuration
-    public static final double kTrackWidth = Units.inchesToMeters(26.0);
     // Distance between centers of right and left wheels on robot
-    public static final double kWheelBase = Units.inchesToMeters(26.0);
+    public static final double kTrackWidth = Units.inchesToMeters(23.5);
+
     // Distance between front and back wheels on robot
+    public static final double kWheelBase = Units.inchesToMeters(23.5);
+    
     public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
         new Translation2d(kWheelBase / 2, kTrackWidth / 2),
         new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
@@ -52,7 +52,6 @@ public final class Constants {
     public static final int kRearRightTurningCanId = 14;
 
     public static final boolean kGyroReversed = true;
-
   }
 
   public static final class ModuleConstants {
@@ -117,6 +116,28 @@ public final class Constants {
     public static final double red = -0.31;
     public static final double blue = -0.29;
     public static final double grey = -0.33;
+  }
+
+  public static enum FlightButtons {
+    BUTTON_1(1),
+    BUTTON_THUMB(2),
+    BUTTON_LEFT(3),
+    BUTTON_RIGHT(4),
+    BUTTON_5(5),
+    BUTTON_6(6),
+    BUTTON_7(7),
+    BUTTON_8(8),
+    BUTTON_9(9);
+
+    private final int buttonCode;
+
+    FlightButtons(int i_buttonCode) {
+      this.buttonCode = i_buttonCode;
+    }
+
+    public int getButtonCode() {
+      return buttonCode;
+    }
   }
 
 }

@@ -4,19 +4,13 @@
 
 package frc.robot.subsystems;
 
-import java.util.Optional;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.SetBlinkinColorCmd;
 
+// Allows control of fun LED lights if Ryan doesn't rip them off before competition
 public class Blinkin extends SubsystemBase {
 
   public static final class LEDConstants {
@@ -39,7 +33,7 @@ public class Blinkin extends SubsystemBase {
   // }
   private final Spark one;
   private final Spark two;
-  // private final Alliance m_allianceColor;
+
   /** Creates a new Blinkin. */
   public Blinkin() {
     one = new Spark(0);
@@ -52,7 +46,6 @@ public class Blinkin extends SubsystemBase {
 }
 
   public void setColor(double input) {
-    // System.out.println("Blinkin setting color to: " + input);
     one.set(input);
     two.set(input);
   }

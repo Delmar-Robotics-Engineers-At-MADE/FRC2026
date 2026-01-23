@@ -38,6 +38,7 @@ public class RobotContainer {
   // for auto driving
 //   Alliance m_allianceColor = DriverStation.getAlliance().get();
   private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
+  
   Command m_autoDoNothing;
 
   // Driver
