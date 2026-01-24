@@ -10,11 +10,13 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import frc.robot.Constants.FlightButtons;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Blinkin;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.DriveSubsystem.HornSelection;
+import frc.robot.subsystems.FuelShooterSS;
+import frc.robot.subsystems.IndexerSubsystem;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -37,6 +39,10 @@ public class RobotContainer {
   // The robot's subsystems
   private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
   private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
+
+  private final FuelShooterSS m_fuelShoot = new FuelShooterSS();
+  private final IndexerSubsystem m_indexer = new IndexerSubsystem();
+  private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   // TODO: Add fun LEDs back in if time and weight permit
   //private final Blinkin m_blinkin = new Blinkin();
@@ -122,11 +128,14 @@ public class RobotContainer {
   private void configureNonButtonTriggers() {
   }
 
+  static final int FlightButtonTHUMB = 2;
+  static final int FlightButtonLEFT = 3;
+  static final int FlightButtonRIGHT = 4;
   private void configureButtonBindings() {
 
     // *************************** DRIVER *****************************
 
-    new JoystickButton(m_driverController, FlightButtons.BUTTON_THUMB.getButtonCode()) // thumb button on flight controller
+    new JoystickButton(m_driverController, FlightButtonTHUMB) // thumb button on flight controller
         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
 
     // reef positions
@@ -153,6 +162,17 @@ public class RobotContainer {
     m_operCmdController.back().or(m_operCmdController.start())
         .and(m_operCmdController.y())
         .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
+
+    // Difference between InstantCommand and RunCommand is the isfinished function.  
+    //    for InstantCommand, isFinished is true, so command can only run once
+    //    for RunCommand, isFinished is false, so command will run until it is interrupted
+    //    RunCommand is good for default command; will run only once, instead of over and over again
+    //    InstantCommand is good for onTrue and autonomous sequences
+    //    RunCommand is good for whileTrue; will run once, but will get interrupted when whileTrue ends
+    m_operCmdController.leftTrigger(TriggerThreshold) // shoot
+        .whileTrue(new RunCommand (() -> m_fuelShoot.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_fuelShoot)
+        .alongWith(new RunCommand (() -> m_indexer.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_indexer))
+        .alongWith(new RunCommand (() -> m_intake.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_indexer)));
 
   }
 

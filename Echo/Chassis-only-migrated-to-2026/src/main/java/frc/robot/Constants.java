@@ -117,27 +117,4 @@ public final class Constants {
     public static final double blue = -0.29;
     public static final double grey = -0.33;
   }
-
-  public static enum FlightButtons {
-    BUTTON_1(1),
-    BUTTON_THUMB(2),
-    BUTTON_LEFT(3),
-    BUTTON_RIGHT(4),
-    BUTTON_5(5),
-    BUTTON_6(6),
-    BUTTON_7(7),
-    BUTTON_8(8),
-    BUTTON_9(9);
-
-    private final int buttonCode;
-
-    FlightButtons(int i_buttonCode) {
-      this.buttonCode = i_buttonCode;
-    }
-
-    public int getButtonCode() {
-      return buttonCode;
-    }
-  }
-
 }
