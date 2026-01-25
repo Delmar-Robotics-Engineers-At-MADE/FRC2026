@@ -172,7 +172,7 @@ public class RobotContainer {
     m_operCmdController.leftTrigger(TriggerThreshold) // shoot
         .whileTrue(new RunCommand (() -> m_fuelShoot.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_fuelShoot)
         .alongWith(new RunCommand (() -> m_indexer.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_indexer))
-        .alongWith(new RunCommand (() -> m_intake.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_indexer)));
+        .alongWith(new RunCommand (() -> m_intake.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_intake)));
 
   }
 

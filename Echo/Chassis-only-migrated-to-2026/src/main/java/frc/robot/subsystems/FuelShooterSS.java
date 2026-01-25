@@ -91,7 +91,7 @@ public class FuelShooterSS extends SubsystemBase{
     // Dashboard indicators
     matchTab.addBoolean("Shooter Ready", () -> getVelocityReady())
         .withPosition(1, 6);
-    debugTab.addDouble("Intake Velocity (deg/min)", () -> getVelocity());
+    debugTab.addDouble("Shooter Velocity (deg/min)", () -> getVelocity());
 
 
     // default command should be idle (no power, coasting)
