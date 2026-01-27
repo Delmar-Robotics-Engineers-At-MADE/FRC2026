@@ -54,9 +54,11 @@ public class RobotContainer {
   // Driver
   GenericHID m_driverController = new GenericHID(OIConstants.kDriverControllerPort);
   CommandGenericHID m_driverCmdController = new CommandGenericHID (OIConstants.kDriverControllerPort);
+
   // Operator
   XboxController m_operController = new XboxController(OIConstants.kOperatorControllerPort);
   CommandXboxController  m_operCmdController = new CommandXboxController (OIConstants.kOperatorControllerPort);
+
   // Button pad (PXN)
   GenericHID m_buttonPad = new GenericHID(OIConstants.kButtonPadPort);
   CommandGenericHID  m_buttonPadCmd = new CommandGenericHID (OIConstants.kButtonPadPort);

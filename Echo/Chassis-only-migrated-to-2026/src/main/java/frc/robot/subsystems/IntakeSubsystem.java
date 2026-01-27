@@ -5,8 +5,8 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -15,8 +15,6 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -65,19 +63,22 @@ public class IntakeSubsystem extends SubsystemBase{
         .p(0.001/MRTOORTD, ClosedLoopSlot.kSlot1)
         .i(0, ClosedLoopSlot.kSlot1)
         .d(0, ClosedLoopSlot.kSlot1)
-        .velocityFF(1.0 / (5767*MRTOORTD), ClosedLoopSlot.kSlot1)
         .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
     motorConfig.closedLoop.maxMotion
         // Set MAXMotion parameters for position control. We don't need to pass
         // a closed loop slot, as it will default to slot 0.
-        .maxVelocity(1000*MRTOORTD)
+        .cruiseVelocity(1000*MRTOORTD)
         .maxAcceleration(1000*MRTOORTD)
-        .allowedClosedLoopError(PositionTolerance) // in degrees
+        .allowedProfileError(PositionTolerance) // in degrees
         // Set MAXMotion parameters for velocity control in slot 1
         .maxAcceleration(1000*MRTOORTD, ClosedLoopSlot.kSlot1)
-        .maxVelocity(60000*MRTOORTD, ClosedLoopSlot.kSlot1)
-        .allowedClosedLoopError(MRTOORTD, ClosedLoopSlot.kSlot1); // degrees per sec
+        .cruiseVelocity(60000*MRTOORTD, ClosedLoopSlot.kSlot1)
+        .allowedProfileError(MRTOORTD, ClosedLoopSlot.kSlot1); // degrees per sec
+
+    // Specifically configure feedforward velocity gain
+    motorConfig.closedLoop.feedForward
+      .kV(1.0 / (5767*MRTOORTD), ClosedLoopSlot.kSlot1);
 
     motorConfig.idleMode(IdleMode.kBrake);
 
@@ -87,11 +88,10 @@ public class IntakeSubsystem extends SubsystemBase{
     debugTab.addDouble("Intake Velocity (deg/min)", () -> getVelocity());
 
     setDefaultCommand(stopCommand());
-  
   }
 
   public void moveVelocityControl (boolean in, double multiplier) {
-    closedLoopController.setReference(multiplier * VelocityV * (in?-1:1), ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
+    closedLoopController.setSetpoint(multiplier * VelocityV * (in?-1:1), ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
     // m_motor.set(OpenLoopSpeed * (in?-1:1));
   }
   public void stop () {
