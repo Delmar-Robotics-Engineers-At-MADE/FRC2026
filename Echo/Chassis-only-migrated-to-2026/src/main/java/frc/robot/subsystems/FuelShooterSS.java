@@ -44,6 +44,8 @@ public class FuelShooterSS extends SubsystemBase{
 
   public FuelShooterSS() {
 
+    double nominalVoltage = 12.0;
+
     m_motorPort = new SparkMax(CANIDShooterPort, MotorType.kBrushless);
     m_motorStar = new SparkMax(CANIDShooterStar, MotorType.kBrushless);
     closedLoopController = m_motorPort.getClosedLoopController();
@@ -66,7 +68,8 @@ public class FuelShooterSS extends SubsystemBase{
         .p(0.0001/MRTOORTD, ClosedLoopSlot.kSlot1)
         .i(0, ClosedLoopSlot.kSlot1)
         .d(0, ClosedLoopSlot.kSlot1)
-        .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
+        .outputRange(-1, 1, ClosedLoopSlot.kSlot1)
+        .feedForward.kV(nominalVoltage / (5767*MRTOORTD), ClosedLoopSlot.kSlot1); // Configure velocity gain on the feed forward closed feedback loop
 
     motorConfig.closedLoop.maxMotion
         // Set MAXMotion parameters for position control. We don't need to pass
@@ -78,10 +81,6 @@ public class FuelShooterSS extends SubsystemBase{
         .maxAcceleration(500*MRTOORTD, ClosedLoopSlot.kSlot1)
         .cruiseVelocity(6000*MRTOORTD, ClosedLoopSlot.kSlot1)
         .allowedProfileError(VelocityTolerance, ClosedLoopSlot.kSlot1); // degrees per sec
-
-    // Configure velocity gain on the feed forward closed feedback loop
-    motorConfig.closedLoop.feedForward
-        .kV(1.0 / (5767*MRTOORTD), ClosedLoopSlot.kSlot1);
 
     motorConfig.idleMode(IdleMode.kCoast);
 

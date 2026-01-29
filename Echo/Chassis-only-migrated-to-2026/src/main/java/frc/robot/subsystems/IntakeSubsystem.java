@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSubsystem extends SubsystemBase{
 
-  static final int CANIDMotor = 25;
+  static final int CANIDMotor = 44;
   static final double PositionTolerance = 10; // degrees
   static final double VelocityV = 25000;  // degrees per minute
   static final double OpenLoopSpeed = 0.3;
@@ -41,6 +41,8 @@ public class IntakeSubsystem extends SubsystemBase{
   private ShuffleboardTab debugTab = Shuffleboard.getTab("Motor Debug");
 
   public IntakeSubsystem() {
+
+    double nominalVoltage = 12.0;
 
     m_motor = new SparkMax(CANIDMotor, MotorType.kBrushless);
     closedLoopController = m_motor.getClosedLoopController();
@@ -63,7 +65,9 @@ public class IntakeSubsystem extends SubsystemBase{
         .p(0.001/MRTOORTD, ClosedLoopSlot.kSlot1)
         .i(0, ClosedLoopSlot.kSlot1)
         .d(0, ClosedLoopSlot.kSlot1)
-        .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
+        .outputRange(-1, 1, ClosedLoopSlot.kSlot1)
+        .feedForward.kV(nominalVoltage / (5767*MRTOORTD), ClosedLoopSlot.kSlot1); // Specifically configure feedforward velocity gain (now as a factor of voltage)
+
 
     motorConfig.closedLoop.maxMotion
         // Set MAXMotion parameters for position control. We don't need to pass
@@ -75,10 +79,6 @@ public class IntakeSubsystem extends SubsystemBase{
         .maxAcceleration(1000*MRTOORTD, ClosedLoopSlot.kSlot1)
         .cruiseVelocity(60000*MRTOORTD, ClosedLoopSlot.kSlot1)
         .allowedProfileError(MRTOORTD, ClosedLoopSlot.kSlot1); // degrees per sec
-
-    // Specifically configure feedforward velocity gain
-    motorConfig.closedLoop.feedForward
-      .kV(1.0 / (5767*MRTOORTD), ClosedLoopSlot.kSlot1);
 
     motorConfig.idleMode(IdleMode.kBrake);
 
