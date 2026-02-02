@@ -25,11 +25,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSubsystem extends SubsystemBase{
 
-  static final int CANIDMotor = 44;
+  static final int CANIDMotor = 25;
   static final double PositionTolerance = 10; // degrees
   static final double VelocityV = 25000;  // degrees per minute
   static final double OpenLoopSpeed = 0.3;
-  static final double MRTOORTD = 360 / 20; // Motor Rotations To One Output Rotation To Degrees; main swerve is 5.49
+  static final double MRTOORTD = 360 / 5; // 5:1 reduction; Motor Rotations To One Output Rotation To Degrees; main swerve is 5.49
 
   private SparkMax m_motor;
   private SparkMaxConfig motorConfig;
@@ -49,6 +49,9 @@ public class IntakeSubsystem extends SubsystemBase{
     m_encoder = m_motor.getEncoder();
 
     motorConfig = new SparkMaxConfig();
+
+    motorConfig.inverted(true);
+
     motorConfig.encoder
         .positionConversionFactor(MRTOORTD)
         .velocityConversionFactor(MRTOORTD);
@@ -57,17 +60,16 @@ public class IntakeSubsystem extends SubsystemBase{
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         // Set PID values for position control. We don't need to pass a closed
         // loop slot, as it will default to slot 0.
-        .p(0.4 /MRTOORTD)
+        .p(0.4 / MRTOORTD)
         .i(0)
         .d(0)
         .outputRange(-1, 1)
         // Set PID values for velocity control in slot 1
-        .p(0.001/MRTOORTD, ClosedLoopSlot.kSlot1)
+        .p(0.0002 / MRTOORTD, ClosedLoopSlot.kSlot1)
         .i(0, ClosedLoopSlot.kSlot1)
         .d(0, ClosedLoopSlot.kSlot1)
         .outputRange(-1, 1, ClosedLoopSlot.kSlot1)
         .feedForward.kV(nominalVoltage / (5767*MRTOORTD), ClosedLoopSlot.kSlot1); // Specifically configure feedforward velocity gain (now as a factor of voltage)
-
 
     motorConfig.closedLoop.maxMotion
         // Set MAXMotion parameters for position control. We don't need to pass
