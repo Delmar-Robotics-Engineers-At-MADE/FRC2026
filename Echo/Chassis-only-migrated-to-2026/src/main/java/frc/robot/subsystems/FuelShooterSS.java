@@ -3,13 +3,10 @@ package frc.robot.subsystems;
 // import com.playingwithfusion.TimeOfFlight;
 // import com.playingwithfusion.TimeOfFlight.RangingMode;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.fasterxml.jackson.databind.util.EnumValues;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
-import com.revrobotics.sim.SparkRelativeEncoderSim;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -20,15 +17,17 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.NeoMotorConstants;
 
 public class FuelShooterSS extends SubsystemBase{
 
@@ -36,21 +35,19 @@ public class FuelShooterSS extends SubsystemBase{
   static final int CANIDShooterStar = 15;
   // static final int CANIDFusion = 1;  fusion line of flight sensor
   static final int DIONumPhotoEye = 6;
-  static final double PositionTolerance = 10; // degrees
-  static final double VelocityTolerance = 10000; // degrees per minute
-  static final double VelocityV = 20000;  // degrees per minute
-  static final double MRTOORTD = 360; // Motor Rotations To One Output Rotation To Degrees; main swerve is 5.49
+  static final double PositionToleranceRotations = 0.1; // rotations
+  static final double VelocityToleranceRPM = 1; // rotations per minute
+  static final double TargetVeloctyRPM = 5000;  // rotations per minute
 
   private SparkMax m_motorPort, m_motorStar;
   private SparkMaxConfig motorConfig;
   private SparkClosedLoopController closedLoopController;
   private RelativeEncoder m_encoder;
 
-
+  // sim entities
   DCMotor m_maxSimGearbox = DCMotor.getNEO(2);
   private SparkMaxSim m_motorsSim;
   private FlywheelSim m_flywheelSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(m_maxSimGearbox, 0.0008246585, 1), m_maxSimGearbox);
-
 
   // shuffleboard stuff
   private ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
@@ -63,43 +60,38 @@ public class FuelShooterSS extends SubsystemBase{
     m_motorPort = new SparkMax(CANIDShooterPort, MotorType.kBrushless);
     m_motorStar = new SparkMax(CANIDShooterStar, MotorType.kBrushless);
 
-    m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
-
     closedLoopController = m_motorPort.getClosedLoopController();
     m_encoder = m_motorPort.getEncoder();
 
     motorConfig = new SparkMaxConfig();
-    motorConfig.encoder
-        .positionConversionFactor(MRTOORTD)
-        .velocityConversionFactor(MRTOORTD);
 
-    motorConfig.closedLoop
+    motorConfig
+      .idleMode(IdleMode.kCoast)
+      .closedLoopRampRate(1.0) // seconds
+      .openLoopRampRate(1.0) // seconds
+      .smartCurrentLimit(60); // A
+
+    motorConfig
+      .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         // Set PID values for position control. We don't need to pass a closed
         // loop slot, as it will default to slot 0.
-        .p(0.4 / MRTOORTD)
-        .i(0)
-        .d(0)
-        .outputRange(-1, 1)
-        // Set PID values for velocity control in slot 1
-        .p(0.0001 / MRTOORTD, ClosedLoopSlot.kSlot1)
-        .i(0, ClosedLoopSlot.kSlot1)
-        .d(0, ClosedLoopSlot.kSlot1)
-        .outputRange(-1, 1, ClosedLoopSlot.kSlot1)
-        .feedForward.kV(nominalVoltage / (5767*MRTOORTD), ClosedLoopSlot.kSlot1); // Configure velocity gain on the feed forward closed feedback loop
+        .p(0.0007)
+        .outputRange(-1, 1);
 
-    motorConfig.closedLoop.maxMotion
-        // Set MAXMotion parameters for position control. We don't need to pass
-        // a closed loop slot, as it will default to slot 0.
-        .cruiseVelocity(1000*MRTOORTD)
-        .maxAcceleration(1000*MRTOORTD)
-        .allowedProfileError(PositionTolerance) // in degrees
-        // Set MAXMotion parameters for velocity control in slot 1
-        .maxAcceleration(500*MRTOORTD, ClosedLoopSlot.kSlot1)
-        .cruiseVelocity(6000*MRTOORTD, ClosedLoopSlot.kSlot1)
-        .allowedProfileError(VelocityTolerance, ClosedLoopSlot.kSlot1); // degrees per sec
+    motorConfig
+      .closedLoop
+        .maxMotion
+          // Set MAXMotion parameters for MAXMotion Velocity control
+          .maxAcceleration(10000)
+          .cruiseVelocity(5000)
+          .allowedProfileError(VelocityToleranceRPM); // degrees per sec
 
-    motorConfig.idleMode(IdleMode.kCoast);
+    // Configure velocity gain on the feed forward closed feedback loop
+    // kV is in V/rpm so divide the nominal voltage by the NEO's max velocity in RPM
+    motorConfig
+      .closedLoop
+        .feedForward.kV(nominalVoltage / NeoMotorConstants.kFreeSpeedRpm);
 
     m_motorPort.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
@@ -112,14 +104,19 @@ public class FuelShooterSS extends SubsystemBase{
         .withPosition(1, 6);
     debugTab.addDouble("Shooter Velocity (deg/min)", () -> getVelocity());
 
-
     // default command should be idle (no power, coasting)
     setDefaultCommand(coastCmd());
+
+    // Zero the flywheel encoder on initialization
+    m_encoder.setPosition(0.0);
+
+    // set up sim entities
+    m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
   }
 
   public void moveVelocityControl (boolean in, double multiplier) {
     System.out.println(multiplier);
-    closedLoopController.setSetpoint(multiplier * VelocityV * (in?1:-1), ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
+    closedLoopController.setSetpoint(multiplier * TargetVeloctyRPM * (in?1:-1), ControlType.kMAXMotionVelocityControl);
   }
 
   public void moveOpenLoop (double speed) {
@@ -136,28 +133,35 @@ public class FuelShooterSS extends SubsystemBase{
   }
 
   public boolean getVelocityReady () {
-    return (Math.abs(m_encoder.getVelocity() - VelocityV) < VelocityTolerance) ;  
+    return (Math.abs(m_encoder.getVelocity() - TargetVeloctyRPM) < VelocityToleranceRPM) ;  
   }
 
   public double getVelocity () {return m_encoder.getVelocity();}
 
-  public void simulationPeriodic() {
-    SparkRelativeEncoderSim encoderSim = m_motorsSim.getRelativeEncoderSim();
-    m_flywheelSim.setInput(m_motorsSim.getAppliedOutput() * RoboRioSim.getVInVoltage());
+  @Override
+  public void periodic() {
+    // Display subsystem values
+    SmartDashboard.putNumber("Shooter | Flywheel | Applied Output", m_motorPort.getAppliedOutput());
+    SmartDashboard.putNumber("Shooter | Flywheel | Current", m_motorPort.getOutputCurrent());
+    SmartDashboard.putNumber("Shooter | Flywheel Follower | Applied Output", m_motorStar.getAppliedOutput());
+    SmartDashboard.putNumber("Shooter | Flywheel Follower | Current", m_motorStar.getOutputCurrent());
 
+    SmartDashboard.putNumber("Shooter | Flywheel | Target Velocity", TargetVeloctyRPM);
+    SmartDashboard.putNumber("Shooter | Flywheel | Actual Velocity", m_encoder.getVelocity());
+  }
+
+  public void simulationPeriodic() {
+    m_flywheelSim.setInput(m_motorPort.getAppliedOutput() * RobotController.getInputVoltage());
     m_flywheelSim.update(0.02);
 
     // Now, we update the Spark Flex
     m_motorsSim.iterate(
-            m_flywheelSim.getAngularVelocityRPM(),
-        RoboRioSim.getVInVoltage(), // Simulated battery voltage, in Volts
-        0.02); // Time interval, in Seconds
-
-    encoderSim.setVelocity(m_motorsSim.getVelocity());
+      m_flywheelSim.getAngularVelocityRPM(),
+      RobotController.getInputVoltage(), // Simulated battery voltage, in Volts
+      0.02); // Time interval, in Seconds
 
     RoboRioSim.setVInVoltage(
       BatterySim.calculateDefaultBatteryLoadedVoltage(m_flywheelSim.getCurrentDrawAmps()));
 
   }
-
 }
