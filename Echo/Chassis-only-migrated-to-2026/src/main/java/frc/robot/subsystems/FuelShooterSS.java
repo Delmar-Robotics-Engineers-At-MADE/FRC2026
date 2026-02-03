@@ -5,9 +5,11 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
+import com.fasterxml.jackson.databind.util.EnumValues;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
+import com.revrobotics.sim.SparkRelativeEncoderSim;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -17,8 +19,13 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -31,14 +38,19 @@ public class FuelShooterSS extends SubsystemBase{
   static final int DIONumPhotoEye = 6;
   static final double PositionTolerance = 10; // degrees
   static final double VelocityTolerance = 10000; // degrees per minute
-  static final double VelocityV = 200000;  // degrees per minute
+  static final double VelocityV = 20000;  // degrees per minute
   static final double MRTOORTD = 360; // Motor Rotations To One Output Rotation To Degrees; main swerve is 5.49
 
   private SparkMax m_motorPort, m_motorStar;
   private SparkMaxConfig motorConfig;
   private SparkClosedLoopController closedLoopController;
   private RelativeEncoder m_encoder;
-  // private final TimeOfFlight m_tofSensor;
+
+
+  DCMotor m_maxSimGearbox = DCMotor.getNEO(2);
+  private SparkMaxSim m_motorsSim;
+  private FlywheelSim m_flywheelSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(m_maxSimGearbox, 0.0008246585, 1), m_maxSimGearbox);
+
 
   // shuffleboard stuff
   private ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
@@ -50,6 +62,9 @@ public class FuelShooterSS extends SubsystemBase{
 
     m_motorPort = new SparkMax(CANIDShooterPort, MotorType.kBrushless);
     m_motorStar = new SparkMax(CANIDShooterStar, MotorType.kBrushless);
+
+    m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
+
     closedLoopController = m_motorPort.getClosedLoopController();
     m_encoder = m_motorPort.getEncoder();
 
@@ -125,5 +140,24 @@ public class FuelShooterSS extends SubsystemBase{
   }
 
   public double getVelocity () {return m_encoder.getVelocity();}
+
+  public void simulationPeriodic() {
+    SparkRelativeEncoderSim encoderSim = m_motorsSim.getRelativeEncoderSim();
+    m_flywheelSim.setInput(m_motorsSim.getAppliedOutput() * RoboRioSim.getVInVoltage());
+
+    m_flywheelSim.update(0.02);
+
+    // Now, we update the Spark Flex
+    m_motorsSim.iterate(
+            m_flywheelSim.getAngularVelocityRPM(),
+        RoboRioSim.getVInVoltage(), // Simulated battery voltage, in Volts
+        0.02); // Time interval, in Seconds
+
+    encoderSim.setVelocity(m_motorsSim.getVelocity());
+
+    RoboRioSim.setVInVoltage(
+      BatterySim.calculateDefaultBatteryLoadedVoltage(m_flywheelSim.getCurrentDrawAmps()));
+
+  }
 
 }

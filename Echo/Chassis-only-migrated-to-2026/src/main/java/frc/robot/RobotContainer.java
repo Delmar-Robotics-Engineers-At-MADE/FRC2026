@@ -5,10 +5,13 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Blinkin;
@@ -89,6 +92,11 @@ public class RobotContainer {
                 true),
             m_robotDrive));
 
+  }
+
+  public void simulationPeriodic() {
+    // Update the simulation model.
+    m_fuelShoot.simulationPeriodic();
   }
 
   private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
