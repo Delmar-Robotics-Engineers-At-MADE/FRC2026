@@ -109,12 +109,13 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0.0002) // from ReCalc
+          .p(0.0001) // from ReCalc
           .outputRange(-1, 1);
 
       flywheelConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Velocity control
+          // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(2500) // rpm/s
           .allowedProfileError(ShooterSubsystemConstants.FlywheelSetpoints.kVelocityTolerance); // rpm
 

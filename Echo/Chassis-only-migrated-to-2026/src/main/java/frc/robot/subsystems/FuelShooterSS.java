@@ -40,7 +40,7 @@ public class FuelShooterSS extends SubsystemBase{
   
   // ###########################
 
-  private final SendableChooser<Double> velocityChooser = new SendableChooser();
+  private final SendableChooser<Double> velocityChooser = new SendableChooser<Double>();
 
   // Member variables for subsystem state management
   private double flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
@@ -136,7 +136,7 @@ public class FuelShooterSS extends SubsystemBase{
           this.setFlywheelVelocity(flywheelTargetVelocity);
         },
         () -> {
-          this.setFlywheelVelocity(0.0);
+          m_motorPort.stopMotor();
         }).withName("Spinning Up Flywheel");
   }
 
@@ -150,7 +150,7 @@ public class FuelShooterSS extends SubsystemBase{
           this.setFlywheelVelocity(flywheelTargetVelocity);
           //this.setFeederPower(FeederSetpoints.kFeed);
         }, () -> {
-          this.setFlywheelVelocity(0.0);
+          m_motorPort.stopMotor();
           //this.setFeederPower(0.0);
         }).withName("Feeding");
   }
