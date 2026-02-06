@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-// import com.playingwithfusion.TimeOfFlight;
-// import com.playingwithfusion.TimeOfFlight.RangingMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.PersistMode;
@@ -10,144 +8,192 @@ import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-// import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.util.datalog.FloatArrayLogEntry;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.NeoMotorConstants;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Configs;
+import frc.robot.Constants.ShooterSubsystemConstants;
+import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
 public class FuelShooterSS extends SubsystemBase{
 
-  static final int CANIDShooterPort = 7;
-  static final int CANIDShooterStar = 15;
-  // static final int CANIDFusion = 1;  fusion line of flight sensor
-  static final int DIONumPhotoEye = 6;
-  static final double PositionToleranceRotations = 0.1; // rotations
-  static final double VelocityToleranceRPM = 1; // rotations per minute
-  static final double TargetVeloctyRPM = 5000;  // rotations per minute
-
   private SparkMax m_motorPort, m_motorStar;
-  private SparkMaxConfig motorConfig;
   private SparkClosedLoopController closedLoopController;
-  private RelativeEncoder m_encoder;
+  private RelativeEncoder m_flywheelEncoder;
 
-  // sim entities
+  // ########### SIM ###########
+
   DCMotor m_maxSimGearbox = DCMotor.getNEO(2);
   private SparkMaxSim m_motorsSim;
-  private FlywheelSim m_flywheelSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(m_maxSimGearbox, 0.0008246585, 1), m_maxSimGearbox);
+  private FlywheelSim m_flywheelSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(m_maxSimGearbox, 0.00316577577, 1), m_maxSimGearbox);
+  
+  // ###########################
 
-  // shuffleboard stuff
-  private ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
-  private ShuffleboardTab debugTab = Shuffleboard.getTab("Motor Debug");
+  private final SendableChooser<Double> velocityChooser = new SendableChooser();
+
+  // Member variables for subsystem state management
+  private double flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
 
   public FuelShooterSS() {
 
-    double nominalVoltage = 12.0;
-
-    m_motorPort = new SparkMax(CANIDShooterPort, MotorType.kBrushless);
-    m_motorStar = new SparkMax(CANIDShooterStar, MotorType.kBrushless);
+    m_motorPort = new SparkMax(ShooterSubsystemConstants.kFlywheelMotorCanId, MotorType.kBrushless);
+    m_motorStar = new SparkMax(ShooterSubsystemConstants.kFlywheelFollowerMotorCanId, MotorType.kBrushless);
 
     closedLoopController = m_motorPort.getClosedLoopController();
-    m_encoder = m_motorPort.getEncoder();
+    m_flywheelEncoder = m_motorPort.getEncoder();
 
-    motorConfig = new SparkMaxConfig();
+    /*
+     * Apply the appropriate configurations to the SPARKs.
+     *
+     * kResetSafeParameters is used to get the SPARK to a known state. This
+     * is useful in case the SPARK is replaced.
+     *
+     * kPersistParameters is used to ensure the configuration is not lost when
+     * the SPARK loses power. This is useful for power cycles that may occur
+     * mid-operation.
+     */
+    m_motorPort.configure(
+        Configs.ShooterSubsystem.flywheelConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    m_motorStar.configure(
+        Configs.ShooterSubsystem.flywheelFollowerConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    // feederMotor.configure(
+    //     Configs.ShooterSubsystem.feederConfig,
+    //     ResetMode.kResetSafeParameters,
+    //     PersistMode.kPersistParameters);
 
-    motorConfig
-      .idleMode(IdleMode.kCoast)
-      .closedLoopRampRate(1.0) // seconds
-      .openLoopRampRate(1.0) // seconds
-      .smartCurrentLimit(60); // A
-
-    motorConfig
-      .closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        // Set PID values for position control. We don't need to pass a closed
-        // loop slot, as it will default to slot 0.
-        .p(0.0007)
-        .outputRange(-1, 1);
-
-    motorConfig
-      .closedLoop
-        .maxMotion
-          // Set MAXMotion parameters for MAXMotion Velocity control
-          .maxAcceleration(10000)
-          .cruiseVelocity(5000)
-          .allowedProfileError(VelocityToleranceRPM); // degrees per sec
-
-    // Configure velocity gain on the feed forward closed feedback loop
-    // kV is in V/rpm so divide the nominal voltage by the NEO's max velocity in RPM
-    motorConfig
-      .closedLoop
-        .feedForward.kV(nominalVoltage / NeoMotorConstants.kFreeSpeedRpm);
-
-    m_motorPort.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
-    // second motor inverted and following first
-    motorConfig.follow(CANIDShooterPort, true);
-    m_motorStar.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-    
-    // Dashboard indicators
-    matchTab.addBoolean("Shooter Ready", () -> getVelocityReady())
-        .withPosition(1, 6);
-    debugTab.addDouble("Shooter Velocity (deg/min)", () -> getVelocity());
-
-    // default command should be idle (no power, coasting)
-    setDefaultCommand(coastCmd());
-
-    // Zero the flywheel encoder on initialization
-    m_encoder.setPosition(0.0);
+    // Zero flywheel encoder on initialization
+    m_flywheelEncoder.setPosition(0.0);
 
     // set up sim entities
     m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
+
+    velocityChooser.setDefaultOption("Low Speed (1500 rpm)", 1500.0);
+    velocityChooser.addOption("Mid Speed (2500 rpm)", 2500.0);
+    velocityChooser.addOption("Full Speed (4500 rpm)", FlywheelSetpoints.kShootRpm);
+    SmartDashboard.putData("Velocity Target", velocityChooser);
   }
 
-  public void moveVelocityControl (boolean in, double multiplier) {
-    System.out.println(multiplier);
-    closedLoopController.setSetpoint(multiplier * TargetVeloctyRPM * (in?1:-1), ControlType.kMAXMotionVelocityControl);
+  private boolean isFlywheelAt(double velocity) {
+    return MathUtil.isNear(m_flywheelEncoder.getVelocity(), 
+            velocity, FlywheelSetpoints.kVelocityTolerance);
   }
 
-  public void moveOpenLoop (double speed) {
-    m_motorPort.set(speed);
-    m_motorStar.set(speed);
+  /** 
+  * Trigger: Is the flywheel spinning at the required velocity?
+  */
+  public final Trigger isFlywheelSpinning = new Trigger(
+      () -> isFlywheelAt(ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm) || 
+            m_flywheelEncoder.getVelocity() > ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm
+  );
+
+  public final Trigger isFlywheelSpinningBackwards = new Trigger(
+      () -> isFlywheelAt(-ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm) || 
+            m_flywheelEncoder.getVelocity() < -ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm
+  );
+
+  /** 
+  * Trigger: Is the flywheel stopped?
+  */
+  public final Trigger isFlywheelStopped = new Trigger(() -> isFlywheelAt(0));
+
+  /**
+  * Drive the flywheels to their set velocity. This will use MAXMotion
+  * velocity control which will allow for a smooth acceleration and deceleration to the mechanism's
+  * setpoint.
+  */
+  private void setFlywheelVelocity(double velocity) {
+    closedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl);
   }
 
-  public Command moveVelocityCmd(boolean in) {
-    return new RunCommand(() -> moveVelocityControl(in, 1), this);
-  }
-  
-  public Command coastCmd() {
-    return new RunCommand(() -> moveOpenLoop(0), this); // open loop 0 power, should coast
+  /** Set the feeder motor power in the range of [-1, 1]. */
+  // private void setFeederPower(double power) {
+  //   feederMotor.set(power);
+  // }
+
+    /**
+   * Command to run the flywheel motors. When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runFlywheelCommand() {
+    return this.startEnd(
+        () -> {
+          System.out.println("Spinning Flywheel!!");
+          this.setFlywheelVelocity(flywheelTargetVelocity);
+        },
+        () -> {
+          this.setFlywheelVelocity(0.0);
+        }).withName("Spinning Up Flywheel");
   }
 
-  public boolean getVelocityReady () {
-    return (Math.abs(m_encoder.getVelocity() - TargetVeloctyRPM) < VelocityToleranceRPM) ;  
+  /**
+   * Command to run the feeder and flywheel motors. When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runFeederCommand() {
+    return this.startEnd(
+        () -> {
+          this.setFlywheelVelocity(flywheelTargetVelocity);
+          //this.setFeederPower(FeederSetpoints.kFeed);
+        }, () -> {
+          this.setFlywheelVelocity(0.0);
+          //this.setFeederPower(0.0);
+        }).withName("Feeding");
   }
 
-  public double getVelocity () {return m_encoder.getVelocity();}
+  /**
+   * Meta-command to operate the shooter. The Flywheel starts spinning up and when it reaches
+   * the desired speed it starts the Feeder.
+   */
+  public Command runShooterCommand() {
+    return this.startEnd(
+      () -> this.setFlywheelVelocity(flywheelTargetVelocity),
+      () -> m_motorPort.stopMotor()
+    ).until(isFlywheelSpinning).andThen(
+      this.startEnd(
+        () -> {
+          this.setFlywheelVelocity(flywheelTargetVelocity);
+          //this.setFeederPower(FeederSetpoints.kFeed);
+        }, () -> {
+          m_motorPort.stopMotor();
+          //feederMotor.stopMotor();
+        })
+    ).withName("Shooting");
+  }
+
+  public double getVelocity () {return m_flywheelEncoder.getVelocity();}
 
   @Override
   public void periodic() {
     // Display subsystem values
     SmartDashboard.putNumber("Shooter | Flywheel | Applied Output", m_motorPort.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel | Current", m_motorPort.getOutputCurrent());
+    SmartDashboard.putNumber("Shooter | Flywheel | Velocity Setpoint", closedLoopController.getMAXMotionSetpointVelocity());
+
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Applied Output", m_motorStar.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Current", m_motorStar.getOutputCurrent());
 
-    SmartDashboard.putNumber("Shooter | Flywheel | Target Velocity", TargetVeloctyRPM);
-    SmartDashboard.putNumber("Shooter | Flywheel | Actual Velocity", m_encoder.getVelocity());
+    SmartDashboard.putNumber("Shooter | Flywheel | Target Velocity", flywheelTargetVelocity);
+    SmartDashboard.putNumber("Shooter | Flywheel | Actual Velocity", m_flywheelEncoder.getVelocity());
+
+    SmartDashboard.putBoolean("Is Flywheel Spinning", isFlywheelSpinning.getAsBoolean());
+    SmartDashboard.putBoolean("Is Flywheel Stopped", isFlywheelStopped.getAsBoolean());
+  
+    flywheelTargetVelocity = velocityChooser.getSelected();
   }
 
   public void simulationPeriodic() {
@@ -162,6 +208,5 @@ public class FuelShooterSS extends SubsystemBase{
 
     RoboRioSim.setVInVoltage(
       BatterySim.calculateDefaultBatteryLoadedVoltage(m_flywheelSim.getCurrentDrawAmps()));
-
   }
 }

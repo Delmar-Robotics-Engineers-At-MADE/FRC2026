@@ -12,6 +12,37 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
+
+    public static final class IntakeSubsystemConstants {
+    public static final int kIntakeMotorCanId = 25;    // SPARK Flex CAN ID
+    public static final int kConveyorMotorCanId = 30;  // SPARK Flex CAN ID
+
+    public static final class IntakeSetpoints {
+      public static final double kIntake = 0.3;
+      public static final double kExtake = -0.3;
+    }
+
+    public static final class ConveyorSetpoints {
+      public static final double kIntake = 0.3;
+      public static final double kExtake = -0.3;
+    }
+  }
+
+  public static final class ShooterSubsystemConstants {
+    public static final int kFeederMotorCanId = 17;    // SPARK Flex CAN ID
+    public static final int kFlywheelMotorCanId = 7;  // SPARK Flex CAN ID (Port)
+    public static final int kFlywheelFollowerMotorCanId = 15;  // SPARK Flex CAN ID (Star)
+
+    public static final class FeederSetpoints {
+      public static final double kFeed = 0.6;
+    }
+
+    public static final class FlywheelSetpoints {
+      public static final double kShootRpm = 4500;
+      public static final double kVelocityTolerance = 10; // rpm
+    }
+  }
+
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds

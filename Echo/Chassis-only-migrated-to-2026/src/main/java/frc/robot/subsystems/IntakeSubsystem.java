@@ -1,98 +1,97 @@
 package frc.robot.subsystems;
 
-// import com.playingwithfusion.TimeOfFlight;
-// import com.playingwithfusion.TimeOfFlight.RangingMode;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.ClosedLoopSlot;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-// import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Configs;
+import frc.robot.Constants.IntakeSubsystemConstants;
+import frc.robot.Constants.IntakeSubsystemConstants.ConveyorSetpoints;
+import frc.robot.Constants.IntakeSubsystemConstants.IntakeSetpoints;
 
 
 public class IntakeSubsystem extends SubsystemBase{
 
-  static final int CANIDMotor = 25;
-  static final double TargetVelocityRPM = 1500;  // rotations per minute
-  static final double OpenLoopSpeed = 0.3;
-  static final double MRTOORTD = 360 / 5; // 5:1 reduction; Motor Rotations To One Output Rotation To Degrees; main swerve is 5.49
-
-  private SparkMax m_motor;
-  private SparkMaxConfig motorConfig;
-  private SparkClosedLoopController closedLoopController;
-  private RelativeEncoder m_encoder;
-
-  // shuffleboard stuff
-  private ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
-  private ShuffleboardTab debugTab = Shuffleboard.getTab("Motor Debug");
+  private SparkMax m_intakeMotor = new SparkMax(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
+  private SparkMax m_conveyorMotor = new SparkMax(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
 
   public IntakeSubsystem() {
+        /*
+     * Apply the appropriate configurations to the SPARKs.
+     *
+     * kResetSafeParameters is used to get the SPARK to a known state. This
+     * is useful in case the SPARK is replaced.
+     *
+     * kPersistParameters is used to ensure the configuration is not lost when
+     * the SPARK loses power. This is useful for power cycles that may occur
+     * mid-operation.
+     */
+    m_intakeMotor.configure(
+        Configs.IntakeSubsystem.intakeConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
 
-    m_motor = new SparkMax(CANIDMotor, MotorType.kBrushless);
-    closedLoopController = m_motor.getClosedLoopController();
-    m_encoder = m_motor.getEncoder();
+    m_conveyorMotor.configure(
+      Configs.IntakeSubsystem.conveyorConfig,
+      ResetMode.kResetSafeParameters,
+      PersistMode.kPersistParameters);
 
-    motorConfig = new SparkMaxConfig();
-
-    motorConfig
-      .inverted(true)
-      .idleMode(IdleMode.kBrake)
-      .openLoopRampRate(0.5)
-      .smartCurrentLimit(40);
-
-    m_motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
-    // Dashboard indicators
-    debugTab.addDouble("Intake Velocity (rpm)", () -> getVelocity());
-
-    setDefaultCommand(stopCommand());
+    System.out.println("---> IntakeSubsystem initialized");
   }
 
-  public void moveVelocityControl (boolean in, double multiplier) {
-    closedLoopController.setSetpoint(multiplier * TargetVelocityRPM * (in?-1:1), ControlType.kMAXMotionVelocityControl);
+  /** Set the intake motor power in the range of [-1, 1]. */
+  private void setIntakePower(double power) {
+    m_intakeMotor.set(power);
   }
 
-  public void stop () {
-    m_motor.set(0);
+  /** Set the conveyor motor power in the range of [-1, 1]. */
+  private void setConveyorPower(double power) {
+    m_conveyorMotor.set(power);
   }
 
-  public Command moveVelocityOnceCmd(boolean in) {
-    System.out.println("intake moving once " + in);
-    return new InstantCommand(() -> moveVelocityControl(in, 1), this);
+  /**
+   * Command to run the intake and conveyor motors. When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runIntakeCommand() {
+    return this.startEnd(
+        () -> {
+          this.setIntakePower(IntakeSetpoints.kIntake);
+          this.setConveyorPower(ConveyorSetpoints.kIntake);
+        }, () -> {
+          this.setIntakePower(0.0);
+          this.setConveyorPower(0.0);
+        }).withName("Intaking");
   }
 
-  public Command moveVelocityCmd(boolean in) {
-    System.out.println("intake moving " + in);
-    return new RunCommand(() -> moveVelocityControl(in, 1), this);
+  /**
+   * Command to reverse the intake motor and coveyor motors. When the command is interrupted, e.g. the button is
+   * released, the motors will stop.
+   */
+  public Command runExtakeCommand() {
+    return this.startEnd(
+        () -> {
+          this.setIntakePower(IntakeSetpoints.kExtake);
+          this.setConveyorPower(ConveyorSetpoints.kExtake);
+        }, () -> {
+          this.setIntakePower(0.0);
+          this.setConveyorPower(0.0);
+        }).withName("Extaking");
   }
-
-  public Command stopCommand() {
-    return new InstantCommand(() -> stop(), this);
-  }
-
-  public double getAngle () {return m_encoder.getPosition();}
-  public double getVelocity () {return m_encoder.getVelocity();}
 
   @Override
   public void periodic() {
 
     // Display subsystem values
-    SmartDashboard.putNumber("Intake | Intake | Velocity Setpoint", closedLoopController.getSetpoint());
-    SmartDashboard.putNumber("Intake | Intake | Applied Output", m_motor.getAppliedOutput());
+    SmartDashboard.putNumber("Intake | Intake | Applied Output", m_intakeMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Intake | Conveyor | Applied Output", m_conveyorMotor.getAppliedOutput());
   }
 
 }

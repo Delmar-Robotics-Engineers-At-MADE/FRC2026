@@ -75,8 +75,8 @@ public class DriveSubsystem extends SubsystemBase {
   // The gyro sensor
   private final AHRS m_gyro = new AHRS();
 
-  // photon vision subsystem
-  PhotonVisionSensor m_photon = null;
+  // photon vision subsystemhoton
+  //PhotonVisionSensor m_photon = null;
 
   // Odometry class for tracking robot pose
   SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
@@ -132,8 +132,8 @@ public class DriveSubsystem extends SubsystemBase {
   Pose2d getEstimatedPosition() {return m_odometry.getEstimatedPosition();}
 
   /** Creates a new DriveSubsystem. */ // constructor
-  public DriveSubsystem(PhotonVisionSensor photon) {
-    m_photon = photon;
+  public DriveSubsystem() {
+    //m_photon = photon;
 
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
@@ -204,18 +204,18 @@ public class DriveSubsystem extends SubsystemBase {
         getCurrentPositions());
 
     // add vision data
-    Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(
-        m_odometry.getEstimatedPosition());
-    if (visionOptional.isPresent()) {
-      EstimatedRobotPose visionPose = visionOptional.get(); 
-      m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
-    }
-    visionOptional = m_photon.getEstimatedPoseBack(
-        m_odometry.getEstimatedPosition());
-    if (visionOptional.isPresent()) {
-      EstimatedRobotPose visionPose = visionOptional.get(); 
-      m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
-    }
+    // Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(
+    //     m_odometry.getEstimatedPosition());
+    // if (visionOptional.isPresent()) {
+    //   EstimatedRobotPose visionPose = visionOptional.get(); 
+    //   m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
+    // }
+    // visionOptional = m_photon.getEstimatedPoseBack(
+    //     m_odometry.getEstimatedPosition());
+    // if (visionOptional.isPresent()) {
+    //   EstimatedRobotPose visionPose = visionOptional.get(); 
+    //   m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
+    // }
 
     
   }
