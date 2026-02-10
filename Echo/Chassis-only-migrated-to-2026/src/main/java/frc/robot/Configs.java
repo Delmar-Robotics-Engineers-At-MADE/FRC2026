@@ -93,6 +93,9 @@ public final class Configs {
     public static final SparkMaxConfig flywheelFollowerConfig = new SparkMaxConfig();
     public static final SparkMaxConfig feederConfig = new SparkMaxConfig();
 
+    public static final SparkMaxConfig turretYawConfig = new SparkMaxConfig();
+    public static final SparkMaxConfig turretPitchConfig = new SparkMaxConfig();
+
     static {
       // Configure basic setting of the flywheel motors
       flywheelConfig
@@ -123,8 +126,8 @@ public final class Configs {
       // the reciprocol.
       flywheelConfig.closedLoop
         .feedForward
-          .kV(0.0020215101); // V/rpm; from ReCalc
-          //.kA(0.0018619172); // V/(rpm/s); from ReCalc
+          .kV(0.0020215101); // V/rpm; from ReCalc (0.35 V*s/m converted to V/rpm)
+          //.kA(0.0018619172); // V/(rpm/s); from ReCalc (0.32 V*s^2/m converted to V/(rpm/s))
 
       // Configure the follower flywheel motor to follow the main flywheel motor
       flywheelFollowerConfig.apply(flywheelConfig)
@@ -133,9 +136,44 @@ public final class Configs {
       // Configure basic setting of the feeder motor
       feederConfig
         .inverted(true)
-        .idleMode(IdleMode.kCoast)
+        .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .smartCurrentLimit(30);
+
+      turretYawConfig
+        .inverted(false)
+        .idleMode(IdleMode.kBrake)
+        .openLoopRampRate(1.0)
+        . closedLoopRampRate(1.0)
+        .smartCurrentLimit(30);
+
+       /*
+       * Configure the closed loop controller. We want to make sure we set the
+       * feedback sensor as the primary encoder.
+       */
+      turretYawConfig
+        .closedLoop
+          .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+          // Set PID values for velocity control
+          .p(0)
+          .outputRange(-1, 1);
+
+      turretYawConfig.closedLoop
+        .maxMotion
+          // Set MAXMotion parameters for MAXMotion Position control
+          .cruiseVelocity(5000) // rpm
+          .maxAcceleration(3000) // rpm/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kPositionTolerance); // rotations
+          // Set MAXMotion parameters for MAXMotion Velocity control
+          // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
+          .maxAcceleration(3000, ClosedLoopSlot.kSlot1) // rpm/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kVelocityTolerance, ClosedLoopSlot.kSlot1); // rotations
+
+      // Motor kV is 1/motor free speed rpm. Feedforward config expects this value as a factor of V/rpm so multiply by
+      // the nominal voltage
+      turretYawConfig.closedLoop
+        .feedForward
+          .kV(nominalVoltage / NeoMotorConstants.kFreeSpeedRpm); // rpm
     }
   }
 }

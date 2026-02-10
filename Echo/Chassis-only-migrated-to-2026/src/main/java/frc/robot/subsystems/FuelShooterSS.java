@@ -28,9 +28,15 @@ import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
 public class FuelShooterSS extends SubsystemBase{
 
+  // Flywheel components
   private SparkMax m_motorPort, m_motorStar;
-  private SparkClosedLoopController closedLoopController;
+  private SparkClosedLoopController m_flywheelClosedLoopController;
   private RelativeEncoder m_flywheelEncoder;
+
+  // Turret components
+  private SparkMax m_turretYawMotor, m_turretPitchMotor;
+  private SparkClosedLoopController m_turretYawClosedLoopController, m_turretPitchClosedLoopController;
+  private RelativeEncoder m_turretYawEncoder, m_turretPitchEncoder;
 
   // ########### SIM ###########
 
@@ -40,7 +46,7 @@ public class FuelShooterSS extends SubsystemBase{
   
   // ###########################
 
-  private final SendableChooser<Double> velocityChooser = new SendableChooser<Double>();
+  private final SendableChooser<Double> flywheelVelocityChooser = new SendableChooser<Double>();
 
   // Member variables for subsystem state management
   private double flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
@@ -49,9 +55,19 @@ public class FuelShooterSS extends SubsystemBase{
 
     m_motorPort = new SparkMax(ShooterSubsystemConstants.kFlywheelMotorCanId, MotorType.kBrushless);
     m_motorStar = new SparkMax(ShooterSubsystemConstants.kFlywheelFollowerMotorCanId, MotorType.kBrushless);
+    m_feederMotor = new SparkMax(ShooterSubsystemConstants.kFeederMotorCanId, MotorType.kBrushless);
 
-    closedLoopController = m_motorPort.getClosedLoopController();
+    flywheelClosedLoopController = m_motorPort.getClosedLoopController();
     m_flywheelEncoder = m_motorPort.getEncoder();
+
+    m_turretYawMotor = new SparkMax(ShooterSubsystemConstants.kTurretYawMotorCanId, MotorType.kBrushless);
+    m_turretPitchMotor = new SparkMax(ShooterSubsystemConstants.kTurretPitchMotorCanId, MotorType.kBrushless);
+
+    turretYawClosedLoopController = m_turretYawMotor.getClosedLoopController();
+    m_turretYawEncoder = m_turretYawMotor.getEncoder();
+    turretPitchClosedLoopController = m_turretPitchMotor.getClosedLoopController();
+    m_turretPitchEncoder = m_turretPitchMotor.getEncoder();
+
 
     /*
      * Apply the appropriate configurations to the SPARKs.
@@ -71,13 +87,24 @@ public class FuelShooterSS extends SubsystemBase{
         Configs.ShooterSubsystem.flywheelFollowerConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
-    // feederMotor.configure(
-    //     Configs.ShooterSubsystem.feederConfig,
-    //     ResetMode.kResetSafeParameters,
-    //     PersistMode.kPersistParameters);
+    m_feederMotor.configure(
+        Configs.ShooterSubsystem.feederConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    m_turretYawMotor.configure(
+        Configs.ShooterSubsystem.turretYawConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    m_turretPitchMotor.configure(
+        Configs.ShooterSubsystem.turretPitchConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
 
     // Zero flywheel encoder on initialization
     m_flywheelEncoder.setPosition(0.0);
+
+    // TODO: Add code to zero turret yaw and pitch at some point early on (not sure when we are allowed to move motors)
 
     // set up sim entities
     m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
@@ -117,7 +144,7 @@ public class FuelShooterSS extends SubsystemBase{
   * setpoint.
   */
   private void setFlywheelVelocity(double velocity) {
-    closedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl);
+    flywheelClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl);
   }
 
   /** Set the feeder motor power in the range of [-1, 1]. */

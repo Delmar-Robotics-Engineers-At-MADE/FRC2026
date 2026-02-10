@@ -14,8 +14,8 @@ import edu.wpi.first.math.util.Units;
 public final class Constants {
 
     public static final class IntakeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 25;    // SPARK Flex CAN ID
-    public static final int kConveyorMotorCanId = 30;  // SPARK Flex CAN ID
+    public static final int kIntakeMotorCanId = 25;    // SPARK MAX CAN ID
+    public static final int kConveyorMotorCanId = 30;  // SPARK MAX CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
@@ -29,9 +29,12 @@ public final class Constants {
   }
 
   public static final class ShooterSubsystemConstants {
-    public static final int kFeederMotorCanId = 17;    // SPARK Flex CAN ID
-    public static final int kFlywheelMotorCanId = 7;  // SPARK Flex CAN ID (Port)
-    public static final int kFlywheelFollowerMotorCanId = 16;  // SPARK Flex CAN ID (Star)
+    public static final int kFeederMotorCanId = 17;    // SPARK MAX CAN ID
+    public static final int kFlywheelMotorCanId = 7;  // SPARK MAX CAN ID (Port)
+    public static final int kFlywheelFollowerMotorCanId = 16;  // SPARK MAX CAN ID (Star)
+
+    public static final int kTurretYawMotorCanId = 29;
+    public static final int kTurretPitchMotorCanId = 31;
 
     public static final class FeederSetpoints {
       public static final double kFeed = 0.6;
@@ -40,6 +43,11 @@ public final class Constants {
     public static final class FlywheelSetpoints {
       public static final double kShootRpm = 4500;
       public static final double kVelocityTolerance = 10; // rpm
+    }
+
+    public static final class TurretSetpoints {
+      public static final double kPitchPositionTolerance = 0.1; // rotations
+      public static final double kYawPositionTolerance = 0.01; // rotations
     }
   }
 
