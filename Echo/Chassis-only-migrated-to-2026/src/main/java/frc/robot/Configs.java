@@ -74,7 +74,7 @@ public final class Configs {
     static {
     // Configure basic settings of the intake motor
     intakeConfig
-      .inverted(true)
+      .inverted(false)
       .idleMode(IdleMode.kCoast)
       .openLoopRampRate(1.0)
       .smartCurrentLimit(40);
@@ -99,7 +99,7 @@ public final class Configs {
         .idleMode(IdleMode.kCoast)
         .closedLoopRampRate(1.0)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(60);
+        .smartCurrentLimit(40);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
@@ -109,14 +109,14 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0.0001) // from ReCalc
+          .p(0)
           .outputRange(-1, 1);
 
       flywheelConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
-          .maxAcceleration(2500) // rpm/s
+          .maxAcceleration(3000) // rpm/s
           .allowedProfileError(ShooterSubsystemConstants.FlywheelSetpoints.kVelocityTolerance); // rpm
 
       // Constants.NeoMotorConstants.kVortexKv is in rpm/V. feedforward.kV is in V/rpm sort we take
@@ -135,7 +135,7 @@ public final class Configs {
         .inverted(true)
         .idleMode(IdleMode.kCoast)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(60);
+        .smartCurrentLimit(30);
     }
   }
 }
