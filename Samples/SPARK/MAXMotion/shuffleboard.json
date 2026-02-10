@@ -1,0 +1,135 @@
+{
+  "tabPane": [
+    {
+      "title": "SmartDashboard",
+      "autoPopulate": true,
+      "autoPopulatePrefix": "SmartDashboard/",
+      "widgetPane": {
+        "gridSize": 128.0,
+        "showGrid": true,
+        "hgap": 16.0,
+        "vgap": 16.0,
+        "titleType": 0,
+        "tiles": {
+          "0,0": {
+            "size": [
+              3,
+              1
+            ],
+            "content": {
+              "_type": "Number Slider",
+              "_source0": "network_table:///SmartDashboard/Target Position",
+              "_title": "Target Position",
+              "_glyph": 148,
+              "_showGlyph": false,
+              "Slider Settings/Min": 0.0,
+              "Slider Settings/Max": 100.0,
+              "Slider Settings/Block increment": 0.0625,
+              "Visuals/Display value": true,
+              "Visuals/Orientation": "HORIZONTAL"
+            }
+          },
+          "4,0": {
+            "size": [
+              3,
+              1
+            ],
+            "content": {
+              "_type": "Number Slider",
+              "_source0": "network_table:///SmartDashboard/Target Velocity",
+              "_title": "Target Velocity",
+              "_glyph": 148,
+              "_showGlyph": false,
+              "Slider Settings/Min": -6000.0,
+              "Slider Settings/Max": 6000.0,
+              "Slider Settings/Block increment": 0.0625,
+              "Visuals/Display value": true,
+              "Visuals/Orientation": "HORIZONTAL"
+            }
+          },
+          "3,0": {
+            "size": [
+              1,
+              1
+            ],
+            "content": {
+              "_type": "Toggle Switch",
+              "_source0": "network_table:///SmartDashboard/Control Mode",
+              "_title": "Control Mode",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "0,1": {
+            "size": [
+              3,
+              1
+            ],
+            "content": {
+              "_type": "Number Slider",
+              "_source0": "network_table:///SmartDashboard/Actual Position",
+              "_title": "Actual Position",
+              "_glyph": 148,
+              "_showGlyph": false,
+              "Slider Settings/Min": 0.0,
+              "Slider Settings/Max": 100.0,
+              "Slider Settings/Block increment": 0.0625,
+              "Visuals/Display value": true,
+              "Visuals/Orientation": "HORIZONTAL"
+            }
+          },
+          "4,1": {
+            "size": [
+              3,
+              1
+            ],
+            "content": {
+              "_type": "Number Slider",
+              "_source0": "network_table:///SmartDashboard/Actual Velocity",
+              "_title": "Actual Velocity",
+              "_glyph": 148,
+              "_showGlyph": false,
+              "Slider Settings/Min": -6000.0,
+              "Slider Settings/Max": 6000.0,
+              "Slider Settings/Block increment": 0.0625,
+              "Visuals/Display value": true,
+              "Visuals/Orientation": "HORIZONTAL"
+            }
+          },
+          "3,1": {
+            "size": [
+              1,
+              1
+            ],
+            "content": {
+              "_type": "Toggle Button",
+              "_source0": "network_table:///SmartDashboard/Reset Encoder",
+              "_title": "Reset Encoder",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "LiveWindow",
+      "autoPopulate": true,
+      "autoPopulatePrefix": "LiveWindow/",
+      "widgetPane": {
+        "gridSize": 128.0,
+        "showGrid": true,
+        "hgap": 16.0,
+        "vgap": 16.0,
+        "titleType": 0,
+        "tiles": {}
+      }
+    }
+  ],
+  "windowGeometry": {
+    "x": -8.0,
+    "y": -8.0,
+    "width": 1936.0,
+    "height": 1048.0
+  }
+}
