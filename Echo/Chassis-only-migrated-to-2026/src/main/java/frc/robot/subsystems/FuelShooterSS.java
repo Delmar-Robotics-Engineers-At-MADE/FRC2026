@@ -162,7 +162,10 @@ public class FuelShooterSS extends SubsystemBase{
    * @param dutyCycle A value from [-1, 1]
    */
   private void moveTurretYaw(double dutyCycle){
-    m_turretYawMotor.set(dutyCycle);
+
+    // Clamp the applied duty cycle to 60% for safety in testing
+    double actualAppliedDutyCycle = Math.max(-0.6, Math.min(0.6, dutyCycle));
+    m_turretYawMotor.set(actualAppliedDutyCycle);
   }
 
     /**
@@ -170,7 +173,10 @@ public class FuelShooterSS extends SubsystemBase{
    * @param dutyCycle A value from [-1, 1]
    */
   private void moveTurretPitch(double dutyCycle) {
-    m_turretPitchMotor.set(dutyCycle);
+
+    // Clamp the applied duty cycle to 60% for safety in testing
+    double actualAppliedDutyCycle = Math.max(-0.6, Math.min(0.6, dutyCycle));
+    m_turretPitchMotor.set(actualAppliedDutyCycle);
   }
 
     /**
