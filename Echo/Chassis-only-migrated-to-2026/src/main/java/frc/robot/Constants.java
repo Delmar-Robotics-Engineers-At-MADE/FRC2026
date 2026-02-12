@@ -46,8 +46,11 @@ public final class Constants {
     }
 
     public static final class TurretSetpoints {
-      public static final double kPitchPositionTolerance = 0.1; // rotations
       public static final double kYawPositionTolerance = 0.01; // rotations
+      public static final double kPitchPositionTolerance = 0.1; // rotations
+      
+      public static final double kYawVelocityTolerance = 1; // rotations
+      public static final double kPitchVelocityTolerance = 1; // rotations
     }
   }
 

@@ -1,6 +1,7 @@
 package frc.robot;
 
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -163,17 +164,17 @@ public final class Configs {
           // Set MAXMotion parameters for MAXMotion Position control
           .cruiseVelocity(5000) // rpm
           .maxAcceleration(3000) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kPositionTolerance); // rotations
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawPositionTolerance) // rotations
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(3000, ClosedLoopSlot.kSlot1) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kVelocityTolerance, ClosedLoopSlot.kSlot1); // rotations
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawVelocityTolerance, ClosedLoopSlot.kSlot1); // rotations
 
       // Motor kV is 1/motor free speed rpm. Feedforward config expects this value as a factor of V/rpm so multiply by
       // the nominal voltage
       turretYawConfig.closedLoop
         .feedForward
-          .kV(nominalVoltage / NeoMotorConstants.kFreeSpeedRpm); // rpm
+          .kV(nominalVoltage / Constants.NeoMotorConstants.kFreeSpeedRpm); // rpm
     }
   }
 }
