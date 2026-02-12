@@ -5,6 +5,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants;
 import frc.robot.Constants.ShooterSubsystemConstants;
+import frc.robot.Constants.ShooterSubsystemConstants.FeederSetpoints;
 import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
 public class FuelShooterSS extends SubsystemBase{
@@ -152,15 +154,23 @@ public class FuelShooterSS extends SubsystemBase{
 
   /** Set the feeder motor power in the range of [-1, 1]. */
   private void setFeederPower(double power) {
-<<<<<<< Updated upstream
     m_feederMotor.set(power);
-=======
-    feederMotor.set(power);
   }
 
-  private void moveTurretYaw(double velocity) {
-    m_turretYawClosedLoopController.setSetpoint(velocityvelocity);
->>>>>>> Stashed changes
+  /**
+   * Used for testing and backup ability for manual control of the turret's rotation
+   * @param dutyCycle A value from [-1, 1]
+   */
+  private void moveTurretYaw(double dutyCycle){
+    m_turretYawMotor.set(dutyCycle);
+  }
+
+    /**
+   * Used for testing and backup ability for manual control of the turret's hood position
+   * @param dutyCycle A value from [-1, 1]
+   */
+  private void moveTurretPitch(double dutyCycle) {
+    m_turretPitchMotor.set(dutyCycle);
   }
 
     /**
@@ -185,20 +195,16 @@ public class FuelShooterSS extends SubsystemBase{
   public Command runFeederCommand() {
     return this.startEnd(
         () -> {
-<<<<<<< Updated upstream
           this.setFeederPower(Constants.ShooterSubsystemConstants.FeederSetpoints.kFeed);
-=======
-          this.setFeederPower(FeederSetpoints.kFeed);
->>>>>>> Stashed changes
         }, () -> {
           this.setFeederPower(0.0);
         }).withName("Feeding");
   }
 
   /**
-   * Meta-command to operate the shooter. The Flywheel starts spinning up and when it reaches
-   * the desired speed it starts the Feeder.
-   */
+  * Meta-command to operate the shooter. The Flywheel starts spinning up and when it reaches
+  * the desired speed it starts the Feeder.
+  */
   public Command runShooterCommand() {
     return this.startEnd(
       () -> this.setFlywheelVelocity(m_flywheelTargetVelocity),
@@ -206,18 +212,39 @@ public class FuelShooterSS extends SubsystemBase{
     ).until(isFlywheelSpinning).andThen(
       this.startEnd(
         () -> {
-<<<<<<< Updated upstream
           this.setFlywheelVelocity(m_flywheelTargetVelocity);
-          //this.setFeederPower(FeederSetpoints.kFeed);
-=======
-          this.setFlywheelVelocity(flywheelTargetVelocity);
           this.setFeederPower(FeederSetpoints.kFeed);
->>>>>>> Stashed changes
         }, () -> {
           m_motorPort.stopMotor();
-          feederMotor.stopMotor();
+          m_feederMotor.stopMotor();
         })
     ).withName("Shooting");
+  }
+
+  /**
+  * Command to manually control the turret's rotation. While being commanded, the turret will move with the
+  * applied dury cycle. Once the command ends, the motors will stop.
+  */
+  public Command moveTurretRotationManual(double dutyCycle) {
+    return this.startEnd(
+        () -> {
+          this.moveTurretYaw(dutyCycle);
+        }, () -> {
+          this.m_turretYawMotor.stopMotor();
+        }).withName("Turning turret");
+  }
+
+  /**
+  * Command to manually control the turret's hood. While being commanded, the turret hood will move with the
+  * applied dury cycle. Once the command ends, the motors will stop.
+  */
+  public Command moveTurretHoodManual(double dutyCycle) {
+    return this.startEnd(
+        () -> {
+          this.moveTurretPitch(dutyCycle);
+        }, () -> {
+          this.m_turretPitchMotor.stopMotor();
+        }).withName("Moving turret hood");
   }
 
   public double getVelocity () {return m_flywheelEncoder.getVelocity();}
