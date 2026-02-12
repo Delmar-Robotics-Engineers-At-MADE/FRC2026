@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Blinkin;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.DriveSubsystem.HornSelection;
 import frc.robot.subsystems.FuelShooterSS;
 import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -33,12 +32,12 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
  */
 public class RobotContainer {
 
-  static final double TriggerThreshold = 0.5;
+  static final double TriggerThreshold = 0.25;
   static final double PovSpeed = 0.1 * DriveSubsystem.DriveSpeedDivider;  // speed divider slows it down, but we really want this speed not slowed down
 
   // The robot's subsystems
-  private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
+  //private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
   private final FuelShooterSS m_fuelShoot = new FuelShooterSS();
   private final IndexerSubsystem m_indexer = new IndexerSubsystem();
@@ -91,34 +90,28 @@ public class RobotContainer {
 
   }
 
-  private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
-    // System.out.println("New command to tag " + id);
-    return m_robotDrive.setTrajectoryToAprilTargetCmd(id, hornSelect, m_photon)
-    .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
-    .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
-  }
-  private Command rotateDownfieldCommand () {
-    return m_robotDrive.setTrajectoryToRotateDownfieldCmd(m_photon)
-    .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
-    .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
+  public void simulationPeriodic() {
+    // Update the simulation model.
+    m_fuelShoot.simulationPeriodic();
   }
 
-  int[] redReefPositionToAprilTag = {0, 11, 10, 9, 6, 7, 8};
-  private Command driveToReefPositionCmd (int pos, HornSelection hornSelect) {
-        return driveToAprilTagCommand (redReefPositionToAprilTag[pos], hornSelect);
-  }
+  // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
+  //   // System.out.println("New command to tag " + id);
+  //   return m_robotDrive.setTrajectoryToAprilTargetCmd(id, hornSelect, m_photon)
+  //   .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
+  //   .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
+  // }
 
-  private Command driveToProcessorCmd () {
-    return driveToAprilTagCommand (3, HornSelection.Between);
-  }
-  private Command driveToCoralStationCmd (HornSelection hornSelect) {
-    if (hornSelect == HornSelection.L){
-        return driveToAprilTagCommand (1, HornSelection.Between);
-    } else {
-        return driveToAprilTagCommand (2, HornSelection.Between);        
-    }
-  }
+  // private Command rotateDownfieldCommand () {
+  //   return m_robotDrive.setTrajectoryToRotateDownfieldCmd(m_photon)
+  //   .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
+  //   .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
+  // }
 
+  // int[] redReefPositionToAprilTag = {0, 11, 10, 9, 6, 7, 8};
+  // private Command driveToReefPositionCmd (int pos, HornSelection hornSelect) {
+  //       return driveToAprilTagCommand (redReefPositionToAprilTag[pos], hornSelect);
+  // }
 
   private void buildAutoChooser() {
 
@@ -141,12 +134,12 @@ public class RobotContainer {
         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
 
     // reef positions
-    m_buttonPadCmd.button(3).and(m_photon::getPoseEstimateAcquired)
-        .whileTrue(driveToReefPositionCmd(4, HornSelection.Between));
+    // m_buttonPadCmd.button(3).and(m_photon::getPoseEstimateAcquired)
+    //     .whileTrue(driveToReefPositionCmd(4, HornSelection.Between));
 
     // Coral stations and Processor
-    m_buttonPadCmd.button(1).and(m_photon::getPoseEstimateAcquired) // processor
-        .whileTrue(driveToCoralStationCmd(HornSelection.L));
+    // m_buttonPadCmd.button(1).and(m_photon::getPoseEstimateAcquired) // processor
+    //     .whileTrue(driveToCoralStationCmd(HornSelection.L));
 
     // drive robot relative in cardinal directions
     m_buttonPadCmd.povUp().whileTrue(new RunCommand(
@@ -161,21 +154,29 @@ public class RobotContainer {
     // ******************************** OPERATOR *********************************
   
     // reset pose to vision
-    m_operCmdController.back().or(m_operCmdController.start())
-        .and(m_operCmdController.y())
-        .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
+    // m_operCmdController.back().or(m_operCmdController.start())
+    //     .and(m_operCmdController.y())
+    //     .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
 
-    // Difference between InstantCommand and RunCommand is the isfinished function.  
-    //    for InstantCommand, isFinished is true, so command can only run once
-    //    for RunCommand, isFinished is false, so command will run until it is interrupted
-    //    RunCommand is good for default command; will run only once, instead of over and over again
-    //    InstantCommand is good for onTrue and autonomous sequences
-    //    RunCommand is good for whileTrue; will run once, but will get interrupted when whileTrue ends
-    m_operCmdController.leftTrigger(TriggerThreshold) // shoot
-        .whileTrue(new RunCommand (() -> m_fuelShoot.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_fuelShoot)
-        .alongWith(new RunCommand (() -> m_indexer.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_indexer))
-        .alongWith(new RunCommand (() -> m_intake.moveVelocityControl(true, m_operCmdController.getLeftTriggerAxis()), m_intake)));
+    // Right Trigger -> Run fuel intake
+    m_operCmdController
+      .rightTrigger(TriggerThreshold)
+      .whileTrue(m_intake.runIntakeCommand());
 
+    // Left Trigger -> Spin shooterflywheel
+    m_operCmdController
+      .leftTrigger(TriggerThreshold)
+      .whileTrue(m_fuelShoot.runFlywheelCommand());
+
+    // Left stick movement along the X axis control the turret rotational movement
+    m_operCmdController
+      .leftStick()
+      .whileTrue(m_fuelShoot.moveTurretRotationManual(this.m_operCmdController.getLeftX()));
+
+    // Left stick movement along the y axis contrtols the turret hood movement
+    m_operCmdController
+      .leftStick()
+      .whileTrue(m_fuelShoot.moveTurretHoodManual(this.m_operCmdController.getLeftY()));
   }
 
   public Command getAutonomousCommand() {
