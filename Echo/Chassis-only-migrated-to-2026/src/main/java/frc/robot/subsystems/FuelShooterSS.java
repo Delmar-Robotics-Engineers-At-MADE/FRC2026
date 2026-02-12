@@ -152,7 +152,15 @@ public class FuelShooterSS extends SubsystemBase{
 
   /** Set the feeder motor power in the range of [-1, 1]. */
   private void setFeederPower(double power) {
+<<<<<<< Updated upstream
     m_feederMotor.set(power);
+=======
+    feederMotor.set(power);
+  }
+
+  private void moveTurretYaw(double velocity) {
+    m_turretYawClosedLoopController.setSetpoint(velocityvelocity);
+>>>>>>> Stashed changes
   }
 
     /**
@@ -177,7 +185,11 @@ public class FuelShooterSS extends SubsystemBase{
   public Command runFeederCommand() {
     return this.startEnd(
         () -> {
+<<<<<<< Updated upstream
           this.setFeederPower(Constants.ShooterSubsystemConstants.FeederSetpoints.kFeed);
+=======
+          this.setFeederPower(FeederSetpoints.kFeed);
+>>>>>>> Stashed changes
         }, () -> {
           this.setFeederPower(0.0);
         }).withName("Feeding");
@@ -194,11 +206,16 @@ public class FuelShooterSS extends SubsystemBase{
     ).until(isFlywheelSpinning).andThen(
       this.startEnd(
         () -> {
+<<<<<<< Updated upstream
           this.setFlywheelVelocity(m_flywheelTargetVelocity);
           //this.setFeederPower(FeederSetpoints.kFeed);
+=======
+          this.setFlywheelVelocity(flywheelTargetVelocity);
+          this.setFeederPower(FeederSetpoints.kFeed);
+>>>>>>> Stashed changes
         }, () -> {
           m_motorPort.stopMotor();
-          //feederMotor.stopMotor();
+          feederMotor.stopMotor();
         })
     ).withName("Shooting");
   }
