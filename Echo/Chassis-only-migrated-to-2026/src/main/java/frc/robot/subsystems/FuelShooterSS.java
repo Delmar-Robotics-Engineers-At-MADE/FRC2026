@@ -2,6 +2,9 @@ package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
+
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
@@ -231,10 +234,10 @@ public class FuelShooterSS extends SubsystemBase{
   * Command to manually control the turret's rotation. While being commanded, the turret will move with the
   * applied dury cycle. Once the command ends, the motors will stop.
   */
-  public Command moveTurretRotationManual(double dutyCycle) {
+  public Command moveTurretRotationManual(DoubleSupplier dutyCycle) {
     return this.startEnd(
         () -> {
-          this.moveTurretYaw(dutyCycle);
+          this.moveTurretYaw(dutyCycle.getAsDouble());
         }, () -> {
           this.m_turretYawMotor.stopMotor();
         }).withName("Turning turret");
@@ -244,10 +247,10 @@ public class FuelShooterSS extends SubsystemBase{
   * Command to manually control the turret's hood. While being commanded, the turret hood will move with the
   * applied dury cycle. Once the command ends, the motors will stop.
   */
-  public Command moveTurretHoodManual(double dutyCycle) {
+  public Command moveTurretHoodManual(DoubleSupplier dutyCycle) {
     return this.startEnd(
         () -> {
-          this.moveTurretPitch(dutyCycle);
+          this.moveTurretPitch(dutyCycle.getAsDouble());
         }, () -> {
           this.m_turretPitchMotor.stopMotor();
         }).withName("Moving turret hood");

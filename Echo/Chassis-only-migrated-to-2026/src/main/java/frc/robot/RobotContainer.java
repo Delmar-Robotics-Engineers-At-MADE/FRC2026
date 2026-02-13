@@ -161,22 +161,22 @@ public class RobotContainer {
     // Right Trigger -> Run fuel intake
     m_operCmdController
       .rightTrigger(TriggerThreshold)
-      .whileTrue(m_intake.runIntakeCommand());
+        .whileTrue(m_intake.runIntakeCommand());
 
     // Left Trigger -> Spin shooterflywheel
     m_operCmdController
       .leftTrigger(TriggerThreshold)
-      .whileTrue(m_fuelShoot.runFlywheelCommand());
+        .whileTrue(m_fuelShoot.runFlywheelCommand());
 
     // Left stick movement along the X axis control the turret rotational movement
     m_operCmdController
-      .leftStick()
-      .whileTrue(m_fuelShoot.moveTurretRotationManual(this.m_operCmdController.getLeftX()));
+      .axisMagnitudeGreaterThan(0, TriggerThreshold)
+        .whileTrue(m_fuelShoot.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX()));
 
     // Left stick movement along the y axis contrtols the turret hood movement
     m_operCmdController
-      .leftStick()
-      .whileTrue(m_fuelShoot.moveTurretHoodManual(this.m_operCmdController.getLeftY()));
+      .axisMagnitudeGreaterThan(1, TriggerThreshold)
+        .whileTrue(m_fuelShoot.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY()));
   }
 
   public Command getAutonomousCommand() {
