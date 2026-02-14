@@ -15,7 +15,7 @@ public final class Constants {
 
     public static final class IntakeSubsystemConstants {
     public static final int kIntakeMotorCanId = 25;    // SPARK MAX CAN ID
-    public static final int kConveyorMotorCanId = 30;  // SPARK MAX CAN ID
+    public static final int kConveyorMotorCanId = 20;  // SPARK MAX CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
@@ -33,24 +33,37 @@ public final class Constants {
     public static final int kFlywheelMotorCanId = 7;  // SPARK MAX CAN ID (Port)
     public static final int kFlywheelFollowerMotorCanId = 16;  // SPARK MAX CAN ID (Star)
 
-    public static final int kTurretYawMotorCanId = 29;
-    public static final int kTurretPitchMotorCanId = 31;
+    public static final int kTurretYawMotorCanId = 6;
+    public static final int kTurretPitchMotorCanId = 21;
 
     public static final class FeederSetpoints {
-      public static final double kFeed = 0.6;
+      public static final double kFeed = 0.6; // duty cycle
     }
 
     public static final class FlywheelSetpoints {
-      public static final double kShootRpm = 4500;
-      public static final double kVelocityTolerance = 10; // rpm
+      public static final double kShootRpm = 4500.0;
+      public static final double kVelocityTolerance = 10.0; // rpm
     }
 
+    public static final class TurretUnits {
+      private static final double kYawMotorOutputGearRatio = 60.0; //TODO: using placeholder for now; update this later
+      public static final double kYawPositionConversionFactor = 360.0 / kYawMotorOutputGearRatio;          // degrees
+      public static final double kYawVelocityConversionFactor = (360.0 / kYawMotorOutputGearRatio) * 60.0; // degrees per second
+
+      private static final double kPitchMotorOutputGearRatio = 60.0; //TODO: using placeholder for now; update this later
+      public static final double kPitchPositionConversionFactor = 360.0 / kPitchMotorOutputGearRatio;          // degrees
+      public static final double kPitchVelocityConversionFactor = (360.0 / kPitchMotorOutputGearRatio) * 60.0; // degrees per second
+    }
+    
     public static final class TurretSetpoints {
-      public static final double kYawPositionTolerance = 0.01; // rotations
-      public static final double kPitchPositionTolerance = 0.1; // rotations
+      public static final double kYawPositionTolerance = 0.25;   // degrees
+      public static final double kPitchPositionTolerance = 0.25; // degrees
       
-      public static final double kYawVelocityTolerance = 1; // rotations
-      public static final double kPitchVelocityTolerance = 1; // rotations
+      public static final double kYawVelocityTolerance = 1;   // degrees per second
+      public static final double kPitchVelocityTolerance = 1; // degrees per second
+
+      public static final double kYawMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle off of the robot's north
+      public static final double kPitchMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle of the hood's launch angle when all the way down
     }
   }
 

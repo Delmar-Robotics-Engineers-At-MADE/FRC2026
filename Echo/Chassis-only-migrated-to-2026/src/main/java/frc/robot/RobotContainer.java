@@ -14,7 +14,6 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Blinkin;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FuelShooterSS;
-import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -40,7 +39,6 @@ public class RobotContainer {
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
   private final FuelShooterSS m_fuelShoot = new FuelShooterSS();
-  private final IndexerSubsystem m_indexer = new IndexerSubsystem();
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   // TODO: Add fun LEDs back in if time and weight permit

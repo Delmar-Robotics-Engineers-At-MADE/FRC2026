@@ -148,6 +148,11 @@ public final class Configs {
         .closedLoopRampRate(1.0)
         .smartCurrentLimit(30);
 
+      turretYawConfig
+        .encoder
+          .positionConversionFactor(Constants.ShooterSubsystemConstants.TurretUnits.kYawPositionConversionFactor)
+          .velocityConversionFactor(Constants.ShooterSubsystemConstants.TurretUnits.kYawVelocityConversionFactor);
+
        /*
        * Configure the closed loop controller. We want to make sure we set the
        * feedback sensor as the primary encoder.
@@ -182,6 +187,11 @@ public final class Configs {
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
         .smartCurrentLimit(30);
+
+      turretPitchConfig
+        .encoder
+          .positionConversionFactor(Constants.ShooterSubsystemConstants.TurretUnits.kPitchPositionConversionFactor)
+          .velocityConversionFactor(Constants.ShooterSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
