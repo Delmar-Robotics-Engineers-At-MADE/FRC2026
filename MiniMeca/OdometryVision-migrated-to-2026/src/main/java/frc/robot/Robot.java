@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Robot extends TimedRobot {
-  private final XboxController m_controller = new XboxController(1);
+  private final XboxController m_controller = new XboxController(0);
   private final Drivetrain m_mecanum = new Drivetrain();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
@@ -27,6 +27,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     driveWithJoystick(true);
+    m_mecanum.updateOdometry();
   }
 
   private void driveWithJoystick(boolean fieldRelative) {

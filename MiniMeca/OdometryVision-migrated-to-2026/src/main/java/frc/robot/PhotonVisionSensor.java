@@ -29,13 +29,13 @@ import edu.wpi.first.math.util.Units;
 public final class PhotonVisionSensor {
 
   // The name of the network table here MUST match the name specified for the camera in the UI
-  static PhotonCamera camera = new PhotonCamera("photoncamera");
+  static PhotonCamera camera = new PhotonCamera("Microsoft_LifeCam_HD-3000");
 
   /// @todo Fill this in with the correct measurements later
   //Cam mounted facing forward, half a meter forward of center, half a meter up from center.
   static Transform3d robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0,0,0));
 
-  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);    
+  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);    
   static PhotonPoseEstimator photonPoseEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCam);
 
   private PhotonVisionSensor() {

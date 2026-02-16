@@ -220,13 +220,13 @@ public class Drivetrain {
     if (visionOptional.isPresent()) {
       EstimatedRobotPose visionPose = visionOptional.get(); 
 
-      System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + "Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
+      System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
 
       m_poseEstimator.addVisionMeasurement(
         visionPose.estimatedPose.toPose2d(),
         visionPose.timestampSeconds);
-    } else {
-      System.out.println("No odometry update available");
-    }
+    } // else {
+    //   System.out.println("No odometry update available");
+    // }
   }
 }
