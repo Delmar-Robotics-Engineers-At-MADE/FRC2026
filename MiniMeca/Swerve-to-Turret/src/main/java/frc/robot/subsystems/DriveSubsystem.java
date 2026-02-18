@@ -7,6 +7,9 @@ package frc.robot.subsystems;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -16,8 +19,15 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import java.util.Optional;
+
+import org.photonvision.EstimatedRobotPose;
 
 import com.kauailabs.navx.frc.AHRS;
 
@@ -50,18 +60,57 @@ public class DriveSubsystem extends SubsystemBase {
   PhotonVisionSensor m_photon = null;
 
   // Odometry class for tracking robot pose
-  SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
+  SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
       DriveConstants.kDriveKinematics,
       Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
       new SwerveModulePosition[] {
           m_frontLeft.getPosition(),
           m_frontLeft.getPosition(),
           m_frontLeft.getPosition(),
-          m_frontLeft.getPosition()
-      });
+          m_frontLeft.getPosition()},
+          Pose2d.kZero,
+        VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
+        VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(30))
+      );
+
+  ShuffleboardTab m_driveBaseTab;
+
+  private void setupDashboard() {
+    m_driveBaseTab = Shuffleboard.getTab("Drivebase");
+    m_driveBaseTab.add("Gyro", m_gyro);
+    m_driveBaseTab.addDouble("Pose X", () -> getPoseX());
+    m_driveBaseTab.addDouble("Pose Y", () -> getPoseY());
+    m_driveBaseTab.addString("Rotation", () -> getPoseRot());
+  }
+
+  double getPoseX () {return m_odometry.getEstimatedPosition().getX();}
+  double getPoseY () {return m_odometry.getEstimatedPosition().getY();}
+  String getPoseRot () {return m_odometry.getEstimatedPosition().getRotation().toString();}
+
+  Pose2d getEstimatedPosition() {return m_odometry.getEstimatedPosition();}
+
+  SwerveModulePosition[] getCurrentPositions() {
+    return new SwerveModulePosition[] {
+      m_frontLeft.getPosition(),
+      m_frontLeft.getPosition(),
+      m_frontLeft.getPosition(),
+      m_frontLeft.getPosition()
+    };
+  }
+
+  public void debugResetOdometryToVision (PhotonVisionSensor vision) {
+    m_odometry.update(m_gyro.getRotation2d(), getCurrentPositions());
+    EstimatedRobotPose pose = vision.debugGetLatestEstimatedPose(getPose());
+    while (pose.timestampSeconds == 0 || Timer.getTimestamp() - pose.timestampSeconds > 0.5) {
+      // keep trying until we get a fresh pose estimate
+      pose = vision.debugGetLatestEstimatedPose(getPose());
+    }
+    resetOdometry(pose.estimatedPose.toPose2d()); // was resetPose
+  }
 
   /** Creates a new DriveSubsystem. */
-  public DriveSubsystem() {
+  public DriveSubsystem(PhotonVisionSensor photon) {
+    m_photon = photon;
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
   }
@@ -77,6 +126,15 @@ public class DriveSubsystem extends SubsystemBase {
             m_frontLeft.getPosition(),
             m_frontLeft.getPosition()
         });
+
+    // add vision data
+    Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(
+        m_odometry.getEstimatedPosition());
+    if (visionOptional.isPresent()) {
+      EstimatedRobotPose visionPose = visionOptional.get(); 
+      m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
+    }
+
   }
 
   /**
@@ -85,7 +143,7 @@ public class DriveSubsystem extends SubsystemBase {
    * @return The pose.
    */
   public Pose2d getPose() {
-    return m_odometry.getPoseMeters();
+    return m_odometry.getEstimatedPosition();
   }
 
   /**

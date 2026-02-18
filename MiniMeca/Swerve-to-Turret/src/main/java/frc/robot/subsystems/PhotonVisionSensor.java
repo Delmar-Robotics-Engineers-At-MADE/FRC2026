@@ -29,8 +29,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public final class PhotonVisionSensor extends SubsystemBase {
 
   // The name of the network table here MUST match the name specified for the camera in the UI
-  static PhotonCamera m_cameraFront = new PhotonCamera("photoncamera_front");
-  static PhotonCamera m_cameraBack = new PhotonCamera("photoncamera_back");
+  static PhotonCamera m_cameraFront = new PhotonCamera("Microsoft_LifeCam_HD-3000");
+  // static PhotonCamera m_cameraBack = new PhotonCamera("photoncamera_back");
 
   /// @todo Fill this in with the correct measurements later
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
@@ -140,21 +140,22 @@ public final class PhotonVisionSensor extends SubsystemBase {
     return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
   }
 
-  public Optional<EstimatedRobotPose> getEstimatedPoseBack(Pose2d prevEstimatedRobotPose) {
-    return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
-  }
+  // public Optional<EstimatedRobotPose> getEstimatedPoseBack(Pose2d prevEstimatedRobotPose) {
+  //   return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
+  // }
 
   // this is only for troubleshooting
   EstimatedRobotPose debugGetLatestEstimatedPose (Pose2d prevEstimatedRobotPose) {
     Optional<EstimatedRobotPose> poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
     if (poseOption.isPresent()) {
       m_latestEstimatedPose = poseOption.get();
-    } else {
-      poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
-      if (poseOption.isPresent()) {
-        m_latestEstimatedPose = poseOption.get();
-      }
-    }
+    } 
+    // else {
+    //   poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
+    //   if (poseOption.isPresent()) {
+    //     m_latestEstimatedPose = poseOption.get();
+    //   }
+    // }
     return m_latestEstimatedPose;
   }
 
