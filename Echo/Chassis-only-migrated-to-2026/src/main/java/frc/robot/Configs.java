@@ -167,19 +167,19 @@ public final class Configs {
       turretYawConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control
-          .cruiseVelocity(5000) // rpm
-          .maxAcceleration(3000) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawPositionTolerance) // rotations
+          .cruiseVelocity(5000 * ShooterSubsystemConstants.TurretUnits.kYawVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(3000* ShooterSubsystemConstants.TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
-          .maxAcceleration(3000, ClosedLoopSlot.kSlot1) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawVelocityTolerance, ClosedLoopSlot.kSlot1); // rotations
+          .maxAcceleration(3000 * ShooterSubsystemConstants.TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawVelocityTolerance, ClosedLoopSlot.kSlot1); // degrees per sec
 
       // Motor kV is 1/motor free speed rpm. Feedforward config expects this value as a factor of V/rpm so multiply by
       // the nominal voltage
       turretYawConfig.closedLoop
         .feedForward
-          .kV(nominalVoltage / Constants.NeoMotorConstants.kFreeSpeedRpm); // rpm
+          .kV(nominalVoltage / (Constants.NeoMotorConstants.kFreeSpeedRpm * ShooterSubsystemConstants.TurretUnits.kYawVelocityConversionFactor)); // rpm
 
       turretPitchConfig
         .inverted(false)
@@ -207,19 +207,19 @@ public final class Configs {
       turretPitchConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control
-          .cruiseVelocity(5000) // rpm
-          .maxAcceleration(3000) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kYawPositionTolerance) // rotations
+          .cruiseVelocity(5000 * ShooterSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(3000* ShooterSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor) // degrees per sec/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kPitchPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
-          .maxAcceleration(3000, ClosedLoopSlot.kSlot1) // rpm/s
-          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kPitchVelocityTolerance, ClosedLoopSlot.kSlot1); // rotations
+          .maxAcceleration(3000 * ShooterSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s
+          .allowedProfileError(ShooterSubsystemConstants.TurretSetpoints.kPitchVelocityTolerance, ClosedLoopSlot.kSlot1); // degrees per sec
 
       // Motor kV is 1/motor free speed rpm. Feedforward config expects this value as a factor of V/rpm so multiply by
       // the nominal voltage
       turretPitchConfig.closedLoop
         .feedForward
-          .kV(nominalVoltage / Constants.NeoMotorConstants.kFreeSpeedRpm); // rpm
+          .kV(nominalVoltage / (Constants.NeoMotorConstants.kFreeSpeedRpm * ShooterSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor)); // output degrees per sec
     }
   }
 }
