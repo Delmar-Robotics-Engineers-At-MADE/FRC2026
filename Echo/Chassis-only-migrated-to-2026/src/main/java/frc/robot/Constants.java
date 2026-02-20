@@ -14,8 +14,8 @@ import edu.wpi.first.math.util.Units;
 public final class Constants {
 
     public static final class IntakeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 25;    // SPARK MAX CAN ID
-    public static final int kConveyorMotorCanId = 20;  // SPARK MAX CAN ID
+    public static final int kIntakeMotorCanId = 33;    // SPARK MAX CAN ID
+    public static final int kConveyorMotorCanId = 32;  // SPARK MAX CAN ID
 
     public static final class IntakeSetpoints {
       public static final double kIntake = 0.6;
@@ -29,12 +29,12 @@ public final class Constants {
   }
 
   public static final class ShooterSubsystemConstants {
-    public static final int kFeederMotorCanId = 17;    // SPARK MAX CAN ID
-    public static final int kFlywheelMotorCanId = 7;  // SPARK MAX CAN ID (Port)
-    public static final int kFlywheelFollowerMotorCanId = 16;  // SPARK MAX CAN ID (Star)
+    public static final int kFeederMotorCanId = 31;    // SPARK MAX CAN ID
+    public static final int kFlywheelMotorCanId = 22;  // SPARK MAX CAN ID (Port)
+    public static final int kFlywheelFollowerMotorCanId = 21;  // SPARK MAX CAN ID (Star)
 
-    public static final int kTurretYawMotorCanId = 6;
-    public static final int kTurretPitchMotorCanId = 21;
+    public static final int kTurretYawMotorCanId = 24;
+    public static final int kTurretPitchMotorCanId = 23;
 
     public static final class FeederSetpoints {
       public static final double kFeed = 0.6; // duty cycle
