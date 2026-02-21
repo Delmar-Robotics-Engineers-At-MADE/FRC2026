@@ -46,11 +46,11 @@ public final class Constants {
     }
 
     public static final class TurretUnits {
-      private static final double kYawMotorOutputGearRatio = 60.0; //TODO: using placeholder for now; update this later
+      private static final double kYawMotorOutputGearRatio = 62.237; // (119 * 5.23) / 10
       public static final double kYawPositionConversionFactor = 360.0 / kYawMotorOutputGearRatio;          // degrees
       public static final double kYawVelocityConversionFactor = (360.0 / kYawMotorOutputGearRatio) * 60.0; // degrees per second
 
-      private static final double kPitchMotorOutputGearRatio = 60.0; //TODO: using placeholder for now; update this later
+      private static final double kPitchMotorOutputGearRatio = 61.42563636; // (167 * 28 * 2.89) / (10 * 22)
       public static final double kPitchPositionConversionFactor = 360.0 / kPitchMotorOutputGearRatio;          // degrees
       public static final double kPitchVelocityConversionFactor = (360.0 / kPitchMotorOutputGearRatio) * 60.0; // degrees per second
     }
@@ -162,7 +162,12 @@ public final class Constants {
   }
 
   public static final class NeoMotorConstants {
-    public static final double kFreeSpeedRpm = 5676;
+    public static final double kFreeSpeedRpm = 5676.0;
+  }
+
+  public static final class Neo550MotorConstants {
+    public static final double kFreeSpeedRpm = 11000.0;
+    public static final int kMaxAllowedCurrent = 20; // Amps
   }
 
   public static final class LEDConstants {

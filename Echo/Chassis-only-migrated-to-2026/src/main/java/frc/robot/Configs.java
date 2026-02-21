@@ -7,6 +7,7 @@ import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.ModuleConstants;
+import frc.robot.Constants.Neo550MotorConstants;
 import frc.robot.Constants.ShooterSubsystemConstants;
 
 public final class Configs {
@@ -41,7 +42,7 @@ public final class Configs {
 
       turningConfig
         .idleMode(IdleMode.kBrake)
-        .smartCurrentLimit(20);
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
 
       turningConfig
         .absoluteEncoder
@@ -85,7 +86,7 @@ public final class Configs {
       .inverted(true)
       .idleMode(IdleMode.kCoast)
       .openLoopRampRate(1.0)
-      .smartCurrentLimit(40);
+      .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
     }
   }
 
@@ -146,7 +147,7 @@ public final class Configs {
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(30);
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
 
       turretYawConfig
         .encoder
@@ -186,7 +187,7 @@ public final class Configs {
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(30);
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
 
       turretPitchConfig
         .encoder
