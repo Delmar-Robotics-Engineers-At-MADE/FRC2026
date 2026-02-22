@@ -41,7 +41,7 @@ import java.util.List;
 
 import org.photonvision.EstimatedRobotPose;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.studica.frc.AHRS;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -72,7 +72,7 @@ public class DriveSubsystem extends SubsystemBase {
       DriveConstants.kBackRightChassisAngularOffset);
 
   // The gyro sensor
-  private final AHRS m_gyro = new AHRS();
+  private final AHRS m_gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, AHRS.NavXUpdateRate.k50Hz);
 
   // photon vision subsystemhoton
   //PhotonVisionSensor m_photon = null;
