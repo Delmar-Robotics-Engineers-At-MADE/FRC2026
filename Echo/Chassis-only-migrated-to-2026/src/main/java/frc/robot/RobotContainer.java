@@ -11,9 +11,8 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.Constants.OIConstants;
-import frc.robot.subsystems.Blinkin;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.FuelShooterSS;
+import frc.robot.subsystems.FuelShooterSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -38,7 +37,7 @@ public class RobotContainer {
   //private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
-  private final FuelShooterSS m_fuelShoot = new FuelShooterSS();
+  private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   // TODO: Add fun LEDs back in if time and weight permit
@@ -165,6 +164,9 @@ public class RobotContainer {
     m_operCmdController
       .leftTrigger(TriggerThreshold)
         .whileTrue(m_fuelShoot.runFlywheelCommand());
+
+    // A button -> Spin feeder/loader motor into shooter
+    m_operCmdController.a().whileTrue(m_fuelShoot.runFeederCommand());
 
     // Left stick movement along the X axis control the turret rotational movement
     m_operCmdController

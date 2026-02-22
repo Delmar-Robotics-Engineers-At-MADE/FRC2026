@@ -30,7 +30,7 @@ import frc.robot.Constants.ShooterSubsystemConstants;
 import frc.robot.Constants.ShooterSubsystemConstants.FeederSetpoints;
 import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
-public class FuelShooterSS extends SubsystemBase{
+public class FuelShooterSubsystem extends SubsystemBase{
 
   // Flywheel components
   private SparkMax m_motorPort, m_motorStar, m_feederMotor;
@@ -54,7 +54,7 @@ public class FuelShooterSS extends SubsystemBase{
   // Member variables for subsystem state management
   private double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
 
-  public FuelShooterSS() {
+  public FuelShooterSubsystem() {
 
     // Initialize flywheel motors
     m_motorPort = new SparkMax(ShooterSubsystemConstants.kFlywheelMotorCanId, MotorType.kBrushless);
