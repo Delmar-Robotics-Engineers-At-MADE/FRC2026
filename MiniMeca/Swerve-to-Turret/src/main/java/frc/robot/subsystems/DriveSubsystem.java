@@ -76,7 +76,7 @@ public class DriveSubsystem extends SubsystemBase {
   ShuffleboardTab m_driveBaseTab;
 
   private void setupDashboard() {
-    m_driveBaseTab = Shuffleboard.getTab("Drivebase");
+    m_driveBaseTab = Shuffleboard.getTab("Drivebase2");
     m_driveBaseTab.add("Gyro", m_gyro);
     m_driveBaseTab.addDouble("Pose X", () -> getPoseX());
     m_driveBaseTab.addDouble("Pose Y", () -> getPoseY());
@@ -99,13 +99,15 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void debugResetOdometryToVision (PhotonVisionSensor vision) {
+    System.out.println("---> Resetting odometry to vision");
     m_odometry.update(m_gyro.getRotation2d(), getCurrentPositions());
     EstimatedRobotPose pose = vision.debugGetLatestEstimatedPose(getPose());
-    while (pose.timestampSeconds == 0 || Timer.getTimestamp() - pose.timestampSeconds > 0.5) {
-      // keep trying until we get a fresh pose estimate
-      pose = vision.debugGetLatestEstimatedPose(getPose());
-    }
+    // while (pose.timestampSeconds == 0 || Timer.getTimestamp() - pose.timestampSeconds > 0.1) {
+    //   // keep trying until we get a fresh pose estimate
+    //   pose = vision.debugGetLatestEstimatedPose(getPose());
+    // }
     resetOdometry(pose.estimatedPose.toPose2d()); // was resetPose
+    System.out.println("---> Done resetting odometry to vision");
   }
 
   /** Creates a new DriveSubsystem. */
@@ -113,6 +115,8 @@ public class DriveSubsystem extends SubsystemBase {
     m_photon = photon;
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
+
+    setupDashboard();
   }
 
   @Override

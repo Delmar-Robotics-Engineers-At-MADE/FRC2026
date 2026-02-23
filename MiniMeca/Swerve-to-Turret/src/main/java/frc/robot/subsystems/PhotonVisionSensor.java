@@ -36,16 +36,17 @@ public final class PhotonVisionSensor extends SubsystemBase {
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
   static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.15, -.35, 0.2), 
       new Rotation3d(0,0,0));
-  static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.15, .35, 0.2), 
-      new Rotation3d(0,0,Math.PI));
+  // static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.15, .35, 0.2), 
+  //     new Rotation3d(0,0,Math.PI));
 
-  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);    
+  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);    
   static PhotonPoseEstimator m_EstimatorFront = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamFront);
-  static PhotonPoseEstimator m_EstimatorBack = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamBack);
+  // static PhotonPoseEstimator m_EstimatorBack = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamBack);
 
   private EstimatedRobotPose m_latestEstimatedPose = new EstimatedRobotPose(new Pose3d(0,0,0,new Rotation3d(0,0,0)), 0,null, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
   private ShuffleboardTab m_matchTab = Shuffleboard.getTab("Match");
   private boolean m_poseEstimateAcquired = false;
+  private boolean m_debugTakeSnapshot = false;
 
   public PhotonVisionSensor() {
     // constructor
@@ -107,6 +108,8 @@ public final class PhotonVisionSensor extends SubsystemBase {
     // If results are present, look for targets to try and get a pose estimate
     if (!pipelineResults.isEmpty()) {
 
+      photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
+
       // Set an arbitrary maximum number of iterations so that if the results
       // buffer gets large, we don't spend lots of time looking for targets if there are none
       // Leaving this out causes the system to get hung up when in scenarios where april tags are not present
@@ -129,10 +132,21 @@ public final class PhotonVisionSensor extends SubsystemBase {
 
       // If we were able to find a frame with targets, use that frame to estimate a global pose
       if (latestPipelineResult.hasTargets()) {
+        System.out.println("---> Pipeline has targets; calling mutitag pose");
         result = photonPoseEstimator.estimateCoprocMultiTagPose(latestPipelineResult);
-        m_poseEstimateAcquired = true;
+        if (result.isPresent()) {
+          m_poseEstimateAcquired = true;
+          EstimatedRobotPose visionPose = result.get(); 
+          System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
+          if (m_debugTakeSnapshot) {
+            m_latestEstimatedPose = result.get();
+            m_debugTakeSnapshot = false;
+          }
+        } else {
+          System.out.println("---> Multitag pose did NOT return a pose");
+        }
       }
-    }
+    } 
     return result;
   }
 
@@ -144,12 +158,21 @@ public final class PhotonVisionSensor extends SubsystemBase {
   //   return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
   // }
 
-  // this is only for troubleshooting
+  // these are only for troubleshooting
+  void debugPrepareToGetLatestEstimatedPose() {
+    m_debugTakeSnapshot = true;
+  }
   EstimatedRobotPose debugGetLatestEstimatedPose (Pose2d prevEstimatedRobotPose) {
-    Optional<EstimatedRobotPose> poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
-    if (poseOption.isPresent()) {
-      m_latestEstimatedPose = poseOption.get();
-    } 
+    m_debugTakeSnapshot = true;
+    // getEstimatedGlobalPose is called repeatedly by periodic() and will update m_latestEstimatedPose
+    // This function should be called repeatedly
+    // Optional<EstimatedRobotPose> poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
+    // if (poseOption.isPresent()) {
+    //   System.out.println("---> Pose present");
+    //   m_latestEstimatedPose = poseOption.get();
+    // } else {
+    //   System.out.println("---> Pose NOT present");
+    // }
     // else {
     //   poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
     //   if (poseOption.isPresent()) {
