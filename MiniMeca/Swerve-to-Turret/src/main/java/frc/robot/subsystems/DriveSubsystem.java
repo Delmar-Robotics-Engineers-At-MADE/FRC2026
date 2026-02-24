@@ -38,21 +38,6 @@ public class DriveSubsystem extends SubsystemBase {
       DriveConstants.kFrontLeftTurningCanId,
       DriveConstants.kFrontLeftChassisAngularOffset);
 
-  // private final MAXSwerveModule m_frontRight = new MAXSwerveModule(
-  //     DriveConstants.kFrontRightDrivingCanId,
-  //     DriveConstants.kFrontRightTurningCanId,
-  //     DriveConstants.kFrontRightChassisAngularOffset);
-
-  // private final MAXSwerveModule m_rearLeft = new MAXSwerveModule(
-  //     DriveConstants.kRearLeftDrivingCanId,
-  //     DriveConstants.kRearLeftTurningCanId,
-  //     DriveConstants.kBackLeftChassisAngularOffset);
-
-  // private final MAXSwerveModule m_rearRight = new MAXSwerveModule(
-  //     DriveConstants.kRearRightDrivingCanId,
-  //     DriveConstants.kRearRightTurningCanId,
-  //     DriveConstants.kBackRightChassisAngularOffset);
-
   // The gyro sensor
   private final AHRS m_gyro = new AHRS();
 
@@ -107,7 +92,7 @@ public class DriveSubsystem extends SubsystemBase {
     //   pose = vision.debugGetLatestEstimatedPose(getPose());
     // }
     resetOdometry(pose.estimatedPose.toPose2d()); // was resetPose
-    System.out.println("---> Done resetting odometry to vision");
+    System.out.println("---> Reset odometry to vision snapshot of " + (Timer.getTimestamp() - pose.timestampSeconds) + " secs ago");
   }
 
   /** Creates a new DriveSubsystem. */
@@ -176,7 +161,7 @@ public class DriveSubsystem extends SubsystemBase {
    * @param fieldRelative Whether the provided x and y speeds are relative to the
    *                      field.
    */
-  public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+  public void beATurret() {
 
     // calculate angle to red target, and then pretend joystick is pointing that way
     Pose2d pose = m_odometry.getEstimatedPosition();
@@ -185,28 +170,19 @@ public class DriveSubsystem extends SubsystemBase {
 
     // normalize so one is 1 and the other is < 1
     double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-    xSpeed = deltaX / maxxy;
-    ySpeed = deltaY / maxxy;
-
-    // double rads = Math.atan2(deltaY, deltaX);
-    // xSpeed = Math.cos(rads);
-    // ySpeed = Math.sin(rads);
+    double xSpeed = deltaX / maxxy;
+    double ySpeed = deltaY / maxxy;
 
     // Convert the commanded speeds into the correct units for the drivetrain
     double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
     double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-    double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
+    double rotDelivered = 0;
 
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
-        fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered, pose.getRotation())
-            : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
+            ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered, pose.getRotation()));
     SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
     m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    // m_frontRight.setDesiredState(swerveModuleStates[1]);
-    // m_rearLeft.setDesiredState(swerveModuleStates[2]);
-    // m_rearRight.setDesiredState(swerveModuleStates[3]);
   }
 
   /**
@@ -214,9 +190,6 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public void setX() {
     m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    // m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    // m_rearLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    // m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
   }
 
   /**
@@ -228,17 +201,11 @@ public class DriveSubsystem extends SubsystemBase {
     SwerveDriveKinematics.desaturateWheelSpeeds(
         desiredStates, DriveConstants.kMaxSpeedMetersPerSecond);
     m_frontLeft.setDesiredState(desiredStates[0]);
-    // m_frontRight.setDesiredState(desiredStates[1]);
-    // m_rearLeft.setDesiredState(desiredStates[2]);
-    // m_rearRight.setDesiredState(desiredStates[3]);
   }
 
   /** Resets the drive encoders to currently read a position of 0. */
   public void resetEncoders() {
     m_frontLeft.resetEncoders();
-    // m_rearLeft.resetEncoders();
-    // m_frontRight.resetEncoders();
-    // m_rearRight.resetEncoders();
   }
 
   /** Zeroes the heading of the robot. */

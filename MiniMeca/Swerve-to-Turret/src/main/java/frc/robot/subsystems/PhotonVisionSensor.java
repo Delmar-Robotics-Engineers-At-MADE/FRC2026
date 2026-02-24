@@ -158,27 +158,9 @@ public final class PhotonVisionSensor extends SubsystemBase {
   //   return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
   // }
 
-  // these are only for troubleshooting
-  void debugPrepareToGetLatestEstimatedPose() {
-    m_debugTakeSnapshot = true;
-  }
+  // do this at least twice, until the pose snapshot is not changing anymore
   EstimatedRobotPose debugGetLatestEstimatedPose (Pose2d prevEstimatedRobotPose) {
     m_debugTakeSnapshot = true;
-    // getEstimatedGlobalPose is called repeatedly by periodic() and will update m_latestEstimatedPose
-    // This function should be called repeatedly
-    // Optional<EstimatedRobotPose> poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
-    // if (poseOption.isPresent()) {
-    //   System.out.println("---> Pose present");
-    //   m_latestEstimatedPose = poseOption.get();
-    // } else {
-    //   System.out.println("---> Pose NOT present");
-    // }
-    // else {
-    //   poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
-    //   if (poseOption.isPresent()) {
-    //     m_latestEstimatedPose = poseOption.get();
-    //   }
-    // }
     return m_latestEstimatedPose;
   }
 
