@@ -55,8 +55,8 @@ public final class PhotonVisionSensor extends SubsystemBase {
 
   private void setupDashboard() {
     ShuffleboardTab tab = Shuffleboard.getTab("Photon");
-    tab.addDouble("Pose X", () -> getPoseX());
-    tab.addDouble("Pose Y", () -> getPoseY());
+    tab.addDouble("Snapshot X", () -> getPoseX());
+    tab.addDouble("Snapshot Y", () -> getPoseY());
     tab.addString("Rotation", () -> getPoseRot());
     m_matchTab.addBoolean("Vision Fix", () -> getPoseEstimateAcquired())
         .withPosition(6, 0);
@@ -132,19 +132,19 @@ public final class PhotonVisionSensor extends SubsystemBase {
 
       // If we were able to find a frame with targets, use that frame to estimate a global pose
       if (latestPipelineResult.hasTargets()) {
-        System.out.println("---> Pipeline has targets; calling mutitag pose");
+        // System.out.println("---> Pipeline has targets; calling mutitag pose");
         result = photonPoseEstimator.estimateCoprocMultiTagPose(latestPipelineResult);
         if (result.isPresent()) {
           m_poseEstimateAcquired = true;
-          EstimatedRobotPose visionPose = result.get(); 
-          System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
+          // EstimatedRobotPose visionPose = result.get(); 
+          // System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
           if (m_debugTakeSnapshot) {
             m_latestEstimatedPose = result.get();
             m_debugTakeSnapshot = false;
           }
-        } else {
-          System.out.println("---> Multitag pose did NOT return a pose");
-        }
+        } // else {
+        //   System.out.println("---> Multitag pose did NOT return a pose");
+        // }
       }
     } 
     return result;

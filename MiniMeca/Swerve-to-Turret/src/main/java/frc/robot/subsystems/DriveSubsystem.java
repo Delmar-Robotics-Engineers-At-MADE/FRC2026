@@ -177,6 +177,21 @@ public class DriveSubsystem extends SubsystemBase {
    *                      field.
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+
+    // calculate angle to red target, and then pretend joystick is pointing that way
+    Pose2d pose = m_odometry.getEstimatedPosition();
+    double deltaX = 11.92 - pose.getX();
+    double deltaY = 4.03 - pose.getY();
+
+    // normalize so one is 1 and the other is < 1
+    double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+    xSpeed = deltaX / maxxy;
+    ySpeed = deltaY / maxxy;
+
+    // double rads = Math.atan2(deltaY, deltaX);
+    // xSpeed = Math.cos(rads);
+    // ySpeed = Math.sin(rads);
+
     // Convert the commanded speeds into the correct units for the drivetrain
     double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
     double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
@@ -184,8 +199,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
         fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)))
+            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered, pose.getRotation())
             : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
     SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
