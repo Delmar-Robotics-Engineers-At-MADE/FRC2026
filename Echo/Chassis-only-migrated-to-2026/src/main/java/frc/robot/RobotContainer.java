@@ -166,17 +166,17 @@ public class RobotContainer {
         .whileTrue(m_fuelShoot.runFlywheelCommand());
 
     // A button -> Spin feeder/loader motor into shooter
-    m_operCmdController.a().whileTrue(m_fuelShoot.runFeederCommand());
+    m_operCmdController.a().whileTrue(m_fuelShoot.runShooterCommand());
 
-    // Left stick movement along the X axis control the turret rotational movement
-    m_operCmdController
-      .axisMagnitudeGreaterThan(0, TriggerThreshold)
-        .whileTrue(m_fuelShoot.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX()));
+    // // Left stick movement along the X axis control the turret rotational movement
+    // m_operCmdController
+    //   .axisMagnitudeGreaterThan(0, TriggerThreshold)
+    //     .whileTrue(m_fuelShoot.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX()));
 
-    // Left stick movement along the y axis contrtols the turret hood movement
-    m_operCmdController
-      .axisMagnitudeGreaterThan(1, TriggerThreshold)
-        .whileTrue(m_fuelShoot.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY()));
+    // // Left stick movement along the y axis contrtols the turret hood movement
+    // m_operCmdController
+    //   .axisMagnitudeGreaterThan(1, TriggerThreshold)
+    //     .whileTrue(m_fuelShoot.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY()));
   }
 
   public Command getAutonomousCommand() {
@@ -185,13 +185,14 @@ public class RobotContainer {
 
   private void setupDashboard() {
     ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
-    matchTab.addCamera("Limelight", "Limelight", "http://10.80.77.18:5800");
-//         .withPosition(0, 1).withSize(4, 3);
+    //matchTab.addCamera("Limelight", "Limelight", "http://10.80.77.18:5800");
+    //        .withPosition(0, 1).withSize(4, 3);
     buildAutoChooser();
     matchTab.add(m_autoChooser).withPosition(0, 0);
 
   }
 
   public void checkHomePositions() {
+    // TODO: Add code to zero turret yaw and pitch. This is intended to be called at the beginning of auto init but could realistically be called at any time
   }
 }

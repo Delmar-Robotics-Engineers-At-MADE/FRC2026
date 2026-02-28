@@ -15,6 +15,8 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.networktables.FloatArrayPublisher;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
@@ -29,6 +31,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.ShooterSubsystemConstants;
 import frc.robot.Constants.ShooterSubsystemConstants.FeederSetpoints;
 import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
+import frc.robot.Constants.ShooterSubsystemConstants.TurretSetpoints;
 
 public class FuelShooterSubsystem extends SubsystemBase{
 
@@ -41,6 +44,11 @@ public class FuelShooterSubsystem extends SubsystemBase{
   private SparkMax m_turretYawMotor, m_turretPitchMotor; // rotation and hood control motors
   private SparkClosedLoopController m_turretYawClosedLoopController, m_turretPitchClosedLoopController;
   private RelativeEncoder m_turretYawEncoder, m_turretPitchEncoder;
+
+  // Sensors
+  private final DigitalInput m_hallEffectYaw = new DigitalInput(0);
+  private final DigitalInput m_hallEffectPitch = new DigitalInput(1);
+
   // ########### SIM ###########
 
   DCMotor m_maxSimGearbox = DCMotor.getNEO(2);
@@ -53,6 +61,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
 
   // Member variables for subsystem state management
   private double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
+  boolean m_isYawTurretHomed = false;
+  boolean m_isPitchTurretHomed = false;
 
   public FuelShooterSubsystem() {
 
@@ -74,7 +84,6 @@ public class FuelShooterSubsystem extends SubsystemBase{
     m_turretYawEncoder = m_turretYawMotor.getEncoder();
     m_turretPitchClosedLoopController = m_turretPitchMotor.getClosedLoopController();
     m_turretPitchEncoder = m_turretPitchMotor.getEncoder();
-
 
     /*
      * Apply the appropriate configurations to the SPARKs.
@@ -108,10 +117,10 @@ public class FuelShooterSubsystem extends SubsystemBase{
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
-    // Zero flywheel encoder on initialization
+    // Zero encoders on initialization
     m_flywheelEncoder.setPosition(0.0);
-
-    // TODO: Add code to zero turret yaw and pitch at some point early on (not sure when we are allowed to move motors)
+    m_turretYawEncoder.setPosition(0.0);
+    m_turretPitchEncoder.setPosition(0.0);
 
     // set up sim entities
     m_motorsSim = new SparkMaxSim(m_motorPort, m_maxSimGearbox);
@@ -131,13 +140,13 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * Trigger: Is the flywheel spinning at the required velocity?
   */
   public final Trigger isFlywheelSpinning = new Trigger(
-      () -> isFlywheelAt(ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm) || 
-            m_flywheelEncoder.getVelocity() > ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm
+      () -> isFlywheelAt(this.m_flywheelTargetVelocity) || 
+            m_flywheelEncoder.getVelocity() > this.m_flywheelTargetVelocity
   );
 
   public final Trigger isFlywheelSpinningBackwards = new Trigger(
-      () -> isFlywheelAt(-ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm) || 
-            m_flywheelEncoder.getVelocity() < -ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm
+      () -> isFlywheelAt(-this.m_flywheelTargetVelocity) || 
+            m_flywheelEncoder.getVelocity() < -this.m_flywheelTargetVelocity
   );
 
   /** 
@@ -165,20 +174,108 @@ public class FuelShooterSubsystem extends SubsystemBase{
    */
   private void moveTurretYaw(double dutyCycle){
 
-    // Clamp the applied duty cycle to 60% for safety in testing
-    double actualAppliedDutyCycle = Math.max(-0.6, Math.min(0.6, dutyCycle));
+    // Clamp the applied duty cycle to 30% for safety in testing
+    double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
     m_turretYawMotor.set(actualAppliedDutyCycle);
   }
 
     /**
+  * Used to command the turret's yaw motor to a particular absolute position in degrees
+  * @param position Absolute output position of the turret's rotation in degrees
+  */
+  private void moveTurretYawToPosition(double position) {
+    if (m_isYawTurretHomed)
+    {
+      // Calculate the position movement that needs to be performed from the current absolute position
+      // in order to reach the commanded output position
+      m_turretYawEncoder.getPosition();
+      
+      // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
+
+      m_turretYawClosedLoopController.setSetpoint(position, ControlType.kMAXMotionPositionControl);
+    }
+  }
+
+  /**
+   * Used to return whether or not the yaw turret motor has been homed and is ready to be commaned to a particular position
+   * This function must always be return true before utilizing closed-loop position control on the yaw motor
+   * @return Whether the yaw turret has been homed
+   */
+  private boolean isYawTurretHomed() {
+    return m_isYawTurretHomed;
+  }
+
+  /**
+  * Gets the current state of the sensor being used to determine if the yaw turret is at its homed position
+  * This can include any failsafes that could be implented to protect against a failing sensor
+  * @return A boolean indicating if the the yaw motor has reached its homing setpoint
+  */
+  public boolean getYawTurretAtHome() {
+    return !m_hallEffectYaw.get();
+  }
+
+  /**
+   * Used to declare that the yaw turret has been homed and its absolute position can be set according to hard physical limits
+   * This function is intended to be run at the beginning of autonomous init in order to get the turret's absolute output rotation
+   */
+  private void setYawTurretHomed() {
+    m_isYawTurretHomed = true;
+    m_turretYawEncoder.setPosition(TurretSetpoints.kYawMotorHomingSetpoint);
+  }
+
+  /**
    * Used for testing and backup ability for manual control of the turret's hood position
    * @param dutyCycle A value from [-1, 1]
    */
   private void moveTurretPitch(double dutyCycle) {
 
     // Clamp the applied duty cycle to 60% for safety in testing
-    double actualAppliedDutyCycle = Math.max(-0.6, Math.min(0.6, dutyCycle));
+    double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
     m_turretPitchMotor.set(actualAppliedDutyCycle);
+  }
+
+  /**
+  * Used to command the turret's hood to a particular absolute position in degrees
+  * @param position Absolute output position of the turret's hood in degrees (launch angle)
+  */
+  private void moveTurretPitchToPosition(double position) {
+    if (m_isPitchTurretHomed)
+    {
+      // Calculate the position movement that needs to be performed from the current absolute position
+      // in order to reach the commanded output position
+      m_turretPitchEncoder.getPosition();
+
+      // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
+
+      m_turretPitchClosedLoopController.setSetpoint(position, ControlType.kMAXMotionPositionControl);
+    }
+  }
+
+  /**
+   * Used to return whether or not the pitch turret motor has been homed and is ready to be commaned to a particular position
+   * This function must always be return true before utilizing closed-loop position control on the pitch motor
+   * @return Whether the pitch turret has been homed
+   */
+  private boolean isPitchTurretHomed() {
+    return m_isPitchTurretHomed;
+  }
+
+  /**
+  * Gets the current state of the sensor being used to determine if the pitch turret is at its homed position
+  * This can include any failsafes that could be implented to protect against a failing sensor
+  * @return A boolean indicating if the the pitch motor has reached its homing setpoint
+  */
+  public boolean getPitchTurretAtHome() {
+    return !m_hallEffectPitch.get();
+  }
+
+  /**
+   * Used to declare that the pitch turret has been homed and its absolute position can be set according to hard physical limits
+   * This function is intended to be run at the beginning of autonomous init in order to get the hood's absolute output rotation
+   */
+  private void setPitchTurretHomed() {
+    m_isPitchTurretHomed = true;
+    m_turretPitchEncoder.setPosition(TurretSetpoints.kPitchMotorHomingSetpoint);
   }
 
     /**
@@ -231,7 +328,7 @@ public class FuelShooterSubsystem extends SubsystemBase{
 
   /**
   * Command to manually control the turret's rotation. While being commanded, the turret will move with the
-  * applied dury cycle. Once the command ends, the motors will stop.
+  * applied duty cycle. Once the command ends, the motors will stop.
   */
   public Command moveTurretRotationManual(DoubleSupplier dutyCycle) {
     return this.startEnd(
@@ -243,8 +340,21 @@ public class FuelShooterSubsystem extends SubsystemBase{
   }
 
   /**
+  * Command to home the turret yaw motor at a low duty cycle and set its starting 
+  * parameters to allow closed loop position control
+  */
+  public Command homeYawTurret() {
+    return this.startEnd(
+      () -> {
+        this.moveTurretYaw(0.2);
+      }, () -> {
+        this.setYawTurretHomed();
+      }).withName("Homing yaw turret motor");
+  }
+
+  /**
   * Command to manually control the turret's hood. While being commanded, the turret hood will move with the
-  * applied dury cycle. Once the command ends, the motors will stop.
+  * applied duty cycle. Once the command ends, the motors will stop.
   */
   public Command moveTurretHoodManual(DoubleSupplier dutyCycle) {
     return this.startEnd(
@@ -255,6 +365,19 @@ public class FuelShooterSubsystem extends SubsystemBase{
         }).withName("Moving turret hood");
   }
 
+  /**
+  * Command to home the turret yaw motor at a low duty cycle and set its starting 
+  * parameters to allow closed loop position control
+  */
+  public Command homePitchTurret() {
+    return this.startEnd(
+      () -> {
+        this.moveTurretPitch(0.2);
+      }, () -> {
+        this.setPitchTurretHomed();
+      }).withName("Homing yaw turret motor");
+  }
+
   public double getVelocity () {return m_flywheelEncoder.getVelocity();}
 
   @Override
@@ -263,6 +386,17 @@ public class FuelShooterSubsystem extends SubsystemBase{
     SmartDashboard.putNumber("Shooter | Flywheel | Applied Output", m_motorPort.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel | Current", m_motorPort.getOutputCurrent());
     SmartDashboard.putNumber("Shooter | Flywheel | Velocity Setpoint", m_flywheelClosedLoopController.getMAXMotionSetpointVelocity());
+    SmartDashboard.putNumber("Shooter | Turret Yaw | Velocity Setpoint", m_turretYawClosedLoopController.getMAXMotionSetpointVelocity());
+    SmartDashboard.putNumber("Shooter | Turret Yaw | Current", m_turretYawMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Shooter | Turret Pitch | Velocity Setpoint", m_turretPitchClosedLoopController.getMAXMotionSetpointVelocity());
+    SmartDashboard.putNumber("Shooter | Turret Pitch | Current", m_turretPitchMotor.getOutputCurrent());
+
+    // Temps
+    SmartDashboard.putNumber("Shooter | Flywheel Leader | Temperature (deg C)", m_motorPort.getMotorTemperature());
+    SmartDashboard.putNumber("Shooter | Flywheel Follower | Temperature (deg C)", m_motorStar.getMotorTemperature());
+    SmartDashboard.putNumber("Shooter | Feeder | Temperature (deg C)", m_feederMotor.getMotorTemperature());
+    SmartDashboard.putNumber("Shooter | Turret Yaw | Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
+    SmartDashboard.putNumber("Shooter | Turret Pitch | Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Applied Output", m_motorStar.getAppliedOutput());
     SmartDashboard.putNumber("Shooter | Flywheel Follower | Current", m_motorStar.getOutputCurrent());
@@ -273,6 +407,9 @@ public class FuelShooterSubsystem extends SubsystemBase{
     SmartDashboard.putBoolean("Is Flywheel Spinning", isFlywheelSpinning.getAsBoolean());
     SmartDashboard.putBoolean("Is Flywheel Stopped", isFlywheelStopped.getAsBoolean());
   
+    // Sensors
+    SmartDashboard.putBoolean("Hall Effect Sensor Detection", m_hallEffectYaw.get());
+
     m_flywheelTargetVelocity = m_flywheelVelocityChooser.getSelected();
   }
 

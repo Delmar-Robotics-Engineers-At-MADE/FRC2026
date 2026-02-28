@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-// import com.revrobotics.CANSparkBase.IdleMode;
-
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -42,15 +40,15 @@ public final class Constants {
 
     public static final class FlywheelSetpoints {
       public static final double kShootRpm = 4500.0;
-      public static final double kVelocityTolerance = 10.0; // rpm
+      public static final double kVelocityTolerance = 250.0; // rpm
     }
 
     public static final class TurretUnits {
-      private static final double kYawMotorOutputGearRatio = 62.237; // (119 * 5.23) / 10
+      private static final double kYawMotorOutputGearRatio = 62.24615385; // (119 * 68:13) / 10
       public static final double kYawPositionConversionFactor = 360.0 / kYawMotorOutputGearRatio;          // degrees
       public static final double kYawVelocityConversionFactor = (360.0 / kYawMotorOutputGearRatio) * 60.0; // degrees per second
 
-      private static final double kPitchMotorOutputGearRatio = 61.42563636; // (167 * 28 * 2.89) / (10 * 22)
+      private static final double kPitchMotorOutputGearRatio = 61.56489028; // (167 * 28 * 84:29) / (10 * 22)
       public static final double kPitchPositionConversionFactor = 360.0 / kPitchMotorOutputGearRatio;          // degrees
       public static final double kPitchVelocityConversionFactor = (360.0 / kPitchMotorOutputGearRatio) * 60.0; // degrees per second
     }
@@ -63,7 +61,9 @@ public final class Constants {
       public static final double kPitchVelocityTolerance = 1; // degrees per second
 
       public static final double kYawMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle off of the robot's north
+      public static final double kYawMotorMaxOutputRotation = 300.0; // degrees
       public static final double kPitchMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle of the hood's launch angle when all the way down
+      public static final double kPitchMotorMaxOutputRotation = 40.0; // degrees; TODO: set this value with the proper max rotation value
     }
   }
 

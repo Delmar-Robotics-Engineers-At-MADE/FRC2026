@@ -89,6 +89,16 @@ public class IntakeSubsystem extends SubsystemBase{
     // Display subsystem values
     SmartDashboard.putNumber("Intake | Intake | Applied Output", m_intakeMotor.getAppliedOutput());
     SmartDashboard.putNumber("Intake | Conveyor | Applied Output", m_conveyorMotor.getAppliedOutput());
+
+    // Current
+    SmartDashboard.putNumber("Intake | Intake | Current", m_intakeMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Intake | Conveyor | Current", m_conveyorMotor.getOutputCurrent());
+
+    // Temps
+    SmartDashboard.putNumber("Intake | Intake | Temperature (deg C)", m_intakeMotor.getMotorTemperature());
+    SmartDashboard.putNumber("Intake | Conveyor | Temperature (deg C)", m_conveyorMotor.getMotorTemperature());
+  
+  
   }
 
 }
