@@ -67,10 +67,11 @@ public class RobotContainer {
           MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband)), m_turretContainer)
             .until(() -> m_turretContainer.getHomed()) // Exit condition
         .andThen(new RunCommand(
-             () -> m_turretContainer.rotateAndShoot(
-                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
-                0, true),
+            //  () -> m_turretContainer.rotateAndShoot(
+            //     -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
+            //     -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
+            //     0, true),
+            () -> m_turretContainer.trackTargetAndShoot(0, true),
             m_turretContainer))
         );
 

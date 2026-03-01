@@ -62,6 +62,22 @@ public class TurretContainer extends SubsystemBase {
     return m_odometry.getEstimatedPosition();
   }
 
+  public void trackTargetAndShoot (double shooterSpeed, boolean fieldRelative) {
+
+    // calculate angle to red target, and then pretend joystick is pointing that way
+    Pose2d pose = m_odometry.getEstimatedPosition();
+    double deltaX = 11.92 - pose.getX();
+    double deltaY = 4.03 - pose.getY();
+
+    // normalize so one is 1 and the other is < 1
+    double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+    double xSpeed = deltaX / maxxy;
+    double ySpeed = deltaY / maxxy;
+
+    rotateAndShoot(deltaX, deltaY, shooterSpeed, fieldRelative);
+  }
+
+
   /**
    * Method to point and shoot the turret
    *

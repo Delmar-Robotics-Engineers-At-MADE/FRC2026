@@ -33,10 +33,10 @@ import com.kauailabs.navx.frc.AHRS;
 
 public class DriveSubsystem extends SubsystemBase {
   // Create MAXSwerveModules
-  // private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
-  //     /* DriveConstants.kFrontLeftDrivingCanId, */
-  //     DriveConstants.kFrontLeftTurningCanId,
-  //     DriveConstants.kFrontLeftChassisAngularOffset);
+  private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
+      /* DriveConstants.kFrontLeftDrivingCanId, */
+      DriveConstants.kFrontLeftTurningCanId,
+      DriveConstants.kFrontLeftChassisAngularOffset);
 
   // The gyro sensor
   private final AHRS m_gyro = new AHRS();
@@ -48,7 +48,7 @@ public class DriveSubsystem extends SubsystemBase {
   SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
       DriveConstants.kDriveKinematics,
       Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
-      new SwerveModulePosition[] {},
+      new SwerveModulePosition[] {m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition()},
           Pose2d.kZero,
         VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
         VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(30))
@@ -73,12 +73,12 @@ public class DriveSubsystem extends SubsystemBase {
   public SwerveDrivePoseEstimator getOdometry() {return m_odometry;} // needed to pass robot odometry system to turret subsystem
 
   SwerveModulePosition[] getCurrentPositions() {
-    return new SwerveModulePosition[] {};
+    return new SwerveModulePosition[] {m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition()};
   }
 
   public void debugResetOdometryToVision (PhotonVisionSensor vision) {
     System.out.println("---> Resetting odometry to vision");
-    m_odometry.update(m_gyro.getRotation2d(), getCurrentPositions());
+    // m_odometry.update(m_gyro.getRotation2d(), getCurrentPositions());
     EstimatedRobotPose pose = vision.debugGetLatestEstimatedPose(getPose());
     // while (pose.timestampSeconds == 0 || Timer.getTimestamp() - pose.timestampSeconds > 0.1) {
     //   // keep trying until we get a fresh pose estimate
@@ -100,15 +100,16 @@ public class DriveSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
-    // m_odometry.update(
-    //     Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
-    //     new SwerveModulePosition[] {});
+    m_odometry.update(
+        Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
+        new SwerveModulePosition[] {m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition()});
 
     // add vision data
     Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(
         m_odometry.getEstimatedPosition());
     if (visionOptional.isPresent()) {
       EstimatedRobotPose visionPose = visionOptional.get(); 
+      System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
       m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
     }
 
@@ -131,7 +132,7 @@ public class DriveSubsystem extends SubsystemBase {
   public void resetOdometry(Pose2d pose) {
     m_odometry.resetPosition(
         Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
-        new SwerveModulePosition[] {},
+        new SwerveModulePosition[] {m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition(),m_frontLeft.getPosition()},
         pose);
   }
 
