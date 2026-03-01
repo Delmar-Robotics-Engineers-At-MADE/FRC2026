@@ -36,6 +36,7 @@ public class TurretContainer extends SubsystemBase {
 
   boolean m_homed = false;
   private ShuffleboardTab m_tab = Shuffleboard.getTab("Turret");
+  private ShuffleboardTab m_matchTab = Shuffleboard.getTab("Match");
 
   // Constructor
   public TurretContainer(SwerveDrivePoseEstimator robot_odometry, FusionRangeSensor fusionRange) {
@@ -45,7 +46,7 @@ public class TurretContainer extends SubsystemBase {
   }
 
   private void setupDashboard() {
-    m_tab.addBoolean("Homed", () -> getHomed()).withPosition(6, 0);
+    m_matchTab.addBoolean("Homed", () -> getHomed()).withPosition(5, 0);
     m_tab.addDouble("Encoder Angle", () -> m_turret.getEncoderPosition());
   }
 
@@ -77,6 +78,7 @@ public class TurretContainer extends SubsystemBase {
 
     double shooterDelivered = shooterSpeed * DriveConstants.kMaxAngularSpeed;
 
+    // System.out.println("rotateAndShoot x/y " + xComponent + " " + yComponent);
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, 0,
@@ -110,6 +112,7 @@ public class TurretContainer extends SubsystemBase {
     if (m_homed) {
       multiplier = 0; // stop moving; command will end, and normal turret tracking will commence
     }
+    // System.out.println("moveUntilHomed multiplier " + multiplier);
     m_turret.moveUntilHomed(multiplier);
   }
 

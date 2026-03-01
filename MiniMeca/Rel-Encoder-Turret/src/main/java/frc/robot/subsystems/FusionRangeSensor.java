@@ -19,13 +19,15 @@ public final class FusionRangeSensor extends SubsystemBase {
 
   public FusionRangeSensor() {
     // constructor
-    m_rangeSensor.setRangingMode(RangingMode.Short, 40);
+    enableRanging(true);
+    // m_rangeSensor.setRangingMode(RangingMode.Short, 40);
     setupDashboard();
   }
 
   private void setupDashboard() {
     ShuffleboardTab tab = Shuffleboard.getTab("Fusion");
     tab.addInteger("Range(mm)", () -> getRange());
+    tab.addInteger("Period(msec)", () -> getPeriod());
   }  
 
   public int getRange(){
@@ -35,6 +37,10 @@ public final class FusionRangeSensor extends SubsystemBase {
     } else {
       return -(int)m_rangeSensor.getRange();
     }
+  }
+
+  private int getPeriod() {
+    return (int)m_rangeSensor.getSampleTime();
   }
 
   public void enableRanging(boolean enable) {

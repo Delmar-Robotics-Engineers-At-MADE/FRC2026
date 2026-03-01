@@ -57,7 +57,7 @@ public final class PhotonVisionSensor extends SubsystemBase {
     ShuffleboardTab tab = Shuffleboard.getTab("Photon");
     tab.addDouble("Snapshot X", () -> getPoseX());
     tab.addDouble("Snapshot Y", () -> getPoseY());
-    tab.addString("Rotation", () -> getPoseRot());
+    tab.addString("Snapshot Rotation", () -> getPoseRot());
     m_matchTab.addBoolean("Vision Fix", () -> getPoseEstimateAcquired())
         .withPosition(6, 0);
   }  
