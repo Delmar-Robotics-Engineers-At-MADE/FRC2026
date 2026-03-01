@@ -70,6 +70,8 @@ public class DriveSubsystem extends SubsystemBase {
 
   Pose2d getEstimatedPosition() {return m_odometry.getEstimatedPosition();}
 
+  public SwerveDrivePoseEstimator getOdometry() {return m_odometry;} // needed to pass robot odometry system to turret subsystem
+
   SwerveModulePosition[] getCurrentPositions() {
     return new SwerveModulePosition[] {};
   }
@@ -98,9 +100,9 @@ public class DriveSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
-    m_odometry.update(
-        Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
-        new SwerveModulePosition[] {});
+    // m_odometry.update(
+    //     Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
+    //     new SwerveModulePosition[] {});
 
     // add vision data
     Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(

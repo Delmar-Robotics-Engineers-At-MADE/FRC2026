@@ -10,6 +10,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.AbsoluteEncoder;
@@ -18,6 +19,7 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 
 import frc.robot.Configs;
+import frc.robot.Constants.TurretConstants;
 
 public class TurretSubsystem {
   private final SparkMax m_shooterSpark;
@@ -86,6 +88,10 @@ public class TurretSubsystem {
         new Rotation2d(m_turningEncoder.getPosition() - m_chassisAngularOffset));
   }
 
+  public double getEncoderPosition() { // in radians
+    return m_turningEncoder.getPosition();
+  }
+
   /**
    * Sets the desired state for the module.
    *
@@ -108,8 +114,13 @@ public class TurretSubsystem {
     m_desiredState = desiredState;
   }
 
-  /** Zeroes all the SwerveModule encoders. */
+  public void moveUntilHomed (double multiplier) {
+    m_turningSpark.set(TurretConstants.VelocityHoming * multiplier);
+  }
+
+  /** Zeroes all the turret encoders. */
   public void resetEncoders() {
     m_shooterEncoder.setPosition(0);
+    m_turningEncoder.setPosition(0);
   }
 }

@@ -15,6 +15,7 @@ import com.playingwithfusion.TimeOfFlight.RangingMode;
 public final class FusionRangeSensor extends SubsystemBase {
 
   private final TimeOfFlight m_rangeSensor = new TimeOfFlight(1);
+  private boolean m_enabled = true;
 
   public FusionRangeSensor() {
     // constructor
@@ -27,10 +28,22 @@ public final class FusionRangeSensor extends SubsystemBase {
     tab.addInteger("Range(mm)", () -> getRange());
   }  
 
-
   public int getRange(){
     // System.out.println("Distance: " + (int)m_rangeSensor.getRange() + "mm   Std Dev: " + (int)m_rangeSensor.getRangeSigma() + "mm   Status: " + m_rangeSensor.getStatus());
-    return (int)m_rangeSensor.getRange();
+    if (m_enabled) {
+      return (int)m_rangeSensor.getRange();
+    } else {
+      return -(int)m_rangeSensor.getRange();
+    }
+  }
+
+  public void enableRanging(boolean enable) {
+    m_enabled = enable;
+    if (enable) {
+      m_rangeSensor.setRangingMode(RangingMode.Short, 40);
+    } else {
+      m_rangeSensor.setRangingMode(RangingMode.Short, 5000); // reduce sampling rate to reduce CAN traffic
+    }
   }
 
 }

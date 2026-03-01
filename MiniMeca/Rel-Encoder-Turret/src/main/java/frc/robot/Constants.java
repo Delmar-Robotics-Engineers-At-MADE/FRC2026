@@ -22,6 +22,12 @@ import edu.wpi.first.math.util.Units;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+
+  public static final class TurretConstants {
+    public static final double VelocityHoming = 0.5;
+    public static final int FusionRangeWhenHomed = 50;
+  }
+
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds

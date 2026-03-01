@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.TurretConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class TurretContainer extends SubsystemBase {
@@ -45,9 +46,10 @@ public class TurretContainer extends SubsystemBase {
 
   private void setupDashboard() {
     m_tab.addBoolean("Homed", () -> getHomed()).withPosition(6, 0);
+    m_tab.addDouble("Encoder Angle", () -> m_turret.getEncoderPosition());
   }
 
-  private boolean getHomed() {
+  public boolean getHomed() {
     return m_homed;
   }
 
@@ -94,6 +96,21 @@ public class TurretContainer extends SubsystemBase {
     SwerveDriveKinematics.desaturateWheelSpeeds(
         desiredStates, DriveConstants.kMaxSpeedMetersPerSecond);
     m_turret.setDesiredState(desiredStates[0], shooterSpeed);
+  }
+
+  public void moveUntilHomed (double multiplier) {
+    if (!m_homed) {
+      // check fusion sensor
+      if (m_fusionRange.getRange() < TurretConstants.FusionRangeWhenHomed) {
+        m_homed = true;
+        m_fusionRange.enableRanging(false);
+        m_turret.resetEncoders();
+      }
+    }
+    if (m_homed) {
+      multiplier = 0; // stop moving; command will end, and normal turret tracking will commence
+    }
+    m_turret.moveUntilHomed(multiplier);
   }
 
   /** Resets the drive encoders to currently read a position of 0. */

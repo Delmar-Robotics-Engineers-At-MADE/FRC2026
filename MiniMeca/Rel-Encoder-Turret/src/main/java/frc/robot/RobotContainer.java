@@ -21,6 +21,7 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FusionRangeSensor;
 import frc.robot.subsystems.PhotonVisionSensor;
+import frc.robot.subsystems.TurretContainer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -40,7 +41,7 @@ public class RobotContainer {
   private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
   private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
   private final FusionRangeSensor m_fusionRange = new FusionRangeSensor();
-
+  private final TurretContainer m_turretContainer = new TurretContainer(m_robotDrive.getOdometry(), m_fusionRange);
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
@@ -60,6 +61,12 @@ public class RobotContainer {
         new RunCommand(
             () -> m_robotDrive.beATurret(),
             m_robotDrive));
+
+    m_turretContainer.setDefaultCommand(
+        new RunCommand(() -> m_turretContainer.moveUntilHomed(
+          MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband)), m_turretContainer)
+            .until(() -> m_turretContainer.getHomed()) // Exit condition
+);
   }
 
   /**
@@ -76,6 +83,9 @@ public class RobotContainer {
     // reset pose to vision
     m_driverCmdController.back().or(m_driverCmdController.start())
         .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
+
+    // move turret until homed
+    
 
   }
 
