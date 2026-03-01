@@ -109,7 +109,7 @@ public class TurretSubsystem {
 
     // Command driving and turning SPARKS towards their respective setpoints.
     m_shooterClosedLoopController.setSetpoint(shooterSpeed, ControlType.kVelocity);
-    System.out.println("Setting turn controller to " + correctedDesiredState.angle.getRadians());
+    // System.out.println("Setting turn controller to " + correctedDesiredState.angle.getRadians());
     m_turningClosedLoopController.setSetpoint(correctedDesiredState.angle.getRadians(), ControlType.kPosition);
 
     m_desiredState = desiredState;

@@ -17,7 +17,7 @@ public final class Configs {
             // Use module constants to calculate conversion factors and feed forward gain.
             double drivingFactor = ModuleConstants.kWheelDiameterMeters * Math.PI
                     / ModuleConstants.kDrivingMotorReduction;
-            double turningFactor = 2 * Math.PI;
+            double turningFactor = 2 * Math.PI / 53.1429; // for absolute encoder, which has no gearing, was 2 * Math.PI;
             double nominalVoltage = 12.0;
             double drivingVelocityFeedForward = nominalVoltage / ModuleConstants.kDriveWheelFreeSpeedRps;
 
@@ -38,14 +38,15 @@ public final class Configs {
                     .idleMode(IdleMode.kBrake)
                     .smartCurrentLimit(20);
 
-        //     turningConfig.absoluteEncoder
-        //             // Invert the turning encoder, since the output shaft rotates in the opposite
-        //             // direction of the steering motor in the MAXSwerve Module.
-        //             .inverted(true)
-        //             .positionConversionFactor(turningFactor) // radians
-        //             .velocityConversionFactor(turningFactor / 60.0) // radians per second
-        //             // This applies to REV Through Bore Encoder V2 (use REV_ThroughBoreEncoder for V1):
-        //             .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
+            turningConfig.encoder
+                    // Invert the turning encoder, since the output shaft rotates in the opposite
+                    // direction of the steering motor in the MAXSwerve Module.
+                    // .inverted(true)
+                    .positionConversionFactor(turningFactor) // radians
+                    .velocityConversionFactor(turningFactor / 60.0) // radians per second
+                    // This applies to REV Through Bore Encoder V2 (use REV_ThroughBoreEncoder for V1):
+                    /// .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2)
+                    ;
 
             turningConfig.closedLoop
                     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -56,8 +57,9 @@ public final class Configs {
                     // controller to go through 0 to get to the setpoint i.e. going from 350 degrees
                     // to 10 degrees will go through 0 rather than the other direction which is a
                     // longer route.
-                    .positionWrappingEnabled(true)
-                    .positionWrappingInputRange(0, turningFactor);
+                //     .positionWrappingEnabled(true)
+                //     .positionWrappingInputRange(0, turningFactor)
+                    ;
         }
     }
 }
