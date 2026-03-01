@@ -25,8 +25,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class TurretContainer extends SubsystemBase {
   // Create Turret
-  private final TurretSubsystem m_turret = new TurretSubsystem(14, 30, 
-      DriveConstants.kFrontLeftChassisAngularOffset);
+  private final TurretSubsystem m_turret = new TurretSubsystem(14, 30, 0);
 
   // Odometry class for tracking robot pose
   SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor

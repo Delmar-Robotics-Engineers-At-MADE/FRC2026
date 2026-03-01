@@ -92,6 +92,26 @@ public class TurretSubsystem {
     return m_turningEncoder.getPosition();
   }
 
+  private SwerveModuleState optimize(SwerveModuleState state) {
+    // original function allows module to always turn less than 180 degrees
+    // var delta = angle.minus(currentAngle);
+    // if (Math.abs(delta.getDegrees()) > 90.0) {
+    //     speedMetersPerSecond *= -1;
+    //     angle = angle.rotateBy(Rotation2d.kPi);
+    // }
+    
+    // for the turret, simply stop the turret from moving through the stops
+    SwerveModuleState result = state; // return unmodified state if it's not past stops
+    if (state.angle.getDegrees() > TurretConstants.TurnLimitPort) {
+      result = new SwerveModuleState(state.speedMetersPerSecond, 
+                                     Rotation2d.fromDegrees(TurretConstants.TurnLimitPort));
+    } else if (state.angle.getDegrees() < TurretConstants.TurnLimitStar) {
+      result = new SwerveModuleState(state.speedMetersPerSecond, 
+                                     Rotation2d.fromDegrees(TurretConstants.TurnLimitStar));
+    }
+    return result;
+  }
+
   /**
    * Sets the desired state for the module.
    *
@@ -104,8 +124,9 @@ public class TurretSubsystem {
     correctedDesiredState.angle = desiredState.angle.plus(Rotation2d.fromRadians(m_chassisAngularOffset));
 
     // Optimize the reference state to avoid spinning further than 90 degrees.
-    // TODO: change this function to prevent turret from turning through its stops
-    correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
+    // No, instead, just change this function to prevent turret from turning through its stops
+    // correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
+    correctedDesiredState = optimize(correctedDesiredState);
 
     // Command driving and turning SPARKS towards their respective setpoints.
     m_shooterClosedLoopController.setSetpoint(shooterSpeed, ControlType.kVelocity);

@@ -26,6 +26,8 @@ public final class Constants {
   public static final class TurretConstants {
     public static final double VelocityHoming = 0.5;
     public static final int FusionRangeWhenHomed = 50;
+    public static final double TurnLimitPort = 100; // degrees
+    public static final double TurnLimitStar = -100; // degrees
   }
 
   public static final class DriveConstants {
