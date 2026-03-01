@@ -54,14 +54,6 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
 
-    // // Configure default commands
-    // m_robotDrive.setDefaultCommand(
-    //     // The left stick controls translation of the robot.
-    //     // Turning is controlled by the X axis of the right stick.
-    //     new RunCommand(
-    //         () -> m_robotDrive.beATurret(),
-    //         m_robotDrive));
-
     m_turretContainer.setDefaultCommand(
         new RunCommand(() -> m_turretContainer.moveUntilHomed(
           MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband)), m_turretContainer)
@@ -91,10 +83,6 @@ public class RobotContainer {
     // reset pose to vision
     m_driverCmdController.back().or(m_driverCmdController.start())
         .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
-
-    // move turret until homed
-    
-
   }
 
   /**

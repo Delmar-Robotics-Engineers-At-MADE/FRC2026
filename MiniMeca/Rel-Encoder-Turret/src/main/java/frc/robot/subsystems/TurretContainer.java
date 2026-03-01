@@ -4,19 +4,11 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.hal.FRCNetComm.tInstances;
-import edu.wpi.first.hal.FRCNetComm.tResourceType;
-import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.ADIS16470_IMU;
-import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.robot.Constants.DriveConstants;
@@ -74,7 +66,7 @@ public class TurretContainer extends SubsystemBase {
     double xSpeed = deltaX / maxxy;
     double ySpeed = deltaY / maxxy;
 
-    rotateAndShoot(deltaX, deltaY, shooterSpeed, fieldRelative);
+    rotateAndShoot(xSpeed, ySpeed, shooterSpeed, fieldRelative);
   }
 
 
@@ -93,7 +85,6 @@ public class TurretContainer extends SubsystemBase {
 
     double shooterDelivered = shooterSpeed * DriveConstants.kMaxAngularSpeed;
 
-    // System.out.println("rotateAndShoot x/y " + xComponent + " " + yComponent);
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, 0,
@@ -127,7 +118,6 @@ public class TurretContainer extends SubsystemBase {
     if (m_homed) {
       multiplier = 0; // stop moving; command will end, and normal turret tracking will commence
     }
-    // System.out.println("moveUntilHomed multiplier " + multiplier);
     m_turret.moveUntilHomed(multiplier);
   }
 
