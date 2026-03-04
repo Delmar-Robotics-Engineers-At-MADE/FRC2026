@@ -168,6 +168,10 @@ public class RobotContainer {
     // A button -> Spin feeder/loader motor into shooter
     m_operCmdController.a().whileTrue(m_fuelShoot.runShooterCommand());
 
+    // X button -> Turn turret yaw to a set point
+    // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
+    m_operCmdController.x().whileTrue(m_fuelShoot.commandTurretYawToPosition(0));
+
     // // Left stick movement along the X axis control the turret rotational movement
     // m_operCmdController
     //   .axisMagnitudeGreaterThan(0, TriggerThreshold)

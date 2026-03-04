@@ -61,8 +61,11 @@ public class FuelShooterSubsystem extends SubsystemBase{
 
   // Member variables for subsystem state management
   private double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
-  boolean m_isYawTurretHomed = false;
-  boolean m_isPitchTurretHomed = false;
+
+  double m_turretYawSetpointDegrees = 0.0;
+  boolean m_isTurretYawHomed = false;
+  double m_turretPitchSetpointDegrees = 0.0;
+  boolean m_isTurretPitchHomed = false;
 
   public FuelShooterSubsystem() {
 
@@ -184,15 +187,16 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * @param position Absolute output position of the turret's rotation in degrees
   */
   private void moveTurretYawToPosition(double position) {
-    if (m_isYawTurretHomed)
+    if (isTurretYawHomed())
     {
       // Calculate the position movement that needs to be performed from the current absolute position
       // in order to reach the commanded output position
-      m_turretYawEncoder.getPosition();
-      
+      double currentYawPosition = m_turretYawEncoder.getPosition();
+    
       // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
 
-      m_turretYawClosedLoopController.setSetpoint(position, ControlType.kMAXMotionPositionControl);
+      // TODO: Update this call to use the position that is being passed in after testing
+      m_turretYawClosedLoopController.setSetpoint(m_turretYawSetpointDegrees, ControlType.kMAXMotionPositionControl);
     }
   }
 
@@ -201,8 +205,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
    * This function must always be return true before utilizing closed-loop position control on the yaw motor
    * @return Whether the yaw turret has been homed
    */
-  private boolean isYawTurretHomed() {
-    return m_isYawTurretHomed;
+  private boolean isTurretYawHomed() {
+    return m_isTurretYawHomed;
   }
 
   /**
@@ -210,7 +214,7 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * This can include any failsafes that could be implented to protect against a failing sensor
   * @return A boolean indicating if the the yaw motor has reached its homing setpoint
   */
-  public boolean getYawTurretAtHome() {
+  public boolean getTurretYawAtHome() {
     return !m_hallEffectYaw.get();
   }
 
@@ -218,8 +222,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
    * Used to declare that the yaw turret has been homed and its absolute position can be set according to hard physical limits
    * This function is intended to be run at the beginning of autonomous init in order to get the turret's absolute output rotation
    */
-  private void setYawTurretHomed() {
-    m_isYawTurretHomed = true;
+  private void setTurretYawHomed() {
+    m_isTurretYawHomed = true;
     m_turretYawEncoder.setPosition(TurretSetpoints.kYawMotorHomingSetpoint);
   }
 
@@ -239,15 +243,15 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * @param position Absolute output position of the turret's hood in degrees (launch angle)
   */
   private void moveTurretPitchToPosition(double position) {
-    if (m_isPitchTurretHomed)
+    if (isTurretPitchHomed())
     {
       // Calculate the position movement that needs to be performed from the current absolute position
       // in order to reach the commanded output position
-      m_turretPitchEncoder.getPosition();
+      double currentPitchPosition = m_turretPitchEncoder.getPosition();
 
       // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
 
-      m_turretPitchClosedLoopController.setSetpoint(position, ControlType.kMAXMotionPositionControl);
+      m_turretPitchClosedLoopController.setSetpoint(m_turretPitchSetpointDegrees, ControlType.kMAXMotionPositionControl);
     }
   }
 
@@ -256,8 +260,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
    * This function must always be return true before utilizing closed-loop position control on the pitch motor
    * @return Whether the pitch turret has been homed
    */
-  private boolean isPitchTurretHomed() {
-    return m_isPitchTurretHomed;
+  private boolean isTurretPitchHomed() {
+    return m_isTurretPitchHomed;
   }
 
   /**
@@ -265,7 +269,7 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * This can include any failsafes that could be implented to protect against a failing sensor
   * @return A boolean indicating if the the pitch motor has reached its homing setpoint
   */
-  public boolean getPitchTurretAtHome() {
+  public boolean getTurretPitchAtHome() {
     return !m_hallEffectPitch.get();
   }
 
@@ -273,8 +277,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
    * Used to declare that the pitch turret has been homed and its absolute position can be set according to hard physical limits
    * This function is intended to be run at the beginning of autonomous init in order to get the hood's absolute output rotation
    */
-  private void setPitchTurretHomed() {
-    m_isPitchTurretHomed = true;
+  private void setTurretPitchHomed() {
+    m_isTurretPitchHomed = true;
     m_turretPitchEncoder.setPosition(TurretSetpoints.kPitchMotorHomingSetpoint);
   }
 
@@ -343,13 +347,26 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * Command to home the turret yaw motor at a low duty cycle and set its starting 
   * parameters to allow closed loop position control
   */
-  public Command homeYawTurret() {
+  public Command homeTurretYaw() {
     return this.startEnd(
       () -> {
-        this.moveTurretYaw(0.2);
+        this.moveTurretYaw(0.1);
       }, () -> {
-        this.setYawTurretHomed();
+        this.setTurretYawHomed();
       }).withName("Homing yaw turret motor");
+  }
+
+  /**
+  * Commands the turret to rotate to an absolute position
+  * @param position The desired absolute rotational position of the turret
+  */
+  public Command commandTurretYawToPosition(double position) {
+    return this.startEnd(
+      () -> {
+        this.moveTurretYawToPosition(position);
+      }, () -> {
+        this.m_turretYawMotor.stopMotor();
+      }).withName("Rotating turret yaw to position");
   }
 
   /**
@@ -369,13 +386,26 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * Command to home the turret yaw motor at a low duty cycle and set its starting 
   * parameters to allow closed loop position control
   */
-  public Command homePitchTurret() {
+  public Command homeTurretPitch() {
     return this.startEnd(
       () -> {
-        this.moveTurretPitch(0.2);
+        this.moveTurretPitch(0.1);
       }, () -> {
-        this.setPitchTurretHomed();
+        this.setTurretPitchHomed();
       }).withName("Homing yaw turret motor");
+  }
+
+  /**
+  * Commands the turret hood to move to an absolute position
+  * @param position The desired absolute position of the turret hood
+  */
+  public Command commandTurretPitchToPosition(double position) {
+    return this.startEnd(
+      () -> {
+        this.moveTurretPitchToPosition(position);
+      }, () -> {
+        this.m_turretYawMotor.stopMotor();
+      }).withName("Rotating turret yaw to position");
   }
 
   public double getVelocity () {return m_flywheelEncoder.getVelocity();}
@@ -406,6 +436,9 @@ public class FuelShooterSubsystem extends SubsystemBase{
 
     SmartDashboard.putBoolean("Is Flywheel Spinning", isFlywheelSpinning.getAsBoolean());
     SmartDashboard.putBoolean("Is Flywheel Stopped", isFlywheelStopped.getAsBoolean());
+
+    m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", 0.0);
+    m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", 0.0);
   
     // Sensors
     SmartDashboard.putBoolean("Hall Effect Sensor Detection", m_hallEffectYaw.get());
