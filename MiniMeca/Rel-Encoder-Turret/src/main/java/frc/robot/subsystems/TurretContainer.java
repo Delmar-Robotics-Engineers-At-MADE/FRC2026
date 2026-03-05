@@ -9,6 +9,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.robot.Constants.DriveConstants;
@@ -26,13 +28,24 @@ public class TurretContainer extends SubsystemBase {
   FusionRangeSensor m_fusionRange = null;
 
   boolean m_homed = false;
+  private double m_targetX = 0;
+  private double m_targetY = 0;
   private ShuffleboardTab m_tab = Shuffleboard.getTab("Turret");
   private ShuffleboardTab m_matchTab = Shuffleboard.getTab("Match");
 
   // Constructor
   public TurretContainer(SwerveDrivePoseEstimator robot_odometry, FusionRangeSensor fusionRange) {
     m_odometry = robot_odometry;
-    m_fusionRange = fusionRange; // used for homing turret
+    m_fusionRange = fusionRange; // used for homing 
+
+    // target position on field
+    m_targetY = 4.03;
+    if(DriverStation.getAlliance().get() == Alliance.Red) {
+      m_targetX = 11.92;
+    } else {
+      m_targetX = 4.63;
+    }
+
     setupDashboard();
   }
 
@@ -58,8 +71,8 @@ public class TurretContainer extends SubsystemBase {
 
     // calculate angle to red target, and then pretend joystick is pointing that way
     Pose2d pose = m_odometry.getEstimatedPosition();
-    double deltaX = 11.92 - pose.getX();
-    double deltaY = 4.03 - pose.getY();
+    double deltaX = m_targetX - pose.getX();
+    double deltaY = m_targetY - pose.getY();
 
     // normalize so one is 1 and the other is < 1
     double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
