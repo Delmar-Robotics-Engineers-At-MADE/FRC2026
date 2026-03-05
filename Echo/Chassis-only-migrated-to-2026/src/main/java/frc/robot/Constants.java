@@ -61,9 +61,12 @@ public final class Constants {
       public static final double kPitchVelocityTolerance = 1; // degrees per second
 
       public static final double kYawMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle off of the robot's north
-      public static final double kYawMotorMaxOutputRotation = 300.0; // degrees
       public static final double kPitchMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle of the hood's launch angle when all the way down
-      public static final double kPitchMotorMaxOutputRotation = 40.0; // degrees; TODO: set this value with the proper max rotation value
+
+      public static final double kYawMotorMinSetpoint = 0.0; // 0 degrees; TODO: Update this later with the real value after Ryan tells me what it is
+      public static final double kYawMotorMaxSetpoint = 100.0; // 100 degrees; TODO: Update this later with the real value after testing
+      public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint;
+      public static final double kPitchMotorMaxSetpoint = 10.0; // 10 degrees; TODO: Update this later with the real value after testing
     }
   }
 

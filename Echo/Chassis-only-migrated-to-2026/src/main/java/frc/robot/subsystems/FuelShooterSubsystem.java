@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -15,7 +16,6 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.networktables.FloatArrayPublisher;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
@@ -187,14 +187,9 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * @param position Absolute output position of the turret's rotation in degrees
   */
   private void moveTurretYawToPosition(double position) {
-    if (isTurretYawHomed())
+    if (isTurretYawHomed() && position >= Constants.ShooterSubsystemConstants.TurretSetpoints.kYawMotorMinSetpoint &&
+                              position <= Constants.ShooterSubsystemConstants.TurretSetpoints.kYawMotorMaxSetpoint)
     {
-      // Calculate the position movement that needs to be performed from the current absolute position
-      // in order to reach the commanded output position
-      double currentYawPosition = m_turretYawEncoder.getPosition();
-    
-      // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
-
       // TODO: Update this call to use the position that is being passed in after testing
       m_turretYawClosedLoopController.setSetpoint(m_turretYawSetpointDegrees, ControlType.kMAXMotionPositionControl);
     }
@@ -214,8 +209,8 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * This can include any failsafes that could be implented to protect against a failing sensor
   * @return A boolean indicating if the the yaw motor has reached its homing setpoint
   */
-  public boolean getTurretYawAtHome() {
-    return !m_hallEffectYaw.get();
+  private BooleanSupplier getTurretYawAtHome() {
+    return () -> !m_hallEffectYaw.get();
   }
 
   /**
@@ -233,7 +228,7 @@ public class FuelShooterSubsystem extends SubsystemBase{
    */
   private void moveTurretPitch(double dutyCycle) {
 
-    // Clamp the applied duty cycle to 60% for safety in testing
+    // Clamp the applied duty cycle to 30% for safety in testing
     double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
     m_turretPitchMotor.set(actualAppliedDutyCycle);
   }
@@ -243,14 +238,10 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * @param position Absolute output position of the turret's hood in degrees (launch angle)
   */
   private void moveTurretPitchToPosition(double position) {
-    if (isTurretPitchHomed())
+    if (isTurretPitchHomed() && position >= Constants.ShooterSubsystemConstants.TurretSetpoints.kPitchMotorMinSetpoint &&
+                                position <= Constants.ShooterSubsystemConstants.TurretSetpoints.kPitchMotorMaxSetpoint)
     {
-      // Calculate the position movement that needs to be performed from the current absolute position
-      // in order to reach the commanded output position
-      double currentPitchPosition = m_turretPitchEncoder.getPosition();
-
-      // TODO: Implement logic to move position in direction that avoids the turret pitch deadzone
-
+      // TODO: Update this call to use the position that is being passed in after testing
       m_turretPitchClosedLoopController.setSetpoint(m_turretPitchSetpointDegrees, ControlType.kMAXMotionPositionControl);
     }
   }
@@ -269,8 +260,11 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * This can include any failsafes that could be implented to protect against a failing sensor
   * @return A boolean indicating if the the pitch motor has reached its homing setpoint
   */
-  public boolean getTurretPitchAtHome() {
-    return !m_hallEffectPitch.get();
+  private BooleanSupplier getTurretPitchAtHome() {
+    // TODO: This fuction may need to be re-done depending on our actual condition for checking if the hood is homed.
+    // I'm not entirely sure we are planning to use a hall effect sensor on this one, so we may need to implement logic for looking
+    // at motor current vs velocity
+    return () -> !m_hallEffectPitch.get();
   }
 
   /**
@@ -348,12 +342,11 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * parameters to allow closed loop position control
   */
   public Command homeTurretYaw() {
-    return this.startEnd(
-      () -> {
-        this.moveTurretYaw(0.1);
-      }, () -> {
-        this.setTurretYawHomed();
-      }).withName("Homing yaw turret motor");
+    return run(() -> this.moveTurretYaw(0.1))
+    .until(getTurretYawAtHome())
+    .andThen(() -> this.m_turretYawMotor.stopMotor())
+    .andThen(() -> this.setTurretYawHomed())
+    .withName("Home Turret Yaw");
   }
 
   /**
@@ -387,12 +380,11 @@ public class FuelShooterSubsystem extends SubsystemBase{
   * parameters to allow closed loop position control
   */
   public Command homeTurretPitch() {
-    return this.startEnd(
-      () -> {
-        this.moveTurretPitch(0.1);
-      }, () -> {
-        this.setTurretPitchHomed();
-      }).withName("Homing yaw turret motor");
+    return run(() -> this.moveTurretPitch(0.1))
+    .until(getTurretPitchAtHome())
+    .andThen(() -> this.m_turretPitchMotor.stopMotor())
+    .andThen(() -> this.setTurretPitchHomed())
+    .withName("Home Turret Pitch");
   }
 
   /**
