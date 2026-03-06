@@ -60,13 +60,16 @@ public final class Constants {
       public static final double kYawVelocityTolerance = 1;   // degrees per second
       public static final double kPitchVelocityTolerance = 1; // degrees per second
 
-      public static final double kYawMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle off of the robot's north
-      public static final double kPitchMotorHomingSetpoint = 0.0; // degrees; TODO: set this value to the proper absolute angle of the hood's launch angle when all the way down
+      public static final double kYawMotorHomingSetpoint = 60.0; // 60 degrees
+      public static final double kPitchMotorHomingSetpoint = 62.45; // degrees; TODO: Verif this with Ryan
 
-      public static final double kYawMotorMinSetpoint = 0.0; // 0 degrees; TODO: Update this later with the real value after Ryan tells me what it is
-      public static final double kYawMotorMaxSetpoint = 100.0; // 100 degrees; TODO: Update this later with the real value after testing
-      public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint;
-      public static final double kPitchMotorMaxSetpoint = 10.0; // 10 degrees; TODO: Update this later with the real value after testing
+      public static final double kYawOutputRotationSafeBuffer = 2.0; // 2 degrees
+      public static final double kPitchOutputAngleSafeBuffer = 5.0; // 5 degrees; TODO: extra large for now to make sure we have a safe buffer
+
+      public static final double kYawMotorMinSetpoint = 2.0; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
+      public static final double kYawMotorMaxSetpoint = 300.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
+      public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint - kPitchOutputAngleSafeBuffer; // use the homing setpoint as the min value and remove a couple degrees for a safety net
+      public static final double kPitchMotorMaxSetpoint = 28.0 + kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
     }
   }
 

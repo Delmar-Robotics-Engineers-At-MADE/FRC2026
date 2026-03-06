@@ -147,7 +147,15 @@ public final class Configs {
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5)
+        .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
+
+      turretYawConfig
+        .softLimit
+          .forwardSoftLimit(Constants.ShooterSubsystemConstants.TurretSetpoints.kYawMotorMaxSetpoint)
+          .forwardSoftLimitEnabled(true)
+          .reverseSoftLimit(Constants.ShooterSubsystemConstants.TurretSetpoints.kYawMotorMinSetpoint)
+          .reverseSoftLimitEnabled(true);
 
       turretYawConfig
         .encoder
@@ -187,7 +195,15 @@ public final class Configs {
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5)
+        .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
+
+      turretPitchConfig
+        .softLimit
+          .forwardSoftLimit(Constants.ShooterSubsystemConstants.TurretSetpoints.kPitchMotorMaxSetpoint)
+          .forwardSoftLimitEnabled(true)
+          .reverseSoftLimit(Constants.ShooterSubsystemConstants.TurretSetpoints.kPitchMotorMinSetpoint)
+          .reverseSoftLimitEnabled(true);
 
       turretPitchConfig
         .encoder

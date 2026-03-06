@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -16,25 +17,35 @@ public class ClimberSubsystem extends SubsystemBase{
    ClimberSubsystem() {
 
       TalonFXConfiguration leftConfig = new TalonFXConfiguration();
-      
+      TalonFXConfiguration rightConfig = new TalonFXConfiguration();
+
+      leftConfig
+         .Feedback
+            .withFeedbackSensorSource(FeedbackSensorSourceValue.RotorSensor);
+
       leftConfig
          .MotorOutput
             .withNeutralMode(NeutralModeValue.Brake)
             .withInverted(InvertedValue.Clockwise_Positive);
 
       leftConfig
+         .OpenLoopRamps
+            .withDutyCycleOpenLoopRampPeriod(0.1);
+
+      leftConfig
          .CurrentLimits
-         .withSupplyCurrentLimit(40); // Amps
+            .withSupplyCurrentLimit(40)
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLowerLimit(30)
+            .withSupplyCurrentLowerTime(1.5)
+            .withStatorCurrentLimit(60)
+            .withStatorCurrentLimitEnable(true); // Amps
 
-      leftClimberMotor.setNeutralMode(NeutralModeValue.Brake);
-      rightClimberMotor.setNeutralMode(NeutralModeValue.Brake);
-
-
-
-      TalonFXConfiguration rightConfig = new TalonFXConfiguration();
-
-      leftConfig.CurrentLimits.withSupplyCurrentLimit(0);
-
+      rightConfig = leftConfig.clone();
+      
+      leftClimberMotor.getConfigurator().apply(leftConfig);
+      rightClimberMotor.getConfigurator().apply(rightConfig);
+      
       // TODO: Finish filling out the configuration for the climber motors
    
    }

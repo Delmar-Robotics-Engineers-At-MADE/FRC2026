@@ -264,7 +264,7 @@ public class FuelShooterSubsystem extends SubsystemBase{
     // TODO: This fuction may need to be re-done depending on our actual condition for checking if the hood is homed.
     // I'm not entirely sure we are planning to use a hall effect sensor on this one, so we may need to implement logic for looking
     // at motor current vs velocity
-    return () -> !m_hallEffectPitch.get();
+    return () -> !m_hallEffectPitch.get() || (m_turretPitchMotor.getOutputCurrent() > Constants.Neo550MotorConstants.kMaxAllowedCurrent - 5);
   }
 
   /**
