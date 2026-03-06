@@ -104,7 +104,7 @@ public final class Configs {
         .idleMode(IdleMode.kCoast)
         .closedLoopRampRate(1.0)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(40);
+        .smartCurrentLimit(30, 50);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
@@ -114,14 +114,14 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0)
+          .p(0.0)
           .outputRange(-1, 1);
 
       flywheelConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
-          .maxAcceleration(3000) // rpm/s
+          .maxAcceleration(4000) // rpm/s
           .allowedProfileError(ShooterSubsystemConstants.FlywheelSetpoints.kVelocityTolerance); // rpm
 
       // Constants.NeoMotorConstants.kVortexKv is in rpm/V. feedforward.kV is in V/rpm sort we take
@@ -140,14 +140,14 @@ public final class Configs {
         .inverted(true)
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(30);
+        .smartCurrentLimit(30, 60);
 
       turretYawConfig
         .inverted(false)
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5)
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5, Neo550MotorConstants.kMaxAllowedCurrent)
         .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
 
       turretYawConfig
@@ -195,7 +195,7 @@ public final class Configs {
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
         .closedLoopRampRate(1.0)
-        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5)
+        .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5, Neo550MotorConstants.kMaxAllowedCurrent)
         .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
 
       turretPitchConfig
