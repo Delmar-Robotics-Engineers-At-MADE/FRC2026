@@ -26,16 +26,6 @@ public final class Constants {
       }
    }
 
-   public static final class ShooterSubsystemConstants {
-      public static final int kFlywheelMotorCanId = 22; // SPARK MAX CAN ID (Port)
-      public static final int kFlywheelFollowerMotorCanId = 21; // SPARK MAX CAN ID (Star)
-
-      public static final class FlywheelSetpoints {
-         public static final double kShootRpm = 4500.0;
-         public static final double kVelocityTolerance = 250.0; // rpm
-      }
-   }
-
    public static final class FeederSubsystemConstants {
       public static final int kFeederMotorCanId = 31; // SPARK MAX CAN ID
 
@@ -79,6 +69,26 @@ public final class Constants {
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
          public static final double kPitchMotorMaxSetpoint = 62.45 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
       }
+   }
+
+   public static final class ShooterSubsystemConstants {
+      public static final int kFlywheelMotorCanId = 22; // SPARK MAX CAN ID (Port)
+      public static final int kFlywheelFollowerMotorCanId = 21; // SPARK MAX CAN ID (Star)
+
+      public static final class FlywheelSetpoints {
+         public static final double kShootRpm = 4500.0;
+         public static final double kVelocityTolerance = 250.0; // rpm
+      }
+   }
+
+   public static final class ClimberSubsystemConstants {
+      public static final int kClimberLeftMotorCanId = 41; // CTRE Talon FX CAN ID (port-side motor)
+      public static final int kClimberRightMotorCanId = 42; // CTRE Talon FX CAN ID (star-side motor)
+   }
+
+   public static final class LightsSubsystemConstants {
+      public static final int kCANdleCanId = 50; // CTRE CANdle CAN ID
+      public static final double kGlobalBrightnessValue = 0.5; // 50% of max brightness
    }
 
    public static final class DriveConstants {

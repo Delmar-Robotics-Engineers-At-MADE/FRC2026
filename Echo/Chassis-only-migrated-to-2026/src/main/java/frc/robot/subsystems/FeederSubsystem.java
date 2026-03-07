@@ -33,7 +33,7 @@ public class FeederSubsystem extends SubsystemBase {
        * mid-operation.
        */
       m_feederMotor.configure(
-            Configs.ShooterSubsystem.feederConfig,
+            Configs.FeederSubsystem.feederConfig,
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters);
    }
@@ -61,6 +61,6 @@ public class FeederSubsystem extends SubsystemBase {
    public void periodic() {
 
       // Temps
-      SmartDashboard.putNumber("Shooter | Feeder | Temperature (deg C)", m_feederMotor.getMotorTemperature());
+      SmartDashboard.putNumber("Feeder Motor | Temperature (deg C)", m_feederMotor.getMotorTemperature());
    }
 }

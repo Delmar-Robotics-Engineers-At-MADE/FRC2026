@@ -53,7 +53,7 @@ public class FuelShooterSubsystem extends SubsystemBase {
 
 
    // TEMPORARY: Tuning Constants
-   private final SparkMaxConfig mt_flywheelConfig = Configs.ShooterSubsystem.flywheelConfig;
+   private SparkMaxConfig mt_flywheelConfig = Configs.ShooterSubsystem.flywheelConfig;
    private double mt_flywheelClosedLoopP = 0.0;
    private double mt_flywheelClosedLoopI = 0.0;
    private double mt_flywheelClosedLoopD = 0.0;
@@ -157,22 +157,20 @@ public class FuelShooterSubsystem extends SubsystemBase {
       //m_flywheelTargetVelocity = m_flywheelVelocityChooser.getSelected(); // TODO: Re-enable this later when tuning is done
       m_flywheelTargetVelocity = SmartDashboard.getNumber("Tuning Flywheel Speed", 1500.0);
 
-      // Display subsystem values
-      SmartDashboard.putNumber("Shooter | Flywheel | Applied Output", m_motorPort.getAppliedOutput());
-      SmartDashboard.putNumber("Shooter | Flywheel | Current", m_motorPort.getOutputCurrent());
-      SmartDashboard.putNumber("Shooter | Flywheel | Velocity Setpoint", m_flywheelClosedLoopController.getMAXMotionSetpointVelocity());
+      // Flyhweel attributes
+      SmartDashboard.putNumber("Flywheel | Temperature (deg C)", m_motorPort.getMotorTemperature());
+      SmartDashboard.putNumber("Flywheel | Applied Output", m_motorPort.getAppliedOutput());
+      SmartDashboard.putNumber("Flywheel | Current", m_motorPort.getOutputCurrent());
+      SmartDashboard.putNumber("Flywheel | Velocity Controller Setpoint", m_flywheelClosedLoopController.getMAXMotionSetpointVelocity());
 
-      // Temps
-      SmartDashboard.putNumber("Shooter | Flywheel Leader | Temperature (deg C)", m_motorPort.getMotorTemperature());
-      SmartDashboard.putNumber("Shooter | Flywheel Follower | Temperature (deg C)", m_motorStar.getMotorTemperature());
-
-      // Follower values
-      SmartDashboard.putNumber("Shooter | Flywheel Follower | Applied Output", m_motorStar.getAppliedOutput());
-      SmartDashboard.putNumber("Shooter | Flywheel Follower | Current", m_motorStar.getOutputCurrent());
+      // Flywheel follower attributes
+      SmartDashboard.putNumber("Flywheel Follower | Temperature (deg C)", m_motorStar.getMotorTemperature());
+      SmartDashboard.putNumber("Flywheel Follower | Applied Output", m_motorStar.getAppliedOutput());
+      SmartDashboard.putNumber("Flywheel Follower | Current", m_motorStar.getOutputCurrent());
 
       // Target velocity vs actual velocity
-      SmartDashboard.putNumber("Shooter | Flywheel | Target Velocity", m_flywheelTargetVelocity);
-      SmartDashboard.putNumber("Shooter | Flywheel | Actual Velocity", m_flywheelEncoder.getVelocity());
+      SmartDashboard.putNumber("Flywheel | Target Velocity", m_flywheelTargetVelocity);
+      SmartDashboard.putNumber("Flywheel | Actual Velocity", m_flywheelEncoder.getVelocity());
 
       // Track whether the flywheel is spinning (within the tolerance)
       SmartDashboard.putBoolean("Is Flywheel Spinning", isFlywheelSpinning.getAsBoolean());

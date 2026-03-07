@@ -10,6 +10,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -37,6 +38,12 @@ public class TurretSubsystem extends SubsystemBase {
    double m_turretPitchSetpointDegrees = 0.0;
    boolean m_isTurretPitchHomed = false;
 
+   // REMOVE LATER: Tuning Constants
+   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
+   private double mt_flywheelClosedLoopP = 0.0;
+   private double mt_flywheelClosedLoopI = 0.0;
+   private double mt_flywheelClosedLoopD = 0.0;
+
    public TurretSubsystem() {
 
       // Initialize shooter pointing motors (yaw motor controls the shooter's
@@ -62,11 +69,11 @@ public class TurretSubsystem extends SubsystemBase {
        * mid-operation.
        */
       m_turretYawMotor.configure(
-            Configs.ShooterSubsystem.turretYawConfig,
+            Configs.TurretSubsystem.turretYawConfig,
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters);
       m_turretPitchMotor.configure(
-            Configs.ShooterSubsystem.turretPitchConfig,
+            Configs.TurretSubsystem.turretPitchConfig,
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters);
 
@@ -324,19 +331,41 @@ public class TurretSubsystem extends SubsystemBase {
    public void periodic() {
 
       // Display subsystem values
-      SmartDashboard.putNumber("Shooter | Turret Yaw | Velocity Setpoint", m_turretYawClosedLoopController.getMAXMotionSetpointVelocity());
-      SmartDashboard.putNumber("Shooter | Turret Yaw | Current", m_turretYawMotor.getOutputCurrent());
-      SmartDashboard.putNumber("Shooter | Turret Pitch | Velocity Setpoint", m_turretPitchClosedLoopController.getMAXMotionSetpointVelocity());
-      SmartDashboard.putNumber("Shooter | Turret Pitch | Current", m_turretPitchMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Turret Yaw | Velocity Setpoint", m_turretYawClosedLoopController.getMAXMotionSetpointVelocity());
+      SmartDashboard.putNumber("Turret Yaw | Current", m_turretYawMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Turret Pitch | Velocity Setpoint", m_turretPitchClosedLoopController.getMAXMotionSetpointVelocity());
+      SmartDashboard.putNumber("Turret Pitch | Current", m_turretPitchMotor.getOutputCurrent());
 
       // Temps
-      SmartDashboard.putNumber("Shooter | Turret Yaw | Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
-      SmartDashboard.putNumber("Shooter | Turret Pitch | Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
+      SmartDashboard.putNumber("Turret Yaw | Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
+      SmartDashboard.putNumber("Turret Pitch | Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
       m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", 0.0);
       m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", 0.0);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", m_hallEffectYaw.get());
+
+      // REMOVE LATER: Tuning PID for the flywheel
+      double newTurretkP = SmartDashboard.getNumber("Turret/kP", mt_flywheelClosedLoopP);
+      double newTurretkI = SmartDashboard.getNumber("Turret/kI", mt_flywheelClosedLoopI);
+      double newTurretkD = SmartDashboard.getNumber("Turret/kD", mt_flywheelClosedLoopD);
+
+      if (newTurretkP != mt_flywheelClosedLoopP || newTurretkI != mt_flywheelClosedLoopI || newTurretkD  != mt_flywheelClosedLoopD) {
+         mt_turretConfig
+            .closedLoop
+               .p(newTurretkP)
+               .i(newTurretkI)
+               .d(newTurretkD);
+
+         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      }
+
+      // Push current values so they appear on startup
+      SmartDashboard.putNumber("Flywheel/kP", mt_flywheelClosedLoopP);
+      SmartDashboard.putNumber("Flywheel/kI", mt_flywheelClosedLoopI);
+      SmartDashboard.putNumber("Flywheel/kD", mt_flywheelClosedLoopD);
+      SmartDashboard.putNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
+      SmartDashboard.putNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
    }
 }
