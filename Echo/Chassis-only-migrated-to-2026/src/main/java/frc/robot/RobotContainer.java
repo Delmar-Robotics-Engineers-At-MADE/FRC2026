@@ -11,10 +11,13 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.Constants.OIConstants;
+import frc.robot.commands.UtilityCommands;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.FuelShooterSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
+import frc.robot.subsystems.TurretSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -34,11 +37,13 @@ public class RobotContainer {
   static final double PovSpeed = 0.1 * DriveSubsystem.DriveSpeedDivider;  // speed divider slows it down, but we really want this speed not slowed down
 
   // The robot's subsystems
-  //private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
 
-  private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
+  private final FeederSubsystem m_feeder = new FeederSubsystem();
+  private final TurretSubsystem m_turret = new TurretSubsystem();
+  private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
 
   // TODO: Add fun LEDs back in if time and weight permit
   //private final Blinkin m_blinkin = new Blinkin();
@@ -155,22 +160,25 @@ public class RobotContainer {
     //     .and(m_operCmdController.y())
     //     .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
 
-    // Right Trigger -> Run fuel intake
-    m_operCmdController
-      .rightTrigger(TriggerThreshold)
-        .whileTrue(m_intake.runIntakeCommand());
-
-    // Left Trigger -> Spin shooterflywheel
+    // Left Trigger -> Run fuel intake
     m_operCmdController
       .leftTrigger(TriggerThreshold)
+        .whileTrue(m_intake.runIntakeCommand());
+
+    // Right Trigger -> Spin shooter/flywheel
+    m_operCmdController
+      .rightTrigger(TriggerThreshold)
         .whileTrue(m_fuelShoot.runFlywheelCommand());
 
     // A button -> Spin feeder/loader motor into shooter
-    m_operCmdController.a().whileTrue(m_fuelShoot.runShooterCommand());
+    m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
+
+    // Y button -> Run the shooter until it is up to speed & then run the shooter
+    m_operCmdController.y().whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder));
 
     // X button -> Turn turret yaw to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.x().whileTrue(m_fuelShoot.commandTurretYawToPosition(0));
+    m_operCmdController.leftBumper().whileTrue(m_turret.commandTurretYawToPosition(0));
 
     // // Left stick movement along the X axis control the turret rotational movement
     // m_operCmdController
