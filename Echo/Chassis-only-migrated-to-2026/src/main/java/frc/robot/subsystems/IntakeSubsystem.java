@@ -9,15 +9,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Configs;
+import frc.robot.Constants;
 import frc.robot.Constants.IntakeSubsystemConstants;
 import frc.robot.Constants.IntakeSubsystemConstants.ConveyorSetpoints;
 import frc.robot.Constants.IntakeSubsystemConstants.IntakeSetpoints;
-
 
 public class IntakeSubsystem extends SubsystemBase{
 
   private SparkMax m_intakeMotor = new SparkMax(IntakeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
   private SparkMax m_conveyorMotor = new SparkMax(IntakeSubsystemConstants.kConveyorMotorCanId, MotorType.kBrushless);
+
+  private double mt_intakeDutyCycle = Constants.IntakeSubsystemConstants.IntakeSetpoints.kIntake;
+  private double mt_conveyorDutyCycle = Constants.IntakeSubsystemConstants.ConveyorSetpoints.kIntake;
 
   public IntakeSubsystem() {
         /*
@@ -60,8 +63,8 @@ public class IntakeSubsystem extends SubsystemBase{
   public Command runIntakeCommand() {
     return this.startEnd(
         () -> {
-          this.setIntakePower(IntakeSetpoints.kIntake);
-          this.setConveyorPower(ConveyorSetpoints.kIntake);
+          this.setIntakePower(mt_intakeDutyCycle);
+          this.setConveyorPower(mt_conveyorDutyCycle);
         }, () -> {
           this.setIntakePower(0.0);
           this.setConveyorPower(0.0);
@@ -86,19 +89,22 @@ public class IntakeSubsystem extends SubsystemBase{
   @Override
   public void periodic() {
 
-    // Display subsystem values
-    SmartDashboard.putNumber("Intake | Intake | Applied Output", m_intakeMotor.getAppliedOutput());
-    SmartDashboard.putNumber("Intake | Conveyor | Applied Output", m_conveyorMotor.getAppliedOutput());
+    mt_intakeDutyCycle = SmartDashboard.getNumber("Set Intake Duty Cycle", mt_intakeDutyCycle);
+    mt_conveyorDutyCycle = SmartDashboard.getNumber("Set Conveyor Duty Cycle", mt_conveyorDutyCycle);
 
-    // Current
-    SmartDashboard.putNumber("Intake | Intake | Current", m_intakeMotor.getOutputCurrent());
-    SmartDashboard.putNumber("Intake | Conveyor | Current", m_conveyorMotor.getOutputCurrent());
+    // Intake Values
+    SmartDashboard.putNumber("Intake | Temperature (deg C)", m_intakeMotor.getMotorTemperature());
+    SmartDashboard.putNumber("Intake | Current", m_intakeMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Intake | Applied Output", m_intakeMotor.getAppliedOutput());
+    
+    // Conveyor Values
+    SmartDashboard.putNumber("Conveyor | Temperature (deg C)", m_conveyorMotor.getMotorTemperature());
+    SmartDashboard.putNumber("Conveyor | Current", m_conveyorMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Conveyor | Applied Output", m_conveyorMotor.getAppliedOutput());
 
-    // Temps
-    SmartDashboard.putNumber("Intake | Intake | Temperature (deg C)", m_intakeMotor.getMotorTemperature());
-    SmartDashboard.putNumber("Intake | Conveyor | Temperature (deg C)", m_conveyorMotor.getMotorTemperature());
-  
-  
+    // Publish duty cycles back to the dashboard
+    SmartDashboard.putNumber("Set Intake Duty Cycle", mt_intakeDutyCycle);
+    SmartDashboard.putNumber("Set Conveyor Duty Cycle", mt_conveyorDutyCycle);
   }
 
 }

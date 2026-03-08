@@ -16,6 +16,7 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.FuelShooterSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.LightsSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import frc.robot.subsystems.TurretSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -37,13 +38,14 @@ public class RobotContainer {
   static final double PovSpeed = 0.1 * DriveSubsystem.DriveSpeedDivider;  // speed divider slows it down, but we really want this speed not slowed down
 
   // The robot's subsystems
-  private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
+  //private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final FeederSubsystem m_feeder = new FeederSubsystem();
   private final TurretSubsystem m_turret = new TurretSubsystem();
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
+  private final LightsSubsystem m_lights = new LightsSubsystem();
 
   // TODO: Add fun LEDs back in if time and weight permit
   //private final Blinkin m_blinkin = new Blinkin();
@@ -90,6 +92,8 @@ public class RobotContainer {
                 true),
             m_robotDrive));
 
+
+    m_lights.test();
   }
 
   public void simulationPeriodic() {
@@ -180,15 +184,17 @@ public class RobotContainer {
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
     m_operCmdController.leftBumper().whileTrue(m_turret.commandTurretYawToPosition(0));
 
-    // // Left stick movement along the X axis control the turret rotational movement
-    // m_operCmdController
-    //   .axisMagnitudeGreaterThan(0, TriggerThreshold)
-    //     .whileTrue(m_fuelShoot.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX()));
 
-    // // Left stick movement along the y axis contrtols the turret hood movement
-    // m_operCmdController
-    //   .axisMagnitudeGreaterThan(1, TriggerThreshold)
-    //     .whileTrue(m_fuelShoot.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY()));
+    m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());
+
+    // Left stick movement along the X axis control the turret rotational movement
+    m_operCmdController.b()
+        .whileTrue(m_turret.moveTurretRotationManual((2000.0 * Constants.TurretSubsystemConstants.TurretUnits.kYawVelocityConversionFactor)));
+
+    // Left stick movement along the y axis contrtols the turret hood movement
+    m_operCmdController
+      .axisMagnitudeGreaterThan(1, TriggerThreshold)
+        .whileTrue(m_turret.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY(), 1000.0 * Constants.TurretSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor));
   }
 
   public Command getAutonomousCommand() {

@@ -3,8 +3,6 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
 
-import java.io.ObjectInputFilter.Config;
-
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
@@ -155,7 +153,7 @@ public class FuelShooterSubsystem extends SubsystemBase {
    public void periodic() {
 
       //m_flywheelTargetVelocity = m_flywheelVelocityChooser.getSelected(); // TODO: Re-enable this later when tuning is done
-      m_flywheelTargetVelocity = SmartDashboard.getNumber("Tuning Flywheel Speed", 1500.0);
+      m_flywheelTargetVelocity = SmartDashboard.getNumber("Tuning Flywheel Speed", m_flywheelTargetVelocity);
 
       // Flyhweel attributes
       SmartDashboard.putNumber("Flywheel | Temperature (deg C)", m_motorPort.getMotorTemperature());
@@ -195,6 +193,8 @@ public class FuelShooterSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Flywheel/kP", mt_flywheelClosedLoopP);
       SmartDashboard.putNumber("Flywheel/kI", mt_flywheelClosedLoopI);
       SmartDashboard.putNumber("Flywheel/kD", mt_flywheelClosedLoopD);
+
+      SmartDashboard.putNumber("Tuning Flywheel Speed", m_flywheelTargetVelocity);
    }
 
    public void simulationPeriodic() {

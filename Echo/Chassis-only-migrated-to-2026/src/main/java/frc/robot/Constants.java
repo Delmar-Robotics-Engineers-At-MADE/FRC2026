@@ -59,7 +59,7 @@ public final class Constants {
          public static final double kPitchVelocityTolerance = 1; // degrees per second
 
          public static final double kYawMotorHomingSetpoint = 60.0; // degrees
-         public static final double kPitchMotorHomingSetpoint = 28.0; // degrees
+         public static final double kPitchMotorHomingSetpoint = 25.0; // degrees
 
          public static final double kYawOutputRotationSafeBuffer = 2.0; // 2 degrees
          public static final double kPitchOutputAngleSafeBuffer = 5.0; // 5 degrees; TODO: extra large for now to make sure we have a safe buffer
@@ -67,7 +67,7 @@ public final class Constants {
          public static final double kYawMotorMinSetpoint = 0.0 + kYawOutputRotationSafeBuffer; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
          public static final double kYawMotorMaxSetpoint = 300.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
-         public static final double kPitchMotorMaxSetpoint = 62.45 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
+         public static final double kPitchMotorMaxSetpoint = 66.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
       }
    }
 
@@ -87,7 +87,7 @@ public final class Constants {
    }
 
    public static final class LightsSubsystemConstants {
-      public static final int kCANdleCanId = 50; // CTRE CANdle CAN ID
+      public static final int kCANdleCanId = 51; // CTRE CANdle CAN ID
       public static final double kGlobalBrightnessValue = 0.5; // 50% of max brightness
    }
 

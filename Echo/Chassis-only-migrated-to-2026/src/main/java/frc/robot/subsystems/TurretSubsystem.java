@@ -7,6 +7,7 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -40,9 +41,9 @@ public class TurretSubsystem extends SubsystemBase {
 
    // REMOVE LATER: Tuning Constants
    private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
-   private double mt_flywheelClosedLoopP = 0.0;
-   private double mt_flywheelClosedLoopI = 0.0;
-   private double mt_flywheelClosedLoopD = 0.0;
+   private double mt_turretClosedLoopP = 0.0;
+   private double mt_turretClosedLoopI = 0.0;
+   private double mt_turretClosedLoopD = 0.0;
 
    public TurretSubsystem() {
 
@@ -50,13 +51,6 @@ public class TurretSubsystem extends SubsystemBase {
       // direction while the pitch motor controls hood position)
       m_turretYawMotor = new SparkMax(TurretSubsystemConstants.kTurretYawMotorCanId, MotorType.kBrushless);
       m_turretPitchMotor = new SparkMax(TurretSubsystemConstants.kTurretPitchMotorCanId, MotorType.kBrushless);
-
-      // Initialize individual closed loop controllers and motors for each of the
-      // turret components individually
-      m_turretYawClosedLoopController = m_turretYawMotor.getClosedLoopController();
-      m_turretYawEncoder = m_turretYawMotor.getEncoder();
-      m_turretPitchClosedLoopController = m_turretPitchMotor.getClosedLoopController();
-      m_turretPitchEncoder = m_turretPitchMotor.getEncoder();
 
       /*
        * Apply the appropriate configurations to the SPARKs.
@@ -76,6 +70,14 @@ public class TurretSubsystem extends SubsystemBase {
             Configs.TurretSubsystem.turretPitchConfig,
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters);
+
+
+      // Initialize individual closed loop controllers and motors for each of the
+      // turret components individually
+      m_turretYawClosedLoopController = m_turretYawMotor.getClosedLoopController();
+      m_turretYawEncoder = m_turretYawMotor.getEncoder();
+      m_turretPitchClosedLoopController = m_turretPitchMotor.getClosedLoopController();
+      m_turretPitchEncoder = m_turretPitchMotor.getEncoder();
 
       // Zero encoders on initialization
       m_turretYawEncoder.setPosition(0.0);
@@ -124,6 +126,18 @@ public class TurretSubsystem extends SubsystemBase {
       // Clamp the applied duty cycle to 30% for safety in testing
       double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
       m_turretYawMotor.set(actualAppliedDutyCycle);
+   }
+
+   public void moveTurretYawVelocity(double velocity) {
+
+      // TODO: Update this to pass in a proper value; for now, use 2 degrees per second
+      m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
+   }
+
+   private void moveTurretPitchVelocity(double velocity) {
+
+      // TODO: Update this to pass in a proper value; for now, use 2 degrees per second
+      m_turretPitchClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
    }
 
    /**
@@ -247,15 +261,21 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretPitchEncoder.setPosition(TurretSetpoints.kPitchMotorHomingSetpoint);
    }
 
+   // TODO: remove this later!!
+   private void testSetTurretHomed() {
+      setTurretPitchHomed();
+      setTurretYawHomed();
+   }
+
       /**
     * Command to manually control the turret's rotation. While being commanded, the
     * turret will move with the
     * applied duty cycle. Once the command ends, the motors will stop.
     */
-   public Command moveTurretRotationManual(DoubleSupplier dutyCycle) {
+   public Command moveTurretRotationManual(double velocity) {
       return this.startEnd(
             () -> {
-               this.moveTurretYaw(dutyCycle.getAsDouble());
+               this.moveTurretYawVelocity(velocity);
             }, () -> {
                this.m_turretYawMotor.stopMotor();
             }).withName("Turning turret");
@@ -292,10 +312,16 @@ public class TurretSubsystem extends SubsystemBase {
     * turret hood will move with the
     * applied duty cycle. Once the command ends, the motors will stop.
     */
-   public Command moveTurretHoodManual(DoubleSupplier dutyCycle) {
+   public Command moveTurretHoodManual(DoubleSupplier threshold, double velocity) {
       return this.startEnd(
             () -> {
-               this.moveTurretPitch(dutyCycle.getAsDouble());
+               if (threshold.getAsDouble() > 0.0)
+               {
+                  this.moveTurretPitchVelocity(velocity);
+               }
+               else{
+                  this.moveTurretPitchVelocity(-velocity);
+               }
             }, () -> {
                this.m_turretPitchMotor.stopMotor();
             }).withName("Moving turret hood");
@@ -327,6 +353,10 @@ public class TurretSubsystem extends SubsystemBase {
             }).withName("Rotating turret yaw to position");
    }
 
+   public Command testCommandSetTurretHomed() {
+      return this.runOnce(() -> this.testSetTurretHomed());
+   }
+
    @Override
    public void periodic() {
 
@@ -340,18 +370,21 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Turret Yaw | Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
       SmartDashboard.putNumber("Turret Pitch | Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
+      SmartDashboard.putNumber("Turret Yaw | Encoder Position", m_turretYawEncoder.getPosition());
+      SmartDashboard.putNumber("Turret Pitch | Encoder Position", m_turretPitchEncoder.getPosition());
+
       m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", 0.0);
       m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", 0.0);
 
       // Sensors
-      SmartDashboard.putBoolean("Hall Effect Sensor Detection", m_hallEffectYaw.get());
+      SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
 
       // REMOVE LATER: Tuning PID for the flywheel
-      double newTurretkP = SmartDashboard.getNumber("Turret/kP", mt_flywheelClosedLoopP);
-      double newTurretkI = SmartDashboard.getNumber("Turret/kI", mt_flywheelClosedLoopI);
-      double newTurretkD = SmartDashboard.getNumber("Turret/kD", mt_flywheelClosedLoopD);
+      double newTurretkP = SmartDashboard.getNumber("Turret/kP", mt_turretClosedLoopP);
+      double newTurretkI = SmartDashboard.getNumber("Turret/kI", mt_turretClosedLoopI);
+      double newTurretkD = SmartDashboard.getNumber("Turret/kD", mt_turretClosedLoopD);
 
-      if (newTurretkP != mt_flywheelClosedLoopP || newTurretkI != mt_flywheelClosedLoopI || newTurretkD  != mt_flywheelClosedLoopD) {
+      if (newTurretkP != mt_turretClosedLoopP || newTurretkI != mt_turretClosedLoopI || newTurretkD  != mt_turretClosedLoopD) {
          mt_turretConfig
             .closedLoop
                .p(newTurretkP)
@@ -362,9 +395,9 @@ public class TurretSubsystem extends SubsystemBase {
       }
 
       // Push current values so they appear on startup
-      SmartDashboard.putNumber("Flywheel/kP", mt_flywheelClosedLoopP);
-      SmartDashboard.putNumber("Flywheel/kI", mt_flywheelClosedLoopI);
-      SmartDashboard.putNumber("Flywheel/kD", mt_flywheelClosedLoopD);
+      SmartDashboard.putNumber("Turret/kP", mt_turretClosedLoopP);
+      SmartDashboard.putNumber("Turret/kI", mt_turretClosedLoopI);
+      SmartDashboard.putNumber("Turret/kD", mt_turretClosedLoopD);
       SmartDashboard.putNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
       SmartDashboard.putNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
    }

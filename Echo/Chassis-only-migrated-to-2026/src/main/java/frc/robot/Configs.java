@@ -110,12 +110,12 @@ public final class Configs {
         .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5, Neo550MotorConstants.kMaxAllowedCurrent)
         .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
 
-      turretYawConfig
-        .softLimit
-          .forwardSoftLimit(TurretSetpoints.kYawMotorMaxSetpoint)
-          .forwardSoftLimitEnabled(true)
-          .reverseSoftLimit(TurretSetpoints.kYawMotorMinSetpoint)
-          .reverseSoftLimitEnabled(true);
+      // turretYawConfig
+      //   .softLimit
+      //     .forwardSoftLimit(TurretSetpoints.kYawMotorMaxSetpoint)
+      //     .forwardSoftLimitEnabled(true)
+      //     .reverseSoftLimit(TurretSetpoints.kYawMotorMinSetpoint)
+      //     .reverseSoftLimitEnabled(true);
 
       turretYawConfig
         .encoder
@@ -148,7 +148,9 @@ public final class Configs {
       // the nominal voltage
       turretYawConfig.closedLoop
         .feedForward
-          .kV(nominalVoltage / (Constants.NeoMotorConstants.kFreeSpeedRpm * TurretUnits.kYawVelocityConversionFactor)); // rpm
+          .kV(0.05)
+          .kS(0.05); // TODO: Update/tune these values later
+          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kYawVelocityConversionFactor));
 
       turretPitchConfig
         .inverted(false)
@@ -158,12 +160,12 @@ public final class Configs {
         .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5, Neo550MotorConstants.kMaxAllowedCurrent)
         .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
 
-      turretPitchConfig
-        .softLimit
-          .forwardSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
-          .forwardSoftLimitEnabled(true)
-          .reverseSoftLimit(TurretSetpoints.kPitchMotorMinSetpoint)
-          .reverseSoftLimitEnabled(true);
+      // turretPitchConfig
+      //   .softLimit
+      //     .forwardSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
+      //     .forwardSoftLimitEnabled(true)
+      //     .reverseSoftLimit(TurretSetpoints.kPitchMotorMinSetpoint)
+      //     .reverseSoftLimitEnabled(true);
 
       turretPitchConfig
         .encoder
@@ -196,7 +198,9 @@ public final class Configs {
       // the nominal voltage
       turretPitchConfig.closedLoop
         .feedForward
-          .kV(nominalVoltage / (Constants.NeoMotorConstants.kFreeSpeedRpm * TurretUnits.kPitchVelocityConversionFactor)); // output degrees per sec
+          .kV(0.05)
+          .kS(0.05); // TODO: Update/tune these values later
+          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kPitchVelocityConversionFactor)); // output degrees per sec
 
     }
   }
@@ -224,6 +228,7 @@ public final class Configs {
     static {
       // Configure basic setting of the flywheel motors
       flywheelConfig
+        .inverted(true)
         .idleMode(IdleMode.kCoast)
         .closedLoopRampRate(1.0)
         .openLoopRampRate(1.0)

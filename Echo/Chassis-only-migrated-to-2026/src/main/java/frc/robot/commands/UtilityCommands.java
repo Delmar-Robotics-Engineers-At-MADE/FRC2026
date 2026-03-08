@@ -11,13 +11,6 @@ public final class UtilityCommands {
    // Prevent instantiation; this class is intended only to organize composite command factories
    private UtilityCommands() {}
 
-
-   /**
-    * Meta-command to operate the shooter. The Flywheel starts spinning up and when
-    * it reaches
-    * the desired speed it starts the Feeder.
-    */
-
    /**
     * Basic shooting command that spins up the flywheel until it is up to speed before feeding in fuel
     * @param shooter The shooter subsystem

@@ -9,13 +9,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Configs;
+import frc.robot.Constants;
 import frc.robot.Constants.FeederSubsystemConstants;
-import frc.robot.Constants.FeederSubsystemConstants.FeederSetpoints;
 
 public class FeederSubsystem extends SubsystemBase {
 
    // Feeder components
    private SparkMax m_feederMotor;
+
+   private double mt_feederDutyCycle = Constants.FeederSubsystemConstants.FeederSetpoints.kFeed;
 
    public FeederSubsystem() {
       
@@ -51,7 +53,7 @@ public class FeederSubsystem extends SubsystemBase {
    public Command runFeederCommand() {
       return this.startEnd(
             () -> {
-               this.setFeederPower(FeederSetpoints.kFeed);
+               this.setFeederPower(mt_feederDutyCycle);
             }, () -> {
                this.m_feederMotor.stopMotor();;
             }).withName("Feeding");
@@ -60,7 +62,15 @@ public class FeederSubsystem extends SubsystemBase {
    @Override
    public void periodic() {
 
+      // REMOVE: Pull the duty cycle value from the dashboard
+      mt_feederDutyCycle = SmartDashboard.getNumber("Set Feeder Duty Cycle", mt_feederDutyCycle);
+
       // Temps
       SmartDashboard.putNumber("Feeder Motor | Temperature (deg C)", m_feederMotor.getMotorTemperature());
+      SmartDashboard.putNumber("Feeder Motor | Current (A)", m_feederMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Feeder Motor | Applied Output", m_feederMotor.getAppliedOutput());
+
+      // Publish duty cycle config to dashboard
+      SmartDashboard.putNumber("Set Feeder Duty Cycle", mt_feederDutyCycle);
    }
 }

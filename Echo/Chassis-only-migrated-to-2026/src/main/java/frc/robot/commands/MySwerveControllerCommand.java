@@ -45,7 +45,7 @@ public class MySwerveControllerCommand extends Command {
   private final Consumer<SwerveModuleState[]> m_outputModuleStates;
   private  Supplier<Rotation2d> m_desiredRotation;
   private final DriveSubsystem m_driveSystem;
-  private final PhotonVisionSensor m_photon;
+  //private final PhotonVisionSensor m_photon;
 
 
   /**
@@ -90,7 +90,7 @@ public class MySwerveControllerCommand extends Command {
             requireNonNullParam(thetaController, "thetaController", "SwerveControllerCommand")),
         // desiredRotation,
         outputModuleStates,
-        drive, photon,
+        drive, //photon,
         requirements);
   }
 
@@ -121,7 +121,7 @@ public class MySwerveControllerCommand extends Command {
       HolonomicDriveController controller,
       // Supplier<Rotation2d> desiredRotation,
       Consumer<SwerveModuleState[]> outputModuleStates,
-      DriveSubsystem drive, PhotonVisionSensor photon,
+      DriveSubsystem drive, //PhotonVisionSensor photon,
       Subsystem... requirements) {
     // m_trajectory = requireNonNullParam(trajectory, "trajectory", "SwerveControllerCommand");
     m_pose = requireNonNullParam(pose, "pose", "SwerveControllerCommand");
@@ -135,7 +135,7 @@ public class MySwerveControllerCommand extends Command {
         requireNonNullParam(outputModuleStates, "outputModuleStates", "SwerveControllerCommand");
 
     m_driveSystem = drive;
-    m_photon = photon;
+    //m_photon = photon;
 
     addRequirements(requirements);
   }
