@@ -37,7 +37,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     // Allows retrieval of video streams to be output in the driver station dashboard
-    CameraServer.startAutomaticCapture();
+    //CameraServer.startAutomaticCapture();
   }
 
   /**

@@ -38,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
 
@@ -156,18 +155,13 @@ public class DriveSubsystem extends SubsystemBase {
 
       // Configure AutoBuilder last
       // AutoBuilder.configure(
-      // this::getPose, // Robot pose supplier
-      // this::resetOdometry, // Method to reset odometry (will be called if your auto
-      // has a starting pose)
-      // this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT
-      // RELATIVE
-      // (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will
-      // drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs
-      // individual module feedforwards
-      // new PPHolonomicDriveController( // PPHolonomicController is the built in path
-      // following controller for holonomic drive trains
-      // new PIDConstants(1.0, 0.0, 0.0), // Translation PID constants
-      // new PIDConstants(0.5, 0.0, 0.0) // Rotation PID constants
+      //    this::getPose, // Robot pose supplier
+      //    this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+      //    this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+      //    (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+      //       new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+      //       new PIDConstants(1.0, 0.0, 0.0), // Translation PID constants
+      //       new PIDConstants(0.5, 0.0, 0.0) // Rotation PID constants
       // ),
       // config, // The robot configuration
       // () -> {
