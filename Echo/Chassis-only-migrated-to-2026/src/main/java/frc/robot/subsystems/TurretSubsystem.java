@@ -270,12 +270,12 @@ public class TurretSubsystem extends SubsystemBase {
       /**
     * Command to manually control the turret's rotation. While being commanded, the
     * turret will move with the
-    * applied duty cycle. Once the command ends, the motors will stop.
+    * applied velocity. Once the command ends, the motors will stop.
     */
-   public Command moveTurretRotationManual(double velocity) {
+   public Command moveTurretRotationManual(DoubleSupplier velocity) {
       return this.startEnd(
             () -> {
-               this.moveTurretYawVelocity(velocity);
+               this.moveTurretYawVelocity(velocity.getAsDouble());
             }, () -> {
                this.m_turretYawMotor.stopMotor();
             }).withName("Turning turret");
@@ -310,18 +310,12 @@ public class TurretSubsystem extends SubsystemBase {
    /**
     * Command to manually control the turret's hood. While being commanded, the
     * turret hood will move with the
-    * applied duty cycle. Once the command ends, the motors will stop.
+    * applied velocity. Once the command ends, the motors will stop.
     */
-   public Command moveTurretHoodManual(DoubleSupplier threshold, double velocity) {
+   public Command moveTurretHoodManual(DoubleSupplier velocity) {
       return this.startEnd(
             () -> {
-               if (threshold.getAsDouble() > 0.0)
-               {
-                  this.moveTurretPitchVelocity(velocity);
-               }
-               else{
-                  this.moveTurretPitchVelocity(-velocity);
-               }
+               this.moveTurretPitchVelocity(velocity.getAsDouble());
             }, () -> {
                this.m_turretPitchMotor.stopMotor();
             }).withName("Moving turret hood");

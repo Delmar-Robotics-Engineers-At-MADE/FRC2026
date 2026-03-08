@@ -184,17 +184,18 @@ public class RobotContainer {
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
     m_operCmdController.leftBumper().whileTrue(m_turret.commandTurretYawToPosition(0));
 
-
+    // TEST: Allow manual homing of turret components
     m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());
 
-    // Left stick movement along the X axis control the turret rotational movement
-    m_operCmdController.b()
-        .whileTrue(m_turret.moveTurretRotationManual((2000.0 * Constants.TurretSubsystemConstants.TurretUnits.kYawVelocityConversionFactor)));
-
+    // Left stick movement along the x axis contrtols the turret hood movement
+    m_operCmdController
+      .axisMagnitudeGreaterThan(0, TriggerThreshold)
+        .whileTrue(m_turret.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX() * 100.0)); // max out at 100 deg/s (3 seconds for full rotation)
+  
     // Left stick movement along the y axis contrtols the turret hood movement
     m_operCmdController
       .axisMagnitudeGreaterThan(1, TriggerThreshold)
-        .whileTrue(m_turret.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY(), 1000.0 * Constants.TurretSubsystemConstants.TurretUnits.kPitchVelocityConversionFactor));
+        .whileTrue(m_turret.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY() * 12.5)); // max out at 12.5 deg/s (3 seconds for full movement)
   }
 
   public Command getAutonomousCommand() {
