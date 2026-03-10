@@ -27,7 +27,6 @@ import frc.robot.Configs;
 import frc.robot.Constants.ShooterSubsystemConstants;
 import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
-
 public class FuelShooterSubsystem extends SubsystemBase {
 
    // Flywheel components
@@ -48,7 +47,6 @@ public class FuelShooterSubsystem extends SubsystemBase {
 
    // Member variables for subsystem state management
    private double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
-
 
    // TEMPORARY: Tuning Constants
    private SparkMaxConfig mt_flywheelConfig = Configs.ShooterSubsystem.flywheelConfig;
@@ -96,6 +94,12 @@ public class FuelShooterSubsystem extends SubsystemBase {
       m_flywheelVelocityChooser.addOption("Mid Speed (2500 rpm)", 2500.0);
       m_flywheelVelocityChooser.addOption("Full Speed (4500 rpm)", FlywheelSetpoints.kShootRpm);
       SmartDashboard.putData("DISABLED: Velocity Target", m_flywheelVelocityChooser);
+
+      // TODO: REMOVE LATER AFTER TUNING
+      SmartDashboard.putNumber("Set Flywheel Velocity", m_flywheelTargetVelocity);
+      SmartDashboard.putNumber("Set Flywheel/kP", mt_flywheelClosedLoopP);
+      SmartDashboard.putNumber("Set Flywheel/kI", mt_flywheelClosedLoopI);
+      SmartDashboard.putNumber("Set Flywheel/kD", mt_flywheelClosedLoopD);
    }
 
    private boolean isFlywheelAt(double velocity) {
@@ -149,11 +153,16 @@ public class FuelShooterSubsystem extends SubsystemBase {
       return m_flywheelEncoder.getVelocity();
    }
 
+   // TODO: Remove this or move it to a shared place later. There is a matching function in the turret class
+   private boolean hasChanged(double a, double b) {
+      return Math.abs(a - b) > 1e-6;
+   }
+
    @Override
    public void periodic() {
 
       //m_flywheelTargetVelocity = m_flywheelVelocityChooser.getSelected(); // TODO: Re-enable this later when tuning is done
-      m_flywheelTargetVelocity = SmartDashboard.getNumber("Tuning Flywheel Speed", m_flywheelTargetVelocity);
+      m_flywheelTargetVelocity = SmartDashboard.getNumber("Set Flywheel Velocity", m_flywheelTargetVelocity);
 
       // Flyhweel attributes
       SmartDashboard.putNumber("Flywheel | Temperature (deg C)", m_motorPort.getMotorTemperature());
@@ -175,11 +184,11 @@ public class FuelShooterSubsystem extends SubsystemBase {
       SmartDashboard.putBoolean("Is Flywheel Stopped", isFlywheelStopped.getAsBoolean());
 
       // REMOVE LATER: Tuning PID for the flywheel
-      double newkP = SmartDashboard.getNumber("Flywheel/kP", mt_flywheelClosedLoopP);
-      double newkI = SmartDashboard.getNumber("Flywheel/kI", mt_flywheelClosedLoopI);
-      double newkD = SmartDashboard.getNumber("Flywheel/kD", mt_flywheelClosedLoopD);
+      double newkP = SmartDashboard.getNumber("Set Flywheel/kP", mt_flywheelClosedLoopP);
+      double newkI = SmartDashboard.getNumber("Set Flywheel/kI", mt_flywheelClosedLoopI);
+      double newkD = SmartDashboard.getNumber("Set Flywheel/kD", mt_flywheelClosedLoopD);
 
-      if (newkP != mt_flywheelClosedLoopP || newkI != mt_flywheelClosedLoopI || newkD  != mt_flywheelClosedLoopD) {
+      if (hasChanged(newkP, mt_flywheelClosedLoopP)|| hasChanged(newkI, mt_flywheelClosedLoopI) || hasChanged(newkD, mt_flywheelClosedLoopD)) {
          mt_flywheelConfig
             .closedLoop
                .p(newkP)
@@ -193,7 +202,6 @@ public class FuelShooterSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Flywheel/kP", mt_flywheelClosedLoopP);
       SmartDashboard.putNumber("Flywheel/kI", mt_flywheelClosedLoopI);
       SmartDashboard.putNumber("Flywheel/kD", mt_flywheelClosedLoopD);
-
       SmartDashboard.putNumber("Tuning Flywheel Speed", m_flywheelTargetVelocity);
    }
 

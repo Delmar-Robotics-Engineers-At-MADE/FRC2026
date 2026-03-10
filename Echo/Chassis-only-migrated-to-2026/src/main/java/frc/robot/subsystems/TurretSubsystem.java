@@ -83,6 +83,12 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretYawEncoder.setPosition(0.0);
       m_turretPitchEncoder.setPosition(0.0);
 
+      // TODO: REMOVE LATER: Tuning PID for the flywheel
+      SmartDashboard.putNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
+      SmartDashboard.putNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
+      SmartDashboard.putNumber("Set Turret/kP", mt_turretClosedLoopP);
+      SmartDashboard.putNumber("Set Turret/kI", mt_turretClosedLoopI);
+      SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
    }
 
    /**
@@ -351,6 +357,11 @@ public class TurretSubsystem extends SubsystemBase {
       return this.runOnce(() -> this.testSetTurretHomed());
    }
 
+   // TODO: Remove this or move it to a shared place later. There is a matching function in the shooter class
+   private boolean hasChanged(double a, double b) {
+      return Math.abs(a - b) > 1e-6;
+   }
+
    @Override
    public void periodic() {
 
@@ -367,18 +378,18 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Turret Yaw | Encoder Position", m_turretYawEncoder.getPosition());
       SmartDashboard.putNumber("Turret Pitch | Encoder Position", m_turretPitchEncoder.getPosition());
 
-      m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", 0.0);
-      m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", 0.0);
+      m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
+      m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
 
       // REMOVE LATER: Tuning PID for the flywheel
-      double newTurretkP = SmartDashboard.getNumber("Turret/kP", mt_turretClosedLoopP);
-      double newTurretkI = SmartDashboard.getNumber("Turret/kI", mt_turretClosedLoopI);
-      double newTurretkD = SmartDashboard.getNumber("Turret/kD", mt_turretClosedLoopD);
+      double newTurretkP = SmartDashboard.getNumber("Set Turret/kP", mt_turretClosedLoopP);
+      double newTurretkI = SmartDashboard.getNumber("Set Turret/kI", mt_turretClosedLoopI);
+      double newTurretkD = SmartDashboard.getNumber("Set Turret/kD", mt_turretClosedLoopD);
 
-      if (newTurretkP != mt_turretClosedLoopP || newTurretkI != mt_turretClosedLoopI || newTurretkD  != mt_turretClosedLoopD) {
+      if (hasChanged(newTurretkP, mt_turretClosedLoopP)|| hasChanged(newTurretkI, mt_turretClosedLoopI) || hasChanged(newTurretkD, mt_turretClosedLoopD)) {
          mt_turretConfig
             .closedLoop
                .p(newTurretkP)
@@ -392,7 +403,7 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Turret/kP", mt_turretClosedLoopP);
       SmartDashboard.putNumber("Turret/kI", mt_turretClosedLoopI);
       SmartDashboard.putNumber("Turret/kD", mt_turretClosedLoopD);
-      SmartDashboard.putNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
-      SmartDashboard.putNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
+      SmartDashboard.putNumber("Turret Yaw Position Setpoint", m_turretYawSetpointDegrees);
+      SmartDashboard.putNumber("Set Turret Pitch Position Setpoint", m_turretPitchSetpointDegrees);
    }
 }
