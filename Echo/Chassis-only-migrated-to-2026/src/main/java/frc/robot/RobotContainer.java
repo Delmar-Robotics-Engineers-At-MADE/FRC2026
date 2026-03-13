@@ -4,12 +4,15 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.UtilityCommands;
 import frc.robot.subsystems.DriveSubsystem;
@@ -51,8 +54,7 @@ public class RobotContainer {
   //private final Blinkin m_blinkin = new Blinkin();
 
   // for auto driving
-  private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
-  Command m_autoDoNothing;
+  private final SendableChooser<Command> m_autoChooser;
 
   // Driver
   GenericHID m_driverController = new GenericHID(OIConstants.kDriverControllerPort);
@@ -79,6 +81,8 @@ public class RobotContainer {
 
     // setup dashboard
     setupDashboard();
+
+    m_autoChooser = AutoBuilder.buildAutoChooser();
 
     // Configure default commands
     m_robotDrive.setDefaultCommand(
@@ -119,12 +123,6 @@ public class RobotContainer {
   //       return driveToAprilTagCommand (redReefPositionToAprilTag[pos], hornSelect);
   // }
 
-  private void buildAutoChooser() {
-
-    // exit staring zone, driving backward toward alliance station
-    m_autoDoNothing = new InstantCommand();
-    m_autoChooser.setDefaultOption("Exit Start Zone", m_autoDoNothing);
-  }
 
   private void configureNonButtonTriggers() {
   }
@@ -206,8 +204,7 @@ public class RobotContainer {
     ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
     //matchTab.addCamera("Limelight", "Limelight", "http://10.80.77.18:5800");
     //        .withPosition(0, 1).withSize(4, 3);
-    buildAutoChooser();
-    matchTab.add(m_autoChooser).withPosition(0, 0);
+    SmartDashboard.putData("Auto Chooser", m_autoChooser);
 
   }
 
