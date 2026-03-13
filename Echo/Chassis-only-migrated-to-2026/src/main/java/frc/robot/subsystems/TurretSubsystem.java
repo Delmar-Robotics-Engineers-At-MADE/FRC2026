@@ -34,13 +34,15 @@ public class TurretSubsystem extends SubsystemBase {
    // Sensors
    private final DigitalInput m_hallEffectYaw = new DigitalInput(0);
 
-   double m_turretYawSetpointDegrees = 0.0;
-   boolean m_isTurretYawHomed = false;
-   double m_turretPitchSetpointDegrees = 0.0;
-   boolean m_isTurretPitchHomed = false;
+   private double m_turretYawSetpointDegrees = 0.0;
+   private boolean m_isTurretYawHomed = false;
+
+   private double m_turretPitchkG = 0.2;
+   private double m_turretPitchSetpointDegrees = 0.0;
+   private boolean m_isTurretPitchHomed = false;
 
    // REMOVE LATER: Tuning Constants
-   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
+   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretPitchConfig;
    private double mt_turretClosedLoopP = 0.0;
    private double mt_turretClosedLoopI = 0.0;
    private double mt_turretClosedLoopD = 0.0;
@@ -89,6 +91,7 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Set Turret/kP", mt_turretClosedLoopP);
       SmartDashboard.putNumber("Set Turret/kI", mt_turretClosedLoopI);
       SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
+      SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
    }
 
    /**
@@ -220,13 +223,15 @@ public class TurretSubsystem extends SubsystemBase {
     * @param position Absolute output position of the turret's hood in degrees
     *                 (launch angle)
     */
-   private void moveTurretPitchToPosition(double position) {
+   private void moveTurretPitchToPosition() {
       if (isTurretPitchHomed()) {
 
          // Clamp the value so we don't move past the safe boundaries
          // TODO: Update this call to use the position that is being passed in after
          double actualAppliedPosition = Math.max(TurretSetpoints.kPitchMotorMinSetpoint, Math.min(TurretSetpoints.kPitchMotorMaxSetpoint, m_turretPitchSetpointDegrees));
-         m_turretPitchClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl);
+
+         double arbFF = m_turretPitchkG * Math.sin(Math.toRadians(m_turretPitchSetpointDegrees));
+         m_turretPitchClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, arbFF);
       }
    }
 
@@ -347,10 +352,10 @@ public class TurretSubsystem extends SubsystemBase {
    public Command commandTurretPitchToPosition(double position) {
       return this.startEnd(
             () -> {
-               this.moveTurretPitchToPosition(position);
+               this.moveTurretPitchToPosition();
             }, () -> {
-               this.m_turretYawMotor.stopMotor();
-            }).withName("Rotating turret yaw to position");
+               this.m_turretPitchMotor.stopMotor();
+            }).withName("Rotating turret pitch to position");
    }
 
    public Command testCommandSetTurretHomed() {
@@ -380,6 +385,7 @@ public class TurretSubsystem extends SubsystemBase {
 
       m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
       m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
+      m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kFF", m_turretPitchkG);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
@@ -396,7 +402,11 @@ public class TurretSubsystem extends SubsystemBase {
                .i(newTurretkI)
                .d(newTurretkD);
 
-         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+         m_turretPitchMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+         mt_turretClosedLoopP = newTurretkP;
+         mt_turretClosedLoopI = newTurretkI;
+         mt_turretClosedLoopD = newTurretkD;
       }
 
       // Push current values so they appear on startup
