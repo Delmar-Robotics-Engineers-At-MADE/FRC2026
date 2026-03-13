@@ -18,7 +18,7 @@ public class LightsSubsystem extends SubsystemBase {
       m_candle.getConfigurator().apply(Configs.CANdleSubsystem.config);
 
       // Set up a rainbow animation to flow through the connected LEDs
-      RainbowAnimation rainbowAnimation = new RainbowAnimation(8, 24).withSlot(0);
+      RainbowAnimation rainbowAnimation = new RainbowAnimation(8, 100).withSlot(0);
 
       // Set up a fire animation for the CANdle itself's built in LEDs
       FireAnimation fireAnimation = new FireAnimation(0, 7).withSlot(1);

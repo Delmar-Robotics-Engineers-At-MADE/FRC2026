@@ -89,7 +89,7 @@ public class RobotContainer {
                 MathUtil.applyDeadband(-m_driverController.getRawAxis(1), OIConstants.kDriveDeadband), // getLeftY()
                 MathUtil.applyDeadband(-m_driverController.getRawAxis(0), OIConstants.kDriveDeadband), // getLeftX()
                 -MathUtil.applyDeadband(m_driverController.getRawAxis(2), OIConstants.kDriveDeadband*4), // getRightX()
-                true),
+                false),
             m_robotDrive));
 
 
@@ -98,7 +98,7 @@ public class RobotContainer {
 
   public void simulationPeriodic() {
     // Update the simulation model.
-    m_fuelShoot.simulationPeriodic();
+    //m_fuelShoot.simulationPeriodic();
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
@@ -148,14 +148,14 @@ public class RobotContainer {
     //     .whileTrue(driveToCoralStationCmd(HornSelection.L));
 
     // drive robot relative in cardinal directions
-    m_buttonPadCmd.povUp().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(PovSpeed, 0, 0, false), m_robotDrive));
-    m_buttonPadCmd.povDown().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(-PovSpeed, 0, 0, false), m_robotDrive));
-    m_buttonPadCmd.povLeft().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(0, PovSpeed, 0, false), m_robotDrive));
-    m_buttonPadCmd.povRight().whileTrue(new RunCommand(
-        () -> m_robotDrive.drive(0, -PovSpeed, 0, false), m_robotDrive));
+    //m_buttonPadCmd.povUp().whileTrue(new RunCommand(
+    //    () -> m_robotDrive.drive(PovSpeed, 0, 0, false), m_robotDrive));
+    //m_buttonPadCmd.povDown().whileTrue(new RunCommand(
+    //    () -> m_robotDrive.drive(-PovSpeed, 0, 0, false), m_robotDrive));
+    //m_buttonPadCmd.povLeft().whileTrue(new RunCommand(
+    //    () -> m_robotDrive.drive(0, PovSpeed, 0, false), m_robotDrive));
+    //m_buttonPadCmd.povRight().whileTrue(new RunCommand(
+    //    () -> m_robotDrive.drive(0, -PovSpeed, 0, false), m_robotDrive));
                     
     // ******************************** OPERATOR *********************************
   
@@ -165,9 +165,9 @@ public class RobotContainer {
     //     .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
 
     // Left Trigger -> Run fuel intake
-    m_operCmdController
-      .leftTrigger(TriggerThreshold)
-        .whileTrue(m_intake.runIntakeCommand());
+    //m_operCmdController
+    //  .leftTrigger(TriggerThreshold)
+    //   .whileTrue(m_intake.runIntakeCommand());
 
     // Right Trigger -> Spin shooter/flywheel
     m_operCmdController
@@ -187,15 +187,17 @@ public class RobotContainer {
     // TEST: Allow manual homing of turret components
     m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());
 
-    // Left stick movement along the x axis contrtols the turret hood movement
-    m_operCmdController
-      .axisMagnitudeGreaterThan(0, TriggerThreshold)
-        .whileTrue(m_turret.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX() * 100.0)); // max out at 100 deg/s (3 seconds for full rotation)
+    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(0.0));
+
+    // // Left stick movement along the x axis contrtols the turret hood movement
+    // m_operCmdController
+    //   .axisMagnitudeGreaterThan(0, TriggerThreshold)
+    //     .whileTrue(m_turret.moveTurretRotationManual(() -> this.m_operCmdController.getLeftX() * 100.0)); // max out at 100 deg/s (3 seconds for full rotation)
   
-    // Left stick movement along the y axis contrtols the turret hood movement
-    m_operCmdController
-      .axisMagnitudeGreaterThan(1, TriggerThreshold)
-        .whileTrue(m_turret.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY() * 12.5)); // max out at 12.5 deg/s (3 seconds for full movement)
+    // // Left stick movement along the y axis contrtols the turret hood movement
+    // m_operCmdController
+    //   .axisMagnitudeGreaterThan(1, TriggerThreshold)
+    //     .whileTrue(m_turret.moveTurretHoodManual(() -> this.m_operCmdController.getLeftY() * 12.5)); // max out at 12.5 deg/s (3 seconds for full movement)
   }
 
   public Command getAutonomousCommand() {

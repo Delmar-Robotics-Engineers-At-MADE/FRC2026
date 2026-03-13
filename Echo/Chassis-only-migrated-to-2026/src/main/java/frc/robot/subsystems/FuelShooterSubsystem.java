@@ -196,6 +196,10 @@ public class FuelShooterSubsystem extends SubsystemBase {
                .d(newkD);
 
          m_motorPort.configure(mt_flywheelConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+         mt_flywheelClosedLoopP = newkP;
+         mt_flywheelClosedLoopI = newkI;
+         mt_flywheelClosedLoopD = newkD;
       }
 
       // Push current values so they appear on startup

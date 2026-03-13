@@ -12,6 +12,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import frc.robot.Constants.LightsSubsystemConstants;
 import frc.robot.Constants.ModuleConstants;
 import frc.robot.Constants.Neo550MotorConstants;
+import frc.robot.Constants.NeoMotorConstants;
 import frc.robot.Constants.ShooterSubsystemConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
@@ -180,14 +181,14 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0)
+          .p(0.2)
           .outputRange(-1, 1);
 
       turretPitchConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control
-          .cruiseVelocity(1000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec
-          .maxAcceleration(1000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec/s
+          .cruiseVelocity(2000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(4000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kPitchPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
@@ -196,11 +197,10 @@ public final class Configs {
 
       // Motor kV is 1/motor free speed rpm. Feedforward config expects this value as a factor of V/rpm so multiply by
       // the nominal voltage
-      turretPitchConfig.closedLoop
-        .feedForward
-          .kV(0.05)
-          .kS(0.05); // TODO: Update/tune these values later
-          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kPitchVelocityConversionFactor)); // output degrees per sec
+      //turretPitchConfig.closedLoop
+        //.feedForward
+          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kPitchVelocityConversionFactor), ClosedLoopSlot.kSlot0) // output degrees per sec
+          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kPitchVelocityConversionFactor), ClosedLoopSlot.kSlot1); // output degrees per sec
 
     }
   }
@@ -232,7 +232,7 @@ public final class Configs {
         .idleMode(IdleMode.kCoast)
         .closedLoopRampRate(1.0)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(30, 50);
+        .smartCurrentLimit(40, 60);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
@@ -242,7 +242,7 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0.0)
+          .p(0.0002)
           .outputRange(-1, 1);
 
       flywheelConfig.closedLoop
@@ -256,8 +256,8 @@ public final class Configs {
       // the reciprocol.
       flywheelConfig.closedLoop
         .feedForward
-          .kV(0.0020215101); // V/rpm; from ReCalc (0.35 V*s/m converted to V/rpm)
-          //.kA(0.0018619172); // V/(rpm/s); from ReCalc (0.32 V*s^2/m converted to V/(rpm/s))
+          .kV(12 / (NeoMotorConstants.kFreeSpeedRpm))
+          .kA(0.0018619172); // V/(rpm/s); from ReCalc (0.32 V*s^2/m converted to V/(rpm/s))
 
       // Configure the follower flywheel motor to follow the main flywheel motor
       flywheelFollowerConfig.apply(flywheelConfig)
