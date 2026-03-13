@@ -39,7 +39,7 @@ public final class Constants {
       public static final int kTurretPitchMotorCanId = 23;
 
       public static final class TurretUnits {
-         private static final double kYawMotorOutputGearRatio = 62.24615385; // (119 * 68:13) / 10
+         private static final double kYawMotorOutputGearRatio = 221.4857143; // (68 * 76 * 117) / (13 * 21 * 10)
          public static final double kYawPositionConversionFactor = 360.0 / kYawMotorOutputGearRatio; // degrees
          public static final double kYawVelocityConversionFactor = 360.0 / (60.0 * kYawMotorOutputGearRatio); // degrees per second
 
@@ -62,7 +62,7 @@ public final class Constants {
          public static final double kPitchMotorHomingSetpoint = 28.0; // degrees
 
          public static final double kYawOutputRotationSafeBuffer = 2.0; // 2 degrees
-         public static final double kPitchOutputAngleSafeBuffer = 5.0; // 5 degrees; TODO: extra large for now to make sure we have a safe buffer
+         public static final double kPitchOutputAngleSafeBuffer = 2.0; // 2 degrees
 
          public static final double kYawMotorMinSetpoint = 0.0 + kYawOutputRotationSafeBuffer; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
          public static final double kYawMotorMaxSetpoint = 300.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net

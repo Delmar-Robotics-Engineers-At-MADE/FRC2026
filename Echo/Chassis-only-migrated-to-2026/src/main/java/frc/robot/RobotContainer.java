@@ -47,9 +47,6 @@ public class RobotContainer {
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final LightsSubsystem m_lights = new LightsSubsystem();
 
-  // TODO: Add fun LEDs back in if time and weight permit
-  //private final Blinkin m_blinkin = new Blinkin();
-
   // for auto driving
   private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
   Command m_autoDoNothing;
@@ -182,12 +179,10 @@ public class RobotContainer {
 
     // X button -> Turn turret yaw to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.leftBumper().whileTrue(m_turret.commandTurretYawToPosition(0));
+    m_operCmdController.b().whileTrue(m_turret.commandTurretYawToPosition(0));
 
     // TEST: Allow manual homing of turret components
     m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());
-
-    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(0.0));
 
     // // Left stick movement along the x axis contrtols the turret hood movement
     // m_operCmdController
