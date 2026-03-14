@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.DriveSubsystem;
+// import frc.robot.subsystems.oldPhotonVisionSensor;
 import frc.robot.subsystems.PhotonVisionSensor;
 
 import java.util.function.Consumer;
@@ -78,7 +79,7 @@ public class MySwerveControllerCommand extends Command {
       ProfiledPIDController thetaController,
       // Supplier<Rotation2d> desiredRotation,
       Consumer<SwerveModuleState[]> outputModuleStates,
-      DriveSubsystem drive, PhotonVisionSensor photon,
+      DriveSubsystem drive, PhotonVisionSensor m_photon,
       Subsystem... requirements) {
     this(
         // trajectory,

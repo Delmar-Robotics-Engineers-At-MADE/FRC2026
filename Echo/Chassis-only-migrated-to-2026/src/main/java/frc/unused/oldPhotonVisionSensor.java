@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package frc.unused;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -26,15 +26,15 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** This class represents a sensor for detecting april elements of the game field using PhotonVision. */
-public final class PhotonVisionSensor extends SubsystemBase {
+public final class oldPhotonVisionSensor extends SubsystemBase {
 
   // The name of the network table here MUST match the name specified for the camera in the UI
-  static PhotonCamera m_cameraFront = new PhotonCamera("Arducam_OV9281_8077_A");
-  static PhotonCamera m_cameraBack = new PhotonCamera("Arducam_OV9281_USB_Camera");
+  static PhotonCamera m_cameraFront = new PhotonCamera("photoncamera_front");
+  static PhotonCamera m_cameraBack = new PhotonCamera("photoncamera_back");
 
   /// @todo Fill this in with the correct measurements later
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-  static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.15, -.35, 0.2), 
+  static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.15, -.35, 0.2),
       new Rotation3d(0,0,0));
   static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.15, .35, 0.2), 
       new Rotation3d(0,0,Math.PI));
@@ -46,21 +46,20 @@ public final class PhotonVisionSensor extends SubsystemBase {
   private EstimatedRobotPose m_latestEstimatedPose = new EstimatedRobotPose(new Pose3d(0,0,0,new Rotation3d(0,0,0)), 0,null, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
   private ShuffleboardTab m_matchTab = Shuffleboard.getTab("Match");
   private boolean m_poseEstimateAcquired = false;
-  private boolean m_debugTakeSnapshot = false;
 
-  public PhotonVisionSensor() {
+  public oldPhotonVisionSensor() {
     // constructor
-    setupDashboard();
+    // setupDashboard();
   }
 
-  private void setupDashboard() {
-    ShuffleboardTab tab = Shuffleboard.getTab("Photon");
-    tab.addDouble("Snapshot X", () -> getPoseX());
-    tab.addDouble("Snapshot Y", () -> getPoseY());
-    tab.addString("Snapshot Rotation", () -> getPoseRot());
-    m_matchTab.addBoolean("Vision Fix", () -> getPoseEstimateAcquired())
-        .withPosition(6, 0);
-  }  
+  // private void setupDashboard() {
+  //   ShuffleboardTab tab = Shuffleboard.getTab("Photon");
+  //   tab.addDouble("Pose X", () -> getPoseX());
+  //   tab.addDouble("Pose Y", () -> getPoseY());
+  //   tab.addString("Rotation", () -> getPoseRot());
+  //   m_matchTab.addBoolean("Vision Fix", () -> getPoseEstimateAcquired())
+  //       .withPosition(6, 0);
+  // }  
 
   // public void getBestTargetLocation() {
   //   // Gets all unread results and pulls out an iterator to the last received result
@@ -108,8 +107,6 @@ public final class PhotonVisionSensor extends SubsystemBase {
     // If results are present, look for targets to try and get a pose estimate
     if (!pipelineResults.isEmpty()) {
 
-      photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
-
       // Set an arbitrary maximum number of iterations so that if the results
       // buffer gets large, we don't spend lots of time looking for targets if there are none
       // Leaving this out causes the system to get hung up when in scenarios where april tags are not present
@@ -132,21 +129,10 @@ public final class PhotonVisionSensor extends SubsystemBase {
 
       // If we were able to find a frame with targets, use that frame to estimate a global pose
       if (latestPipelineResult.hasTargets()) {
-        // System.out.println("---> Pipeline has targets; calling mutitag pose");
         result = photonPoseEstimator.estimateCoprocMultiTagPose(latestPipelineResult);
-        if (result.isPresent()) {
-          m_poseEstimateAcquired = true;
-          // EstimatedRobotPose visionPose = result.get(); 
-          // System.out.println("X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
-          if (m_debugTakeSnapshot) {
-            m_latestEstimatedPose = result.get();
-            m_debugTakeSnapshot = false;
-          }
-        } // else {
-        //   System.out.println("---> Multitag pose did NOT return a pose");
-        // }
+        m_poseEstimateAcquired = true;
       }
-    } 
+    }
     return result;
   }
 
@@ -158,9 +144,17 @@ public final class PhotonVisionSensor extends SubsystemBase {
     return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
   }
 
-  // do this at least twice, until the pose snapshot is not changing anymore
+  // this is only for troubleshooting
   EstimatedRobotPose debugGetLatestEstimatedPose (Pose2d prevEstimatedRobotPose) {
-    m_debugTakeSnapshot = true;
+    Optional<EstimatedRobotPose> poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
+    if (poseOption.isPresent()) {
+      m_latestEstimatedPose = poseOption.get();
+    } else {
+      poseOption = getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
+      if (poseOption.isPresent()) {
+        m_latestEstimatedPose = poseOption.get();
+      }
+    }
     return m_latestEstimatedPose;
   }
 

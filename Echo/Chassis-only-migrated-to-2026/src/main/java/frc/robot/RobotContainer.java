@@ -41,8 +41,8 @@ public class RobotContainer {
   static final double PovSpeed = 0.1 * DriveSubsystem.DriveSpeedDivider;  // speed divider slows it down, but we really want this speed not slowed down
 
   // The robot's subsystems
-  //private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
 
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final FeederSubsystem m_feeder = new FeederSubsystem();
@@ -198,10 +198,10 @@ public class RobotContainer {
   }
 
   private void setupDashboard() {
-    ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
+    // ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
     //matchTab.addCamera("Limelight", "Limelight", "http://10.80.77.18:5800");
     //        .withPosition(0, 1).withSize(4, 3);
-    SmartDashboard.putData("Auto Chooser", m_autoChooser);
+    // SmartDashboard.putData("Auto Chooser", m_autoChooser);
 
   }
 
