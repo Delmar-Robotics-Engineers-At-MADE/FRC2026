@@ -46,7 +46,7 @@ public class RobotContainer {
 
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final FeederSubsystem m_feeder = new FeederSubsystem();
-  private final TurretSubsystem m_turret = new TurretSubsystem();
+  private final TurretSubsystem m_turret = new TurretSubsystem(m_robotDrive.m_odometry);
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final LightsSubsystem m_lights = new LightsSubsystem();
 
@@ -93,6 +93,10 @@ public class RobotContainer {
                 false),
             m_robotDrive));
 
+    m_turret.setDefaultCommand(
+        m_turret.homeTurretYaw()
+        .andThen(new RunCommand(() -> m_turret.trackHub(),m_turret))
+        );
 
     m_lights.test();
   }

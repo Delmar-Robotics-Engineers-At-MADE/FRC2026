@@ -35,6 +35,20 @@ public final class Constants {
    }
 
    public static final class TurretSubsystemConstants {
+
+      // since we're using swerve library to calculate angle, need these swervy constants
+      public static final double kTrackWidth = Units.inchesToMeters(23.5);
+      public static final double kWheelBase = Units.inchesToMeters(23.5);
+      public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
+            new Translation2d(kWheelBase / 2, kTrackWidth / 2),
+            new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
+            new Translation2d(-kWheelBase / 2, kTrackWidth / 2),
+            new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
+      // public static final double kFrontLeftChassisAngularOffset = -Math.PI / 2;
+      public static final double kChassisAngularOffset = -Math.PI / 2;
+      public static final double TurnLimitPort = 100; // degrees
+      public static final double TurnLimitStar = -100; // degrees      
+
       public static final int kTurretYawMotorCanId = 24;
       public static final int kTurretPitchMotorCanId = 23;
 

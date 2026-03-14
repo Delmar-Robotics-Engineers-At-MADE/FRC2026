@@ -81,7 +81,7 @@ public class DriveSubsystem extends SubsystemBase {
    PhotonVisionSensor m_photon;
 
    // Odometry class for tracking robot pose
-   SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
+   public SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
          DriveConstants.kDriveKinematics,
          Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
          new SwerveModulePosition[] {
