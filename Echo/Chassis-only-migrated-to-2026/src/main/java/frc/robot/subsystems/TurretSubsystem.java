@@ -155,7 +155,7 @@ public class TurretSubsystem extends SubsystemBase {
       correctedDesiredState = optimize(correctedDesiredState);
 
       // Command driving and turning SPARKS towards their respective setpoints.
-      System.err.println("Setting turret setpoint to " + correctedDesiredState.angle.getRadians());
+      System.err.println("Setting turret setpoint to " + correctedDesiredState.angle.getDegrees());
       m_turretYawClosedLoopController.setSetpoint(correctedDesiredState.angle.getDegrees(), ControlType.kPosition);
    }
 
