@@ -205,7 +205,7 @@ public class RobotContainer {
     // ShuffleboardTab matchTab = Shuffleboard.getTab("Match");
     //matchTab.addCamera("Limelight", "Limelight", "http://10.80.77.18:5800");
     //        .withPosition(0, 1).withSize(4, 3);
-    // SmartDashboard.putData("Auto Chooser", m_autoChooser);
+    SmartDashboard.putData("Auto Chooser", m_autoChooser);
 
   }
 
