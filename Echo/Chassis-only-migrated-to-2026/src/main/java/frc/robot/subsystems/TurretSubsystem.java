@@ -16,8 +16,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -55,20 +54,21 @@ public class TurretSubsystem extends SubsystemBase {
 
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
-   private double m_hubX = 0;
-   private double m_hubY = 0;
+
+   private Translation2d m_hub;
 
    public TurretSubsystem(SwerveDrivePoseEstimator robot_odometry) {
 
-      // for tracking hub by odometry
+     // for tracking hub by odometry
       m_odometry = robot_odometry;
+
       // target position on field
-      m_hubY = 4.03;
       if(DriverStation.getAlliance().get() == Alliance.Red) {
-         m_hubX = 11.92;
+         m_hub = new Translation2d(11.92, 4.03);
       } else {
-         m_hubX = 4.63;
+         m_hub = new Translation2d(4.63, 4.03);
       }
+
 
       // Initialize shooter pointing motors (yaw motor controls the shooter's
       // direction while the pitch motor controls hood position)
@@ -113,66 +113,28 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
    }
 
-   public void trackHub () {
+    public void trackHub () {
 
       // calculate angle to red target, and then pretend joystick is pointing that way
       Pose2d pose = m_odometry.getEstimatedPosition();
-      double deltaX = m_hubX - pose.getX();
-      double deltaY = m_hubY - pose.getY();
 
-      // normalize so one is 1 and the other is < 1
-      double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-      double xSpeed = deltaX / maxxy;
-      double ySpeed = deltaY / maxxy;
+      // Calculate the rotation the field relative angle to the target from the robot's center
+      Translation2d robotPos = pose.getTranslation();
+      Rotation2d fieldRelativeAngleToTarget = m_hub.minus(robotPos).getAngle();
 
-      System.out.println("trackHub" + xSpeed + " " + ySpeed);
-      rotateByOdometry(xSpeed, ySpeed);
-   }
-   
-   public void rotateByOdometry(double xComponent, double yComponent) {
-      // Convert the commanded speeds/components into the correct units for the shooter
+      // Get the current robot heading and subtract it from the field-relative number to get the
+      // angle relative to the robot's local reference frame (where 0 degrees is straight forward)
+      // This provides a valid in the range [-180, 180]
+      Rotation2d robotHeading = pose.getRotation();
+      double robotRelativeDeg = fieldRelativeAngleToTarget.minus(robotHeading).getDegrees();
 
-      var swerveModuleStates = TurretSubsystemConstants.kDriveKinematics.toSwerveModuleStates(
-         ChassisSpeeds.fromFieldRelativeSpeeds(xComponent, yComponent, 0,
-                  m_odometry.getEstimatedPosition().getRotation()));
-      // SwerveDriveKinematics.desaturateWheelSpeeds(
-      //     swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
-      setDesiredState(swerveModuleStates[0]);
-   }   
+      // Add the offset to the output value to get the angle representing straight forward on the turret
+      double turretSetpointDeg = robotRelativeDeg + 200.0; // TODO: Update this later with the real offset value
 
-   public void setDesiredState(SwerveModuleState desiredState) {
-      // Apply chassis angular offset to the desired state.
-      SwerveModuleState correctedDesiredState = new SwerveModuleState();
-      correctedDesiredState.angle = desiredState.angle.plus(Rotation2d.fromRadians(TurretSubsystemConstants.kChassisAngularOffset));
+      // Normalize the value in degrees so it falls in the range [0,360]
+      turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
 
-      // Optimize the reference state to avoid spinning further than 90 degrees.
-      // No, instead, just change this function to prevent turret from turning through its stops
-      // correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
-      correctedDesiredState = optimize(correctedDesiredState);
-
-      // Command driving and turning SPARKS towards their respective setpoints.
-      System.err.println("Setting turret setpoint to " + correctedDesiredState.angle.getDegrees());
-      m_turretYawClosedLoopController.setSetpoint(correctedDesiredState.angle.getDegrees(), ControlType.kPosition);
-   }
-
-   private SwerveModuleState optimize(SwerveModuleState state) {
-   // original function allows module to always turn less than 180 degrees
-   // var delta = angle.minus(currentAngle);
-   // if (Math.abs(delta.getDegrees()) > 90.0) {
-   //     speedMetersPerSecond *= -1;
-   //     angle = angle.rotateBy(Rotation2d.kPi);
-   // }
-   
-   // for the turret, simply stop the turret from moving through the stops
-      SwerveModuleState result = state; // return unmodified state if it's not past stops
-      if (state.angle.getDegrees() > TurretSubsystemConstants.TurnLimitPort) {
-         result = new SwerveModuleState(state.speedMetersPerSecond, 
-                                       Rotation2d.fromDegrees(TurretSubsystemConstants.TurnLimitPort));
-      } else if (state.angle.getDegrees() < TurretSubsystemConstants.TurnLimitStar) {
-         result = new SwerveModuleState(state.speedMetersPerSecond, 
-                                       Rotation2d.fromDegrees(TurretSubsystemConstants.TurnLimitStar));
-      }
-      return result;
+      moveTurretYawToPosition(turretSetpointDeg);
    }
        
    /**
@@ -182,6 +144,15 @@ public class TurretSubsystem extends SubsystemBase {
     */
    private boolean isYawAt(double desiredPosition) {
       return Math.abs(m_turretYawEncoder.getPosition() - desiredPosition) < TurretSetpoints.kYawPositionTolerance;
+   }
+
+   /**
+    * Checks whether the input position falls within the valid range of positions that the turret can be commanded to
+    * @param position The input position to verify against the turret bounds
+    * @return Whether the turret position is a valid setpoint
+    */
+   private boolean isYawPositionReachable(double position) {
+      return position >= TurretSetpoints.kYawMotorMinSetpoint && position <= TurretSetpoints.kYawMotorMaxSetpoint;
    }
 
    /**
@@ -219,6 +190,14 @@ public class TurretSubsystem extends SubsystemBase {
       // Clamp the applied duty cycle to 30% for safety in testing
       double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
       m_turretYawMotor.set(actualAppliedDutyCycle);
+   }
+
+   public void moveTurretYawVelocity(double velocity) {
+      m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
+   }
+
+   private void moveTurretPitchVelocity(double velocity) {
+      m_turretPitchClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
    }
 
    /**

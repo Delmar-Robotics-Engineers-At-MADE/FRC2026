@@ -46,8 +46,6 @@ public final class Constants {
             new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
       // public static final double kFrontLeftChassisAngularOffset = -Math.PI / 2;
       public static final double kChassisAngularOffset = -Math.PI / 2;
-      public static final double TurnLimitPort = 100; // degrees
-      public static final double TurnLimitStar = -100; // degrees      
 
       public static final int kTurretYawMotorCanId = 24;
       public static final int kTurretPitchMotorCanId = 23;

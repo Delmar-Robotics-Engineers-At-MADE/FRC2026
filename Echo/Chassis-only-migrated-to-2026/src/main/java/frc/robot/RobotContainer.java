@@ -21,7 +21,6 @@ import frc.robot.subsystems.LightsSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import frc.robot.subsystems.TurretSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
@@ -49,10 +48,9 @@ public class RobotContainer {
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final LightsSubsystem m_lights = new LightsSubsystem();
 
-  // TODO: Remove these later after tuning
-  // Tunable Setpoints
-  private double mt_turretYawSetpointDegrees = 0.0;
-  private double mt_turretPitchSetpointDegrees = 0.0;
+  // TODO: Remove later; tuning constants
+  private final double mt_turretYawSetpointDegrees = 0.0;
+  private final double mt_turretPitchSetpointDegrees = 0.0;
 
   // for auto driving
   private final SendableChooser<Command> m_autoChooser;
@@ -97,19 +95,7 @@ public class RobotContainer {
                 true),
             m_robotDrive));
 
-    // Brake the rotation of the turret by default unless the turret has not been homed yet
-    m_turret.setDefaultCommand(
-      Commands.either(
-        m_turret.stopTurretYaw(), 
-        m_turret.homeTurretYaw(() -> -m_operCmdController.getRightX()),
-        m_turret.isTurretYawHomed())
-    );
-
     m_lights.test();
-
-    // TODO: REMOVE LATER: Tuning PID for the flywheel
-    SmartDashboard.putNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees);
-    SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
