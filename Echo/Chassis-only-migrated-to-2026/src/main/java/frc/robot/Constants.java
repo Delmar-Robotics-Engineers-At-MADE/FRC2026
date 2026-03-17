@@ -52,6 +52,8 @@ public final class Constants {
       public static final int kTurretYawMotorCanId = 24;
       public static final int kTurretPitchMotorCanId = 23;
 
+      public static final double kTurretYawManualHomeDutyCycle = 0.1;
+
       public static final class TurretUnits {
          private static final double kYawMotorOutputGearRatio = 221.4857143; // (68 * 76 * 117) / (13 * 21 * 10)
          public static final double kYawPositionConversionFactor = 360.0 / kYawMotorOutputGearRatio; // degrees

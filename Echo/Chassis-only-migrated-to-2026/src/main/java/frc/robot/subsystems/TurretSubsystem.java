@@ -23,10 +23,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Neo550MotorConstants;
 import frc.robot.Constants.TurretSubsystemConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
@@ -215,7 +215,7 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @param dutyCycle A value from [-1, 1]
     */
-   public void moveTurretYaw(double dutyCycle) {
+   private void moveTurretYaw(double dutyCycle) {
 
       System.out.println("MoveTurretYaw");
       // Clamp the applied duty cycle to 30% for safety in testing
@@ -223,7 +223,7 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretYawMotor.set(actualAppliedDutyCycle);
    }
 
-   public void moveTurretYawVelocity(double velocity) {
+   private void moveTurretYawVelocity(double velocity) {
       m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
    }
 
@@ -238,7 +238,7 @@ public class TurretSubsystem extends SubsystemBase {
     * @param position Actual output position of the turret's rotation in degrees in the range [0,300]
     */
    private void moveTurretYawToPosition(double position) {
-      if (isTurretYawHomed()) {
+      if (isTurretYawHomed().getAsBoolean()) {
 
          // Clamp the value so we don't move past the safe boundaries
          // TODO: Update this call to use the position that is being passed in after
@@ -255,8 +255,8 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @return Whether the yaw turret has been homed
     */
-   public boolean isTurretYawHomed() {
-      return m_isTurretYawHomed;
+   public BooleanSupplier isTurretYawHomed() {
+      return () -> m_isTurretYawHomed;
    }
 
    /**
@@ -268,7 +268,7 @@ public class TurretSubsystem extends SubsystemBase {
     * @return A boolean indicating if the the yaw motor has reached its homing
     *         setpoint
     */
-   public BooleanSupplier getTurretYawAtHome() {
+   private BooleanSupplier getTurretYawAtHome() {
       return () -> !m_hallEffectYaw.get() || 
                    ((m_turretYawMotor.getOutputCurrent() > Neo550MotorConstants.kMaxAllowedCurrent / 3) && 
                    Math.abs(m_turretYawEncoder.getVelocity()) < TurretUnits.kTurretYawNotMovingSafeThresholdDegreesPerSec);
@@ -280,9 +280,11 @@ public class TurretSubsystem extends SubsystemBase {
     * This function is intended to be run at the beginning of autonomous init in
     * order to get the turret's absolute output rotation
     */
-   public void setTurretYawHomed() {
+   private void setTurretYawHomed() {
       m_isTurretYawHomed = true;
       m_turretYawEncoder.setPosition(TurretSetpoints.kYawMotorHomingSetpoint);
+
+      // TODO: Add logic here to enable soft limits in the motor controller
    }
 
    /**
@@ -306,7 +308,7 @@ public class TurretSubsystem extends SubsystemBase {
     *                 (launch angle)
     */
    private void moveTurretPitchToPosition() {
-      if (isTurretPitchHomed()) {
+      if (isTurretPitchHomed().getAsBoolean()) {
 
          // Clamp the value so we don't move past the safe boundaries
          // TODO: Update this call to use the position that is being passed in after
@@ -325,8 +327,8 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @return Whether the pitch turret has been homed
     */
-   private boolean isTurretPitchHomed() {
-      return m_isTurretPitchHomed;
+   private BooleanSupplier isTurretPitchHomed() {
+      return () -> m_isTurretPitchHomed;
    }
 
    /**
@@ -352,6 +354,8 @@ public class TurretSubsystem extends SubsystemBase {
    private void setTurretPitchHomed() {
       m_isTurretPitchHomed = true;
       m_turretPitchEncoder.setPosition(TurretSetpoints.kPitchMotorHomingSetpoint);
+
+      // TODO: Add logic here to enable soft limits in the motor controller
    }
 
    // TODO: remove this later!!
@@ -361,29 +365,19 @@ public class TurretSubsystem extends SubsystemBase {
    }
 
       /**
-    * Command to manually control the turret's rotation. While being commanded, the
-    * turret will move with the
-    * applied velocity. Once the command ends, the motors will stop.
+    * Command to manually home the turret's rotation. While being commanded, the turret
+    * will be allowed to move via manual stick motion until the hall effect sensor is reached
     */
-   public Command moveTurretRotationManual(DoubleSupplier velocity) {
-      return this.startEnd(
-            () -> {
-               this.moveTurretYawVelocity(velocity.getAsDouble());
-            }, () -> {
-               this.m_turretYawMotor.stopMotor();
-            }).withName("Turning turret");
-   }
-
-   /**
-    * Command to home the turret yaw motor at a low duty cycle and set its starting
-    * parameters to allow closed loop position control
-    */
-   public Command homeTurretYaw() {
-      return run(() -> this.moveTurretYaw(0.1))
+   public Command homeTurretYaw(DoubleSupplier axisSupplier) {
+      return Commands.run(
+               () -> moveTurretYaw(axisSupplier.getAsDouble() * TurretSubsystemConstants.kTurretYawManualHomeDutyCycle), 
+               this)
             .until(getTurretYawAtHome())
-            .andThen(() -> this.m_turretYawMotor.stopMotor())
-            .andThen(() -> this.setTurretYawHomed())
-            .withName("Home Turret Yaw");
+            .andThen(Commands.runOnce(() -> {
+               m_turretYawMotor.stopMotor();
+               setTurretYawHomed();
+            }, this))
+            .withName("Manual Turret Homing");
    }
 
    /**
@@ -398,6 +392,13 @@ public class TurretSubsystem extends SubsystemBase {
             }, () -> {
                this.m_turretYawMotor.stopMotor();
             }).withName("Rotating turret yaw to position");
+   }
+
+   /**
+    * Command to stop the turret from rotating in general and to fall back to its brake mode to hold its current position
+    */
+   public Command stopTurretYaw() {
+      return this.run(() -> m_turretYawMotor.stopMotor());
    }
 
    /**
