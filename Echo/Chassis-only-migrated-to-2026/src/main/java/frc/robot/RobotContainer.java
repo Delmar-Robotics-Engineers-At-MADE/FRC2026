@@ -75,11 +75,11 @@ public class RobotContainer {
 
     // Configure non-button triggers
     configureNonButtonTriggers();
-
+    m_autoChooser = AutoBuilder.buildAutoChooser();
     // setup dashboard
     setupDashboard();
 
-    m_autoChooser = AutoBuilder.buildAutoChooser();
+    
 
     // Configure default commands
     m_robotDrive.setDefaultCommand(

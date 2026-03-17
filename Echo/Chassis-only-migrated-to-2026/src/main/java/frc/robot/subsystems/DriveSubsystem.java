@@ -257,7 +257,7 @@ public class DriveSubsystem extends SubsystemBase {
       };
    }
 
-   private ChassisSpeeds getRobotRelativeSpeeds() {
+   public ChassisSpeeds getRobotRelativeSpeeds() {
       return DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
    }
 
@@ -338,6 +338,16 @@ public class DriveSubsystem extends SubsystemBase {
       m_rearLeft.resetEncoders();
       m_frontRight.resetEncoders();
       m_rearRight.resetEncoders();
+   }
+
+   public ChassisSpeeds getFieldRelativeSpeeds() {
+
+      ChassisSpeeds robotSpeeds = getRobotRelativeSpeeds();
+
+      return ChassisSpeeds.fromRobotRelativeSpeeds(
+         robotSpeeds,
+         getPose().getRotation()
+      );
    }
 
    /** Zeroes the heading of the robot. */
