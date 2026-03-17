@@ -98,6 +98,23 @@ public final class Constants {
    public static final class ClimberSubsystemConstants {
       public static final int kClimberLeftMotorCanId = 41; // CTRE Talon FX CAN ID (port-side motor)
       public static final int kClimberRightMotorCanId = 42; // CTRE Talon FX CAN ID (star-side motor)
+
+      public static final class ClimberUnits {
+         private static final double kClimberMotorOutputGearRatio = 1.0; // TODO: Update these later with values from Ryan or verify if there is no reduction
+         public static final double kClimberPositionConversionFactor = 360.0 / kClimberMotorOutputGearRatio; // degrees
+         public static final double kClimberVelocityConversionFactor = 360.0 / (60.0 * kClimberMotorOutputGearRatio); // degrees per second
+
+         public static final double kClimberNotMovingSafeThresholdDegreesPerSec = 5.0 * kClimberVelocityConversionFactor; // 5 RPM with conversion factor applied
+      }
+
+      public static final class ClimberSetpoints {
+         public static final double kLeftClimberPositionTolerance = 1.0; // degrees; TODO: Adjust this later
+         public static final double kRightClimberPositionTolerance = 1.0; // degrees; TODO: Adjust this later
+
+         // TODO: Set these later with values from Ryan
+         public static final double kLeftClimberMotorHomingSetpoint = 0.0; // degrees
+         public static final double kRightClimberMotorHomingSetpoint = 0.0; // degrees
+      }
    }
 
    public static final class LightsSubsystemConstants {
@@ -210,6 +227,11 @@ public final class Constants {
    public static final class Neo550MotorConstants {
       public static final double kFreeSpeedRpm = 11000.0;
       public static final int kMaxAllowedCurrent = 20; // Amps
+   }
+
+   public static final class Falcon500MotorConstants {
+      public static final double kFreeSpeedRpm = 6380.0;
+      public static final int kMaxAllowedCurrent = 40; // max stator current of 40A
    }
 
    public static final class LEDConstants {

@@ -45,7 +45,7 @@ public class TurretSubsystem extends SubsystemBase {
    private double m_turretYawSetpointDegrees = 0.0;
    private boolean m_isTurretYawHomed = false;
 
-   private double m_turretPitchkG = 0.2;
+   private double m_turretPitchkG = 1.0;
    private double m_turretPitchSetpointDegrees = 0.0;
    private boolean m_isTurretPitchHomed = false;
 
@@ -224,22 +224,18 @@ public class TurretSubsystem extends SubsystemBase {
    }
 
    public void moveTurretYawVelocity(double velocity) {
-
-      // TODO: Update this to pass in a proper value; for now, use 2 degrees per second
       m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
    }
 
    private void moveTurretPitchVelocity(double velocity) {
-
-      // TODO: Update this to pass in a proper value; for now, use 2 degrees per second
       m_turretPitchClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
    }
 
    /**
-    * Used to command the turret's yaw motor to a particular absolute position in
-    * degrees
+    * Used to command the turret's yaw motor to a particular position in
+    * degrees relative to the turret's local reference frame in the range [0,300]
     * 
-    * @param position Absolute output position of the turret's rotation in degrees
+    * @param position Actual output position of the turret's rotation in degrees in the range [0,300]
     */
    private void moveTurretYawToPosition(double position) {
       if (isTurretYawHomed()) {

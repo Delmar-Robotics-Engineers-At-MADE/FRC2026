@@ -287,7 +287,7 @@ public final class Configs {
       // TODO: Re-evaluate this later
       leftConfig
          .OpenLoopRamps
-            .withDutyCycleOpenLoopRampPeriod(0.5);
+            .withDutyCycleOpenLoopRampPeriod(1.0);
 
       // Set current limits for the motors to prevent damage
       // If the supply current limit is reached for a period of time, we will drop down to the lower limit

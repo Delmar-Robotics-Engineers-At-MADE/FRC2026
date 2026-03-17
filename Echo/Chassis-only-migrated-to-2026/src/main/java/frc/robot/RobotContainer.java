@@ -90,20 +90,10 @@ public class RobotContainer {
                 MathUtil.applyDeadband(-m_driverController.getRawAxis(1), OIConstants.kDriveDeadband), // getLeftY()
                 MathUtil.applyDeadband(-m_driverController.getRawAxis(0), OIConstants.kDriveDeadband), // getLeftX()
                 -MathUtil.applyDeadband(m_driverController.getRawAxis(2), OIConstants.kDriveDeadband*4), // getRightX()
-                false),
+                true),
             m_robotDrive));
 
-    m_turret.setDefaultCommand(
-        m_turret.homeTurretYaw()
-        .andThen(new RunCommand(() -> m_turret.trackHub(),m_turret))
-        );
-
     m_lights.test();
-  }
-
-  public void simulationPeriodic() {
-    // Update the simulation model.
-    //m_fuelShoot.simulationPeriodic();
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
@@ -210,6 +200,7 @@ public class RobotContainer {
   }
 
   public void checkHomePositions() {
-    // TODO: Add code to zero turret yaw and pitch. This is intended to be called at the beginning of auto init but could realistically be called at any time
+        //m_turret.homeTurretYaw();
+        //m_turret.homeTurretPitch();
   }
 }

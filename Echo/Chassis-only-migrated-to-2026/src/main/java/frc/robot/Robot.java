@@ -57,10 +57,7 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void simulationPeriodic() {
-    // Update the simulation model.
-    m_robotContainer.simulationPeriodic();
-  }
+  public void simulationPeriodic() {}
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
