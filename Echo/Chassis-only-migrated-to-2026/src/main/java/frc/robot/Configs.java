@@ -187,8 +187,8 @@ public final class Configs {
       turretPitchConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control
-          .cruiseVelocity(2000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec
-          .maxAcceleration(4000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec/s
+          .cruiseVelocity(3000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(5000 * TurretUnits.kPitchVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kPitchPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control

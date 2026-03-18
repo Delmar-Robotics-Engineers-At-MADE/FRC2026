@@ -9,8 +9,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
@@ -50,6 +48,11 @@ public class RobotContainer {
   private final TurretSubsystem m_turret = new TurretSubsystem(m_robotDrive.m_odometry);
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem();
   private final LightsSubsystem m_lights = new LightsSubsystem();
+
+  // TODO: Remove these later after tuning
+  // Tunable Setpoints
+  private double mt_turretYawSetpointDegrees = 0.0;
+  private double mt_turretPitchSetpointDegrees = 0.0;
 
   // for auto driving
   private final SendableChooser<Command> m_autoChooser;
@@ -103,6 +106,10 @@ public class RobotContainer {
     );
 
     m_lights.test();
+
+    // TODO: REMOVE LATER: Tuning PID for the flywheel
+    SmartDashboard.putNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees);
+    SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
@@ -178,9 +185,13 @@ public class RobotContainer {
     // Y button -> Run the shooter until it is up to speed & then run the shooter
     m_operCmdController.y().whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder));
 
-    // X button -> Turn turret yaw to a set point
+    // B button -> Turn turret pitch to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.b().whileTrue(m_turret.commandTurretYawToPosition(0));
+    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(() -> SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
+
+    // X button -> turn turret yaw to a set point
+    // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
+    m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(() -> SmartDashboard.getNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees)));
 
     // TEST: Allow manual homing of turret components
     m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());

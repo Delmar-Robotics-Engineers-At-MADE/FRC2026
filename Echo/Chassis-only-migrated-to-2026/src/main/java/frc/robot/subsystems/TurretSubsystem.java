@@ -42,12 +42,10 @@ public class TurretSubsystem extends SubsystemBase {
    // Sensors
    private final DigitalInput m_hallEffectYaw = new DigitalInput(0);
 
-   private double m_turretYawSetpointDegrees = 0.0;
    private boolean m_isTurretYawHomed = false;
+   private boolean m_isTurretPitchHomed = false;
 
    private double m_turretPitchkG = 1.0;
-   private double m_turretPitchSetpointDegrees = 0.0;
-   private boolean m_isTurretPitchHomed = false;
 
    // REMOVE LATER: Tuning Constants
    private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretPitchConfig;
@@ -108,9 +106,7 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretYawEncoder.setPosition(0.0);
       m_turretPitchEncoder.setPosition(0.0);
 
-      // TODO: REMOVE LATER: Tuning PID for the flywheel
-      SmartDashboard.putNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
-      SmartDashboard.putNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
+      // TODO: Remove these later; tuning constants
       SmartDashboard.putNumber("Set Turret/kP", mt_turretClosedLoopP);
       SmartDashboard.putNumber("Set Turret/kI", mt_turretClosedLoopI);
       SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
@@ -200,14 +196,16 @@ public class TurretSubsystem extends SubsystemBase {
    /**
     * Trigger: Is the turret at the desired position?
     */
-   public final Trigger isYawAtPosition = new Trigger(
-         () -> isYawAt(this.m_turretYawSetpointDegrees));
+   public final BooleanSupplier isYawAtPosition(double position) {
+      return () -> isYawAt(position);
+   }
 
    /**
     * Trigger: Is the turret hood at the desired position?
     */
-   public final Trigger isPitchAtPosition = new Trigger(
-         () -> isPitchAt(this.m_turretPitchSetpointDegrees));
+   public final BooleanSupplier isPitchAtPosition(double position) {
+      return () -> isPitchAt(position);
+   }
 
    /**
     * Used for testing and backup ability for manual control of the turret's
@@ -223,14 +221,6 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretYawMotor.set(actualAppliedDutyCycle);
    }
 
-   private void moveTurretYawVelocity(double velocity) {
-      m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
-   }
-
-   private void moveTurretPitchVelocity(double velocity) {
-      m_turretPitchClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
-   }
-
    /**
     * Used to command the turret's yaw motor to a particular position in
     * degrees relative to the turret's local reference frame in the range [0,300]
@@ -241,8 +231,7 @@ public class TurretSubsystem extends SubsystemBase {
       if (isTurretYawHomed().getAsBoolean()) {
 
          // Clamp the value so we don't move past the safe boundaries
-         // TODO: Update this call to use the position that is being passed in after
-         double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, m_turretYawSetpointDegrees));
+         double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
          m_turretYawClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl);
       }
    }
@@ -304,17 +293,16 @@ public class TurretSubsystem extends SubsystemBase {
     * Used to command the turret's hood to a particular absolute position in
     * degrees
     * 
-    * @param position Absolute output position of the turret's hood in degrees
+    * @param positionDegrees Absolute output position of the turret's hood in degrees
     *                 (launch angle)
     */
-   private void moveTurretPitchToPosition() {
+   private void moveTurretPitchToPosition(double positionDegrees) {
       if (isTurretPitchHomed().getAsBoolean()) {
 
          // Clamp the value so we don't move past the safe boundaries
-         // TODO: Update this call to use the position that is being passed in after
-         double actualAppliedPosition = Math.max(TurretSetpoints.kPitchMotorMinSetpoint, Math.min(TurretSetpoints.kPitchMotorMaxSetpoint, m_turretPitchSetpointDegrees));
+         double actualAppliedPosition = Math.max(TurretSetpoints.kPitchMotorMinSetpoint, Math.min(TurretSetpoints.kPitchMotorMaxSetpoint, positionDegrees));
 
-         double arbFF = m_turretPitchkG * Math.sin(Math.toRadians(m_turretPitchSetpointDegrees));
+         double arbFF = m_turretPitchkG * Math.sin(Math.toRadians(positionDegrees));
          m_turretPitchClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, arbFF);
       }
    }
@@ -383,12 +371,12 @@ public class TurretSubsystem extends SubsystemBase {
    /**
     * Commands the turret to rotate to an absolute position
     * 
-    * @param position The desired absolute rotational position of the turret
+    * @param positionDegrees The desired absolute rotational position of the turret
     */
-   public Command commandTurretYawToPosition(double position) {
+   public Command commandTurretYawToPosition(DoubleSupplier positionDegrees) {
       return this.startEnd(
             () -> {
-               this.moveTurretYawToPosition(position);
+               this.moveTurretYawToPosition(positionDegrees.getAsDouble());
             }, () -> {
                this.m_turretYawMotor.stopMotor();
             }).withName("Rotating turret yaw to position");
@@ -399,20 +387,6 @@ public class TurretSubsystem extends SubsystemBase {
     */
    public Command stopTurretYaw() {
       return this.run(() -> m_turretYawMotor.stopMotor());
-   }
-
-   /**
-    * Command to manually control the turret's hood. While being commanded, the
-    * turret hood will move with the
-    * applied velocity. Once the command ends, the motors will stop.
-    */
-   public Command moveTurretHoodManual(DoubleSupplier velocity) {
-      return this.startEnd(
-            () -> {
-               this.moveTurretPitchVelocity(velocity.getAsDouble());
-            }, () -> {
-               this.m_turretPitchMotor.stopMotor();
-            }).withName("Moving turret hood");
    }
 
    /**
@@ -432,10 +406,10 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @param position The desired absolute position of the turret hood
     */
-   public Command commandTurretPitchToPosition(double position) {
+   public Command commandTurretPitchToPosition(DoubleSupplier position) {
       return this.startEnd(
             () -> {
-               this.moveTurretPitchToPosition();
+               this.moveTurretPitchToPosition(position.getAsDouble());
             }, () -> {
                this.m_turretPitchMotor.stopMotor();
             }).withName("Rotating turret pitch to position");
@@ -466,8 +440,6 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Turret Yaw | Encoder Position", m_turretYawEncoder.getPosition());
       SmartDashboard.putNumber("Turret Pitch | Encoder Position", m_turretPitchEncoder.getPosition());
 
-      m_turretYawSetpointDegrees = SmartDashboard.getNumber("Set Turret Yaw Position", m_turretYawSetpointDegrees);
-      m_turretPitchSetpointDegrees = SmartDashboard.getNumber("Set Turret Pitch Position", m_turretPitchSetpointDegrees);
       m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kFF", m_turretPitchkG);
 
       // Sensors
@@ -496,7 +468,5 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Turret/kP", mt_turretClosedLoopP);
       SmartDashboard.putNumber("Turret/kI", mt_turretClosedLoopI);
       SmartDashboard.putNumber("Turret/kD", mt_turretClosedLoopD);
-      SmartDashboard.putNumber("Turret Yaw Position Setpoint", m_turretYawSetpointDegrees);
-      SmartDashboard.putNumber("Set Turret Pitch Position Setpoint", m_turretPitchSetpointDegrees);
    }
 }

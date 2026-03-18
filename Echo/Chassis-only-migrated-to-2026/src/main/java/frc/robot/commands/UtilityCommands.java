@@ -43,7 +43,7 @@ public final class UtilityCommands {
             Commands.sequence(
                // First, wait until the turret is at the desired position (control of the turret is happening continuously in the "otherCommands")
                Commands.waitUntil(
-                  turret.isYawAtPosition.and(turret.isPitchAtPosition) 
+                  () -> turret.isYawAtPosition(0.0).getAsBoolean() && (turret.isPitchAtPosition(0.0).getAsBoolean()) 
                ), 
 
                // Then, wait for the flywheel to get up to speed (also being commanded to spin up in the "otherCommands")
@@ -57,13 +57,13 @@ public final class UtilityCommands {
             // TODO: These turret position commands are ignoring the value being passed in currently. Update these once values are actually being passed
             // in (from vision or other)
             shooter.runFlywheelCommand(),
-            turret.commandTurretYawToPosition(0),
-            turret.commandTurretPitchToPosition(0)
+            turret.commandTurretYawToPosition(() -> 0.0),
+            turret.commandTurretPitchToPosition(() -> 0.0)
          ),
 
          // After shooting is done, lower the hood back down
-         turret.commandTurretPitchToPosition(0) // TODO: This currently isn't passing anything because the input value is being ignored. Update
-                                                         // this once the value can be passed in
+         turret.commandTurretPitchToPosition(() -> 0.0) // TODO: This currently isn't passing anything because the input value is being ignored. Update
+                                                        // this once the value can be passed in
       );
    }
 }
