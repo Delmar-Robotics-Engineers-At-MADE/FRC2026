@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
@@ -24,7 +25,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants.Neo550MotorConstants;
 import frc.robot.Constants.TurretSubsystemConstants;
@@ -45,9 +45,10 @@ public class TurretSubsystem extends SubsystemBase {
    private boolean m_isTurretPitchHomed = false;
 
    private double m_turretPitchkG = 1.0;
+   private double m_turretYawkS = 0.0;
 
    // REMOVE LATER: Tuning Constants
-   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretPitchConfig;
+   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
    private double mt_turretClosedLoopP = 0.0;
    private double mt_turretClosedLoopI = 0.0;
    private double mt_turretClosedLoopD = 0.0;
@@ -62,8 +63,9 @@ public class TurretSubsystem extends SubsystemBase {
      // for tracking hub by odometry
       m_odometry = robot_odometry;
 
+      Optional<Alliance> allianceOptional = DriverStation.getAlliance();
       // target position on field
-      if(DriverStation.getAlliance().get() == Alliance.Red) {
+      if(allianceOptional.isPresent() && allianceOptional.get() == Alliance.Red) {
          m_hub = new Translation2d(11.92, 4.03);
       } else {
          m_hub = new Translation2d(4.63, 4.03);
@@ -111,8 +113,11 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Set Turret/kI", mt_turretClosedLoopI);
       SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
+      SmartDashboard.putNumber("Set Turret Yaw kS", m_turretYawkS);
    }
 
+   // TODO: Move most of this logic to a separate class/subsystem for getting the angle to a particular target
+   // Need to decide if this class should be handling conversion from field-relative to robot-relative/turret relative
     public void trackHub () {
 
       // calculate angle to red target, and then pretend joystick is pointing that way
@@ -129,7 +134,7 @@ public class TurretSubsystem extends SubsystemBase {
       double robotRelativeDeg = fieldRelativeAngleToTarget.minus(robotHeading).getDegrees();
 
       // Add the offset to the output value to get the angle representing straight forward on the turret
-      double turretSetpointDeg = robotRelativeDeg + 200.0; // TODO: Update this later with the real offset value
+      double turretSetpointDeg = robotRelativeDeg + TurretSetpoints.kYawCenterOffsetFromHome;
 
       // Normalize the value in degrees so it falls in the range [0,360]
       turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
@@ -416,6 +421,7 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Hood/Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
       m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kG", m_turretPitchkG);
+      double newTurretYawkS = SmartDashboard.getNumber("Set Turret Yaw kS", m_turretYawkS);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
@@ -430,13 +436,29 @@ public class TurretSubsystem extends SubsystemBase {
             .closedLoop
                .p(newTurretkP)
                .i(newTurretkI)
-               .d(newTurretkD);
+               .d(newTurretkD)
+               .p(newTurretkP, ClosedLoopSlot.kSlot2)
+               .i(newTurretkI, ClosedLoopSlot.kSlot2)
+               .d(newTurretkD, ClosedLoopSlot.kSlot2);
 
-         m_turretPitchMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
          mt_turretClosedLoopP = newTurretkP;
          mt_turretClosedLoopI = newTurretkI;
          mt_turretClosedLoopD = newTurretkD;
+      }
+
+      if (hasChanged(m_turretYawkS, newTurretYawkS))
+      {
+         // Configure only closed loop slot 2 with the kS constant since it is working against the energy chain and constant force spring
+         mt_turretConfig
+            .closedLoop
+               .feedForward
+                  .kS(newTurretYawkS, ClosedLoopSlot.kSlot2);
+
+         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+         m_turretYawkS = newTurretYawkS;
       }
 
       // Push current values so they appear on startup

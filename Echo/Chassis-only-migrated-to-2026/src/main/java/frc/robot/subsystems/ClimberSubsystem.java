@@ -3,8 +3,11 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -20,12 +23,17 @@ public class ClimberSubsystem extends SubsystemBase{
    TalonFX m_leftClimberMotor = new TalonFX(ClimberSubsystemConstants.kClimberLeftMotorCanId);
    TalonFX m_rightClimberMotor = new TalonFX(ClimberSubsystemConstants.kClimberRightMotorCanId);
 
+   // Re-usable control requests
+   private final MotionMagicVoltage leftMMRequest = new MotionMagicVoltage(0);
+   private final MotionMagicVoltage rightMMRequest = new MotionMagicVoltage(0);
+   private final NeutralOut neutralRequest = new NeutralOut();
+
    // Member state variables
    boolean m_isLeftClimberArmHomed = false;
+   boolean m_isRightClimberArmHomed = false;
 
-   // Test Values
-   // TODO: Remove these later
-   double mt_leftClimberPositionSetpoint = 0.0;
+   // Most recently commanded climber setpoint
+   double m_climberPositionSetpoint = 0.0;
 
    ClimberSubsystem() {
 
@@ -34,6 +42,8 @@ public class ClimberSubsystem extends SubsystemBase{
       
       m_leftClimberMotor.getConfigurator().apply(leftConfig);
       m_rightClimberMotor.getConfigurator().apply(rightConfig);
+
+      SmartDashboard.putNumber("Set Climber Position (deg)", m_climberPositionSetpoint);
    }
 
    /**
@@ -48,7 +58,7 @@ public class ClimberSubsystem extends SubsystemBase{
     * Trigger: Is the left climber arm at the desired position?
     */
    public final Trigger isLeftArmAtPosition = new Trigger(
-         () -> isLeftArmAt(this.mt_leftClimberPositionSetpoint));
+         () -> isLeftArmAt(this.m_climberPositionSetpoint));
 
    /**
     * Used to return whether or not the left climber motor has been homed and is
@@ -84,13 +94,32 @@ public class ClimberSubsystem extends SubsystemBase{
     */
    private void setLeftClimberHomed() {
       m_isLeftClimberArmHomed = true;
-      m_leftClimberMotor.setPosition(ClimberSetpoints.kLeftClimberMotorHomingSetpoint);
+      m_leftClimberMotor.setPosition(ClimberSetpoints.kClimberMotorHomingSetpoint);
+   }
+   
+   /**
+    * Used to declare that the right climber motor has been homed and its absolute position
+    * can be set according to hard physical limits
+    * This function is intended to be run at the beginning of autonomous init in
+    * order to get the right climber motor's output rotation relative to the local reference frame
+    */
+   private void setRightClimberHomed() {
+      m_isLeftClimberArmHomed = true;
+      m_leftClimberMotor.setPosition(ClimberSetpoints.kClimberMotorHomingSetpoint);
+   }
+
+   /**
+    * Tells both motors to explicitly stop moving
+    */
+   private void stop() {
+      m_leftClimberMotor.setControl(neutralRequest);
+      m_rightClimberMotor.setControl(neutralRequest);
    }
 
    // TODO: Remove later. Temporary usage for testing climber motor functionality
    private void testSetClimberHomed() {
       setLeftClimberHomed();
-      // setRightClimberHomed();
+      setRightClimberHomed();
    }
 
    /**
@@ -112,5 +141,10 @@ public class ClimberSubsystem extends SubsystemBase{
 
    private void moveLeftArm(double position) {
       m_leftClimberMotor.set(position);
+   }
+
+   @Override
+   public void periodic() {
+      m_climberPositionSetpoint = SmartDashboard.getNumber("Set Climber Position (deg)", m_climberPositionSetpoint);
    }
 }

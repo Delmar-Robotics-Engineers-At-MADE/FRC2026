@@ -14,6 +14,7 @@ import frc.robot.Constants.ModuleConstants;
 import frc.robot.Constants.Neo550MotorConstants;
 import frc.robot.Constants.NeoMotorConstants;
 import frc.robot.Constants.ShooterSubsystemConstants;
+import frc.robot.Constants.ClimberSubsystemConstants.ClimberUnits;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
 
@@ -132,14 +133,23 @@ public final class Configs {
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
           .p(0)
+          .i(0)
+          .d(0)
+          .p(0, ClosedLoopSlot.kSlot2)
+          .i(0, ClosedLoopSlot.kSlot2)
+          .d(0, ClosedLoopSlot.kSlot2)
           .outputRange(-1, 1);
 
       turretYawConfig.closedLoop
         .maxMotion
-          // Set MAXMotion parameters for MAXMotion Position control
+          // Set MAXMotion parameters for MAXMotion Position control working with the spring
           .cruiseVelocity(1500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
           .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance) // degrees
+          // Set MAXMotion parameters for MAXMotion Position control working with the spring
+          .cruiseVelocity(1500 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec
+          .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec/s
+          .allowedProfileError(TurretSetpoints.kYawPositionTolerance, ClosedLoopSlot.kSlot2) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s
@@ -149,9 +159,8 @@ public final class Configs {
       // the nominal voltage
       turretYawConfig.closedLoop
         .feedForward
-          .kV(0.05)
-          .kS(0.05); // TODO: Update/tune these values later
-          //.kV(nominalVoltage / (Constants.Neo550MotorConstants.kFreeSpeedRpm * TurretUnits.kYawVelocityConversionFactor));
+          .kS(0.0, ClosedLoopSlot.kSlot0)
+          .kS(0.0, ClosedLoopSlot.kSlot2); // TODO: Set these after tuning
 
       turretPitchConfig
         .inverted(false)
@@ -275,7 +284,8 @@ public final class Configs {
       // Make sure the motors are using the built-in relative encoder on the motor shaft
       leftConfig
          .Feedback
-            .withFeedbackSensorSource(FeedbackSensorSourceValue.RotorSensor);
+            .withFeedbackSensorSource(FeedbackSensorSourceValue.RotorSensor)
+            .withSensorToMechanismRatio(ClimberUnits.kClimberMotorOutputGearRatio);
 
       // Set the motors to brake when not be commanded to move, and set proper rotation
       leftConfig

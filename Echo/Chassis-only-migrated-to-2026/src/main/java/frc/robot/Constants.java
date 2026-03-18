@@ -72,6 +72,8 @@ public final class Constants {
          public static final double kYawVelocityTolerance = 1; // degrees per second
          public static final double kPitchVelocityTolerance = 1; // degrees per second
 
+         public static final double kYawCenterOffsetFromHome = 200.0; // degrees; // TODO: Update this later with the real offset value
+
          public static final double kYawMotorHomingSetpoint = 60.0; // degrees
          public static final double kPitchMotorHomingSetpoint = 28.0; // degrees
 
@@ -100,7 +102,7 @@ public final class Constants {
       public static final int kClimberRightMotorCanId = 42; // CTRE Talon FX CAN ID (star-side motor)
 
       public static final class ClimberUnits {
-         private static final double kClimberMotorOutputGearRatio = 1.0; // TODO: Update these later with values from Ryan or verify if there is no reduction
+         public static final double kClimberMotorOutputGearRatio = 1.0; // TODO: Update these later with values from Ryan or verify if there is no reduction
          public static final double kClimberPositionConversionFactor = 360.0 / kClimberMotorOutputGearRatio; // degrees
          public static final double kClimberVelocityConversionFactor = 360.0 / (60.0 * kClimberMotorOutputGearRatio); // degrees per second
 
@@ -112,8 +114,12 @@ public final class Constants {
          public static final double kRightClimberPositionTolerance = 1.0; // degrees; TODO: Adjust this later
 
          // TODO: Set these later with values from Ryan
-         public static final double kLeftClimberMotorHomingSetpoint = 0.0; // degrees
-         public static final double kRightClimberMotorHomingSetpoint = 0.0; // degrees
+         public static final double kClimberMotorHomingSetpoint = 0.0; // degrees
+
+         public static final double kClimberStowedSetpoint = kClimberMotorHomingSetpoint;
+         public static final double kClimberExtendedLevelZeroSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
+         public static final double kClimberExtendedLevelOnePlusSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
+         public static final double kClimberRetractedSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
       }
    }
 
