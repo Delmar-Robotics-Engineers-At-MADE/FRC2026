@@ -428,19 +428,15 @@ public class TurretSubsystem extends SubsystemBase {
    public void periodic() {
 
       // Display subsystem values
-      SmartDashboard.putNumber("Turret Yaw | Velocity Setpoint", m_turretYawClosedLoopController.getMAXMotionSetpointVelocity());
-      SmartDashboard.putNumber("Turret Yaw | Current", m_turretYawMotor.getOutputCurrent());
-      SmartDashboard.putNumber("Turret Pitch | Velocity Setpoint", m_turretPitchClosedLoopController.getMAXMotionSetpointVelocity());
-      SmartDashboard.putNumber("Turret Pitch | Current", m_turretPitchMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Turret/Position (deg)", m_turretYawEncoder.getPosition());
+      SmartDashboard.putNumber("Turret/Current (A)", m_turretYawMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Turret/Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
+      
+      SmartDashboard.putNumber("Hood/Position (deg)", m_turretPitchEncoder.getPosition());
+      SmartDashboard.putNumber("Hood/Current (A)", m_turretPitchMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Hood/Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
-      // Temps
-      SmartDashboard.putNumber("Turret Yaw | Temperature (deg C)", m_turretYawMotor.getMotorTemperature());
-      SmartDashboard.putNumber("Turret Pitch | Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
-
-      SmartDashboard.putNumber("Turret Yaw | Encoder Position", m_turretYawEncoder.getPosition());
-      SmartDashboard.putNumber("Turret Pitch | Encoder Position", m_turretPitchEncoder.getPosition());
-
-      m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kFF", m_turretPitchkG);
+      m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kG", m_turretPitchkG);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
