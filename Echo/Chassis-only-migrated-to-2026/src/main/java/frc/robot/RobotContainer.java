@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.commands.UtilityCommands;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
@@ -21,6 +22,7 @@ import frc.robot.subsystems.LightsSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
 import frc.robot.subsystems.TurretSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
@@ -49,8 +51,8 @@ public class RobotContainer {
   private final LightsSubsystem m_lights = new LightsSubsystem();
 
   // TODO: Remove later; tuning constants
-  private final double mt_turretYawSetpointDegrees = 0.0;
-  private final double mt_turretPitchSetpointDegrees = 0.0;
+  private final double mt_turretYawSetpointDegrees = TurretSetpoints.kYawMotorHomingSetpoint;
+  private final double mt_turretPitchSetpointDegrees = TurretSetpoints.kPitchMotorHomingSetpoint;
 
   // for auto driving
   private final SendableChooser<Command> m_autoChooser;
@@ -95,7 +97,19 @@ public class RobotContainer {
                 true),
             m_robotDrive));
 
+    // Brake the rotation of the turret by default unless the turret has not been homed yet
+    m_turret.setDefaultCommand(
+      Commands.either(
+        m_turret.stopTurretYaw(), 
+        m_turret.homeTurretYaw(() -> m_operCmdController.getRightX()),
+        m_turret.isTurretYawHomed())
+    );
+
     m_lights.test();
+
+    // TODO: REMOVE LATER: Tuning PID for the flywheel
+    SmartDashboard.putNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees);
+    SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
@@ -173,11 +187,13 @@ public class RobotContainer {
 
     // B button -> Turn turret pitch to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(() -> SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
+    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(() -> SmartDashboard.getNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees)));
 
     // X button -> turn turret yaw to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(() -> SmartDashboard.getNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees)));
+    m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(() -> SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
+
+    m_operCmdController.rightBumper().whileTrue(m_turret.trackHubCommand());
 
     // TEST: Allow manual homing of turret components
     m_operCmdController.back().onTrue(m_turret.testCommandSetTurretHomed());

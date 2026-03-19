@@ -46,6 +46,7 @@ public class TurretSubsystem extends SubsystemBase {
 
    private double m_turretPitchkG = 1.0;
    private double m_turretYawkS = 0.0;
+   private double m_turretYawkV = 0.0;
 
    // REMOVE LATER: Tuning Constants
    private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
@@ -114,6 +115,7 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
       SmartDashboard.putNumber("Set Turret Yaw kS", m_turretYawkS);
+      SmartDashboard.putNumber("Set Turret Yaw kV", m_turretYawkV);
    }
 
    // TODO: Move most of this logic to a separate class/subsystem for getting the angle to a particular target
@@ -138,6 +140,8 @@ public class TurretSubsystem extends SubsystemBase {
 
       // Normalize the value in degrees so it falls in the range [0,360]
       turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
+
+      System.out.println(turretSetpointDeg);
 
       moveTurretYawToPosition(turretSetpointDeg);
    }
@@ -336,7 +340,12 @@ public class TurretSubsystem extends SubsystemBase {
       setTurretYawHomed();
    }
 
-      /**
+   public Command trackHubCommand() {
+      return Commands.run(
+         () -> this.trackHub(), this);
+   }
+
+   /**
     * Command to manually home the turret's rotation. While being commanded, the turret
     * will be allowed to move via manual stick motion until the hall effect sensor is reached
     */
@@ -422,6 +431,7 @@ public class TurretSubsystem extends SubsystemBase {
 
       m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kG", m_turretPitchkG);
       double newTurretYawkS = SmartDashboard.getNumber("Set Turret Yaw kS", m_turretYawkS);
+      double newTurretYawkV = SmartDashboard.getNumber("Set Turret Yaw kV", m_turretYawkV);
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
@@ -448,17 +458,20 @@ public class TurretSubsystem extends SubsystemBase {
          mt_turretClosedLoopD = newTurretkD;
       }
 
-      if (hasChanged(m_turretYawkS, newTurretYawkS))
+      if (hasChanged(m_turretYawkS, newTurretYawkS) || hasChanged(newTurretYawkV, m_turretYawkV))
       {
          // Configure only closed loop slot 2 with the kS constant since it is working against the energy chain and constant force spring
          mt_turretConfig
             .closedLoop
                .feedForward
+                  .kV(newTurretYawkV)
+                  .kV(newTurretYawkV, ClosedLoopSlot.kSlot2)
                   .kS(newTurretYawkS, ClosedLoopSlot.kSlot2);
 
          m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
          m_turretYawkS = newTurretYawkS;
+         m_turretYawkV = newTurretYawkV;
       }
 
       // Push current values so they appear on startup

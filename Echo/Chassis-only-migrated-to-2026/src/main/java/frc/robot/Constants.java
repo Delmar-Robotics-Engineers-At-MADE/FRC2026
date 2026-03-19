@@ -50,7 +50,7 @@ public final class Constants {
       public static final int kTurretYawMotorCanId = 24;
       public static final int kTurretPitchMotorCanId = 23;
 
-      public static final double kTurretYawManualHomeDutyCycle = 0.1;
+      public static final double kTurretYawManualHomeDutyCycle = 0.10;
 
       public static final class TurretUnits {
          private static final double kYawMotorOutputGearRatio = 221.4857143; // (68 * 76 * 117) / (13 * 21 * 10)
@@ -72,16 +72,16 @@ public final class Constants {
          public static final double kYawVelocityTolerance = 1; // degrees per second
          public static final double kPitchVelocityTolerance = 1; // degrees per second
 
-         public static final double kYawCenterOffsetFromHome = 200.0; // degrees; // TODO: Update this later with the real offset value
+         public static final double kYawCenterOffsetFromHome = 310.0; // degrees;
 
-         public static final double kYawMotorHomingSetpoint = 60.0; // degrees
+         public static final double kYawMotorHomingSetpoint = 226.0; // degrees
          public static final double kPitchMotorHomingSetpoint = 28.0; // degrees
 
-         public static final double kYawOutputRotationSafeBuffer = 2.0; // 2 degrees
-         public static final double kPitchOutputAngleSafeBuffer = 2.0; // 2 degrees
+         public static final double kYawOutputRotationSafeBuffer = 3.0; // 2 degrees
+         public static final double kPitchOutputAngleSafeBuffer = 3.0; // 2 degrees
 
          public static final double kYawMotorMinSetpoint = 0.0 + kYawOutputRotationSafeBuffer; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
-         public static final double kYawMotorMaxSetpoint = 300.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
+         public static final double kYawMotorMaxSetpoint = 335.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
          public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
       }

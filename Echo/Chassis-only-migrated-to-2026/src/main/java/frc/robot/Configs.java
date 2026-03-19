@@ -132,23 +132,23 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0)
+          .p(0.2)
           .i(0)
-          .d(0)
-          .p(0, ClosedLoopSlot.kSlot2)
+          .d(0.001)
+          .p(0.2, ClosedLoopSlot.kSlot2)
           .i(0, ClosedLoopSlot.kSlot2)
-          .d(0, ClosedLoopSlot.kSlot2)
+          .d(0.001, ClosedLoopSlot.kSlot2)
           .outputRange(-1, 1);
 
       turretYawConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(1500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
-          .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
+          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(1500 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec
-          .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec/s
+          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec
+          .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance, ClosedLoopSlot.kSlot2) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
@@ -160,6 +160,7 @@ public final class Configs {
       turretYawConfig.closedLoop
         .feedForward
           .kS(0.0, ClosedLoopSlot.kSlot0)
+          .kV(0.01, ClosedLoopSlot.kSlot0)
           .kS(0.0, ClosedLoopSlot.kSlot2); // TODO: Set these after tuning
 
       turretPitchConfig
