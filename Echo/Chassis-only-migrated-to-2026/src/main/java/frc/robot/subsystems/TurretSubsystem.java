@@ -18,6 +18,8 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -120,7 +122,7 @@ public class TurretSubsystem extends SubsystemBase {
 
    // TODO: Move most of this logic to a separate class/subsystem for getting the angle to a particular target
    // Need to decide if this class should be handling conversion from field-relative to robot-relative/turret relative
-    public void trackHub () {
+    public void trackHubNoSwerve() {
 
       // calculate angle to red target, and then pretend joystick is pointing that way
       Pose2d pose = m_odometry.getEstimatedPosition();
@@ -144,6 +146,68 @@ public class TurretSubsystem extends SubsystemBase {
       System.out.println(turretSetpointDeg);
 
       moveTurretYawToPosition(turretSetpointDeg);
+   }
+
+   public void trackHub() {
+
+      // calculate angle to red target, and then pretend joystick is pointing that way
+      Pose2d pose = m_odometry.getEstimatedPosition();
+      double deltaX = m_hub.getX() - pose.getX();
+      double deltaY = m_hub.getY() - pose.getY();
+
+      // normalize so one is 1 and the other is < 1
+      double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+      double xSpeed = deltaX / maxxy;
+      double ySpeed = deltaY / maxxy;
+
+      System.out.println("trackHub" + xSpeed + " " + ySpeed);
+      rotateByOdometry(xSpeed, ySpeed);
+   }
+   
+   public void rotateByOdometry(double xComponent, double yComponent) {
+      // Convert the commanded speeds/components into the correct units for the shooter
+
+      var swerveModuleStates = TurretSubsystemConstants.kDriveKinematics.toSwerveModuleStates(
+         ChassisSpeeds.fromFieldRelativeSpeeds(xComponent, yComponent, 0,
+                  m_odometry.getEstimatedPosition().getRotation()));
+      // SwerveDriveKinematics.desaturateWheelSpeeds(
+      //     swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
+      setDesiredState(swerveModuleStates[0]);
+   }   
+
+   public void setDesiredState(SwerveModuleState desiredState) {
+      // Apply chassis angular offset to the desired state.
+      SwerveModuleState correctedDesiredState = new SwerveModuleState();
+      correctedDesiredState.angle = desiredState.angle.plus(Rotation2d.fromRadians(TurretSubsystemConstants.kChassisAngularOffset));
+
+      // Optimize the reference state to avoid spinning further than 90 degrees.
+      // No, instead, just change this function to prevent turret from turning through its stops
+      // correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
+      correctedDesiredState = optimize(correctedDesiredState);
+
+      // Command driving and turning SPARKS towards their respective setpoints.
+      System.err.println("Setting turret setpoint to " + correctedDesiredState.angle.getDegrees());
+      m_turretYawClosedLoopController.setSetpoint(correctedDesiredState.angle.getDegrees(), ControlType.kPosition);
+   }
+
+   private SwerveModuleState optimize(SwerveModuleState state) {
+   // original function allows module to always turn less than 180 degrees
+   // var delta = angle.minus(currentAngle);
+   // if (Math.abs(delta.getDegrees()) > 90.0) {
+   //     speedMetersPerSecond *= -1;
+   //     angle = angle.rotateBy(Rotation2d.kPi);
+   // }
+   
+   // for the turret, simply stop the turret from moving through the stops
+      SwerveModuleState result = state; // return unmodified state if it's not past stops
+      if (state.angle.getDegrees() > TurretSetpoints.kYawMotorMaxSetpoint) {
+         result = new SwerveModuleState(state.speedMetersPerSecond, 
+                                       Rotation2d.fromDegrees(TurretSetpoints.kYawMotorMaxSetpoint));
+      } else if (state.angle.getDegrees() < TurretSetpoints.kYawMotorMinSetpoint) {
+         result = new SwerveModuleState(state.speedMetersPerSecond, 
+                                       Rotation2d.fromDegrees(TurretSetpoints.kYawMotorMinSetpoint));
+      }
+      return result;
    }
        
    /**
