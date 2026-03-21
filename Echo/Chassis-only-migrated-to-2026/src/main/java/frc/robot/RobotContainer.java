@@ -107,9 +107,10 @@ public class RobotContainer {
 
     m_lights.test();
 
-    // TODO: REMOVE LATER: Tuning PID for the flywheel
+    // TODO: REMOVE LATER: Tuning PID turret
     SmartDashboard.putNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees);
     SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
+    SmartDashboard.putNumber("Set Turret Yaw FF", TurretSetpoints.kYawFF);
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
@@ -134,15 +135,13 @@ public class RobotContainer {
   private void configureNonButtonTriggers() {
   }
 
+  static final int FlightButtonTRIGGER = 1;
   static final int FlightButtonTHUMB = 2;
   static final int FlightButtonLEFT = 3;
   static final int FlightButtonRIGHT = 4;
   private void configureButtonBindings() {
 
     // *************************** DRIVER *****************************
-
-    new JoystickButton(m_driverController, FlightButtonTHUMB) // thumb button on flight controller
-        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
 
     // reef positions
     // m_buttonPadCmd.button(3).and(m_photon::getPoseEstimateAcquired)
@@ -174,10 +173,16 @@ public class RobotContainer {
     //  .leftTrigger(TriggerThreshold)
     //   .whileTrue(m_intake.runIntakeCommand());
 
-    // Right Trigger -> Spin shooter/flywheel
-    m_operCmdController
-      .rightTrigger(TriggerThreshold)
-        .whileTrue(m_fuelShoot.runFlywheelCommand());
+    // Driver Trigger -> Shoot! By default at hub, or left or right offense zones with extra button press
+    new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
+         .whileTrue(new RunCommand(() -> m_turret.trackHubNoSwerve(), m_turret));
+
+    new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller
+        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
+
+    // m_operCmdController
+    //   .rightTrigger(TriggerThreshold)
+    //     .whileTrue(m_fuelShoot.runFlywheelCommand());
 
     // A button -> Spin feeder/loader motor into shooter
     m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());

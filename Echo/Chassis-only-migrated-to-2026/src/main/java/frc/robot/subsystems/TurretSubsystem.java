@@ -52,14 +52,17 @@ public class TurretSubsystem extends SubsystemBase {
 
    // REMOVE LATER: Tuning Constants
    private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
-   private double mt_turretClosedLoopP = 0.0;
-   private double mt_turretClosedLoopI = 0.0;
-   private double mt_turretClosedLoopD = 0.0;
+   private double mt_turretClosedLoopP = TurretSetpoints.kYawP;
+   private double mt_turretClosedLoopI = TurretSetpoints.kYawI;
+   private double mt_turretClosedLoopD = TurretSetpoints.kYawD;
 
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
 
    private Translation2d m_hub;
+
+   // for pid tuning
+   double mt_turretYawFF = TurretSetpoints.kYawFF;
 
    public TurretSubsystem(SwerveDrivePoseEstimator robot_odometry) {
 
@@ -112,9 +115,9 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretPitchEncoder.setPosition(0.0);
 
       // TODO: Remove these later; tuning constants
-      SmartDashboard.putNumber("Set Turret/kP", mt_turretClosedLoopP);
-      SmartDashboard.putNumber("Set Turret/kI", mt_turretClosedLoopI);
-      SmartDashboard.putNumber("Set Turret/kD", mt_turretClosedLoopD);
+      SmartDashboard.putNumber("Set Turret/kP", TurretSetpoints.kYawP);
+      SmartDashboard.putNumber("Set Turret/kI", TurretSetpoints.kYawI);
+      SmartDashboard.putNumber("Set Turret/kD", TurretSetpoints.kYawD);
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
       SmartDashboard.putNumber("Set Turret Yaw kS", m_turretYawkS);
       SmartDashboard.putNumber("Set Turret Yaw kV", m_turretYawkV);
@@ -143,7 +146,7 @@ public class TurretSubsystem extends SubsystemBase {
       // Normalize the value in degrees so it falls in the range [0,360]
       turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
 
-      System.out.println(turretSetpointDeg);
+      System.out.println("Setting turret yaw to " + turretSetpointDeg);
 
       moveTurretYawToPosition(turretSetpointDeg);
    }
@@ -259,10 +262,9 @@ public class TurretSubsystem extends SubsystemBase {
     */
    private void moveTurretYaw(double dutyCycle) {
 
-      System.out.println("MoveTurretYaw");
       // Clamp the applied duty cycle to 30% for safety in testing
-      double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
-      m_turretYawMotor.set(actualAppliedDutyCycle);
+      // double actualAppliedDutyCycle = Math.max(-0.7, Math.min(0.7, dutyCycle));
+      m_turretYawMotor.set(dutyCycle);
    }
 
    public void moveTurretYawVelocity(double velocity) {
@@ -282,9 +284,13 @@ public class TurretSubsystem extends SubsystemBase {
    private void moveTurretYawToPosition(double position) {
       if (isTurretYawHomed().getAsBoolean()) {
 
+         // apply FF only above 180 degrees;  seems like the spring is limp below that
+         double turretYawFF = position < 180 ? 0 : SmartDashboard.getNumber("Set Turret Yaw FF", mt_turretYawFF);
+         System.err.println("Moving turret by position to " + position);
+
          // Clamp the value so we don't move past the safe boundaries
          double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
-         m_turretYawClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl);
+         m_turretYawClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretYawFF);
       }
    }
 
@@ -500,7 +506,7 @@ public class TurretSubsystem extends SubsystemBase {
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
 
-      // REMOVE LATER: Tuning PID for the flywheel
+      // REMOVE LATER: Tuning PID for the yaw
       double newTurretkP = SmartDashboard.getNumber("Set Turret/kP", mt_turretClosedLoopP);
       double newTurretkI = SmartDashboard.getNumber("Set Turret/kI", mt_turretClosedLoopI);
       double newTurretkD = SmartDashboard.getNumber("Set Turret/kD", mt_turretClosedLoopD);

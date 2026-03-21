@@ -81,9 +81,14 @@ public final class Constants {
          public static final double kPitchOutputAngleSafeBuffer = 3.0; // 2 degrees
 
          public static final double kYawMotorMinSetpoint = 0.0 + kYawOutputRotationSafeBuffer; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
-         public static final double kYawMotorMaxSetpoint = 335.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
+         public static final double kYawMotorMaxSetpoint = 330.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
          public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
+
+         public static final double kYawFF = 0.4;
+         public static final double kYawP = 0.25;
+         public static final double kYawI = 0.00005;
+         public static final double kYawD = 0.0;
       }
    }
 

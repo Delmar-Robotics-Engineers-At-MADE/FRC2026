@@ -216,13 +216,13 @@ public class DriveSubsystem extends SubsystemBase {
       Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(m_odometry.getEstimatedPosition());
       if (visionOptional.isPresent()) {
          EstimatedRobotPose visionPose = visionOptional.get();
-         System.out.println("Front X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
+         // System.out.println("Front X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
          m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
       }
       visionOptional = m_photon.getEstimatedPoseBack(m_odometry.getEstimatedPosition());
       if (visionOptional.isPresent()) {
          EstimatedRobotPose visionPose = visionOptional.get();
-         System.out.println("Rear X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
+         // System.out.println("Rear X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
          m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
       }
    }
