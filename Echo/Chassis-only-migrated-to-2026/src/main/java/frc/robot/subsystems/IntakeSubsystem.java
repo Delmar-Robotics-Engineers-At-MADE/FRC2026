@@ -72,6 +72,19 @@ public class IntakeSubsystem extends SubsystemBase{
   }
 
   /**
+   * Command to run just the conveyer during shooting; When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  // public Command runConveyerCommand() {
+  //   return this.startEnd(
+  //       () -> {
+  //         this.setConveyorPower(mt_conveyorDutyCycle);
+  //       }, () -> {
+  //         this.setConveyorPower(0.0);
+  //       }).withName("Conveying");
+  // }  
+
+  /**
    * Command to reverse the intake motor and coveyor motors. When the command is interrupted, e.g. the button is
    * released, the motors will stop.
    */

@@ -177,7 +177,7 @@ public class RobotContainer {
     new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
          .whileTrue(
             new RunCommand(() -> m_turret.trackHubNoSwerve(), m_turret)
-            .alongWith(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret))
+            .alongWith(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake))
           );
 
     new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller

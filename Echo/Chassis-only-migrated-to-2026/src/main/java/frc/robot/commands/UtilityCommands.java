@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.FuelShooterSubsystem;
 import frc.robot.subsystems.TurretSubsystem;
@@ -17,12 +18,13 @@ public final class UtilityCommands {
     * @param feeder The feeder subsystem
     * @return A simple command that spins the flywheel and feeds fuel at a constant rate
     */
-   public static Command runShooterCommand(FuelShooterSubsystem shooter, FeederSubsystem feeder, TurretSubsystem turret) {
+   public static Command runShooterCommand(FuelShooterSubsystem shooter, FeederSubsystem feeder, 
+                                           TurretSubsystem turret, IntakeSubsystem intake) {
       return Commands.deadline(
                Commands.sequence(
                   Commands.waitUntil(shooter.isFlywheelSpinning),
                   Commands.waitUntil(turret.isYawAtTargetPosition()),
-                  feeder.runFeederCommand()
+                  feeder.runFeederCommand().alongWith(intake.runIntakeCommand())
                ),
                shooter.runFlywheelCommand()
             );

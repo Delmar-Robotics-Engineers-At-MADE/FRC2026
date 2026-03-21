@@ -86,7 +86,7 @@ public final class Constants {
          public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
 
          public static final double kYawFF = 0.1;
-         public static final double kYawP = 0.25;
+         public static final double kYawP = 0.4; // .25 also good
          public static final double kYawI = 0.00005; // to overcome binding
          public static final double kYawD = 0.0;
       }
@@ -97,7 +97,7 @@ public final class Constants {
       public static final int kFlywheelFollowerMotorCanId = 21; // SPARK MAX CAN ID (Star)
 
       public static final class FlywheelSetpoints {
-         public static final double kShootRpm = 4500.0;
+         public static final double kShootRpm = 2000; // 4500.0;
          public static final double kVelocityTolerance = 250.0; // rpm
       }
    }
