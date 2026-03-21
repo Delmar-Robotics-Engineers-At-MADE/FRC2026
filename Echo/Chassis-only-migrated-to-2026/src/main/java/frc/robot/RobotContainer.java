@@ -175,7 +175,10 @@ public class RobotContainer {
 
     // Driver Trigger -> Shoot! By default at hub, or left or right offense zones with extra button press
     new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
-         .whileTrue(new RunCommand(() -> m_turret.trackHubNoSwerve(), m_turret));
+         .whileTrue(
+            new RunCommand(() -> m_turret.trackHubNoSwerve(), m_turret)
+            .alongWith(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret))
+          );
 
     new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller
         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
@@ -188,7 +191,8 @@ public class RobotContainer {
     m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
 
     // Y button -> Run the shooter until it is up to speed & then run the shooter
-    m_operCmdController.y().whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder));
+    // moved to driver control
+    // m_operCmdController.y().whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder));
 
     // B button -> Turn turret pitch to a set point
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard

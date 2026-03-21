@@ -17,10 +17,11 @@ public final class UtilityCommands {
     * @param feeder The feeder subsystem
     * @return A simple command that spins the flywheel and feeds fuel at a constant rate
     */
-   public static Command runShooterCommand(FuelShooterSubsystem shooter, FeederSubsystem feeder) {
+   public static Command runShooterCommand(FuelShooterSubsystem shooter, FeederSubsystem feeder, TurretSubsystem turret) {
       return Commands.deadline(
                Commands.sequence(
                   Commands.waitUntil(shooter.isFlywheelSpinning),
+                  Commands.waitUntil(turret.isYawAtTargetPosition()),
                   feeder.runFeederCommand()
                ),
                shooter.runFlywheelCommand()

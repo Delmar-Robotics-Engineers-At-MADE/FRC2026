@@ -85,9 +85,9 @@ public final class Constants {
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
          public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
 
-         public static final double kYawFF = 0.4;
+         public static final double kYawFF = 0.1;
          public static final double kYawP = 0.25;
-         public static final double kYawI = 0.00005;
+         public static final double kYawI = 0.00005; // to overcome binding
          public static final double kYawD = 0.0;
       }
    }

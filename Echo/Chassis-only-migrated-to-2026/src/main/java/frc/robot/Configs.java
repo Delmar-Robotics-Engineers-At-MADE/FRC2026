@@ -143,7 +143,7 @@ public final class Configs {
       turretYawConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
+          .cruiseVelocity(9000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
           .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance) // degrees
           // Set MAXMotion parameters for MAXMotion Position control working with the spring

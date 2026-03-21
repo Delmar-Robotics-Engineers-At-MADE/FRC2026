@@ -14,6 +14,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -27,8 +28,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants.Neo550MotorConstants;
+import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
@@ -60,6 +63,9 @@ public class TurretSubsystem extends SubsystemBase {
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
 
    private Translation2d m_hub;
+
+   // for remembering target so we know when we're at it
+   double m_targetPosition = 0;
 
    // for pid tuning
    double mt_turretYawFF = TurretSetpoints.kYawFF;
@@ -246,6 +252,9 @@ public class TurretSubsystem extends SubsystemBase {
    public final BooleanSupplier isYawAtPosition(double position) {
       return () -> isYawAt(position);
    }
+   public final BooleanSupplier isYawAtTargetPosition() {
+      return () -> isYawAt(m_targetPosition);
+   }
 
    /**
     * Trigger: Is the turret hood at the desired position?
@@ -263,8 +272,8 @@ public class TurretSubsystem extends SubsystemBase {
    private void moveTurretYaw(double dutyCycle) {
 
       // Clamp the applied duty cycle to 30% for safety in testing
-      // double actualAppliedDutyCycle = Math.max(-0.7, Math.min(0.7, dutyCycle));
-      m_turretYawMotor.set(dutyCycle);
+      double actualAppliedDutyCycle = Math.max(-0.3, Math.min(0.3, dutyCycle));
+      m_turretYawMotor.set(actualAppliedDutyCycle);
    }
 
    public void moveTurretYawVelocity(double velocity) {
@@ -283,6 +292,8 @@ public class TurretSubsystem extends SubsystemBase {
     */
    private void moveTurretYawToPosition(double position) {
       if (isTurretYawHomed().getAsBoolean()) {
+
+         m_targetPosition = position; // remember for knowing when we're there
 
          // apply FF only above 180 degrees;  seems like the spring is limp below that
          double turretYawFF = position < 180 ? 0 : SmartDashboard.getNumber("Set Turret Yaw FF", mt_turretYawFF);
@@ -305,6 +316,12 @@ public class TurretSubsystem extends SubsystemBase {
    public BooleanSupplier isTurretYawHomed() {
       return () -> m_isTurretYawHomed;
    }
+
+   // public final Trigger isTurret = new Trigger(
+   //       () -> isFlywheelAt(this.m_flywheelTargetVelocity) ||
+   //             m_flywheelEncoder.getVelocity() > this.m_flywheelTargetVelocity);   
+
+
 
    /**
     * Gets the current state of the sensor being used to determine if the yaw
