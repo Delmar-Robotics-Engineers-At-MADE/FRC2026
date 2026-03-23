@@ -137,6 +137,8 @@ public class TurretSubsystem extends SubsystemBase {
       Translation2d robotPos = pose.getTranslation();
       Rotation2d fieldRelativeAngleToTarget = m_hub.minus(robotPos).getAngle();
 
+      System.out.println("Field relative angle to target: " + fieldRelativeAngleToTarget.getDegrees());
+
       // Get the current robot heading and subtract it from the field-relative number to get the
       // angle relative to the robot's local reference frame (where 0 degrees is straight forward)
       // This provides a valid in the range [-180, 180]
@@ -290,11 +292,20 @@ public class TurretSubsystem extends SubsystemBase {
    private void moveTurretYawToPosition(double position) {
       if (isTurretYawHomed().getAsBoolean()) {
 
+         double positionChange = position - m_turretYawEncoder.getPosition();
+
          m_targetPosition = position; // remember for knowing when we're there
 
+         double v_against = 0.3; // V
+         double v_with = -0.2; // V
+
+         double kS_friction = (v_against + v_with) / 2;
+         double kSpring = (v_against - v_with) / 2;
+
          // apply FF only above 180 degrees;  seems like the spring is limp below that
-         double turretYawFF = position < 180 ? 0 : SmartDashboard.getNumber("Set Turret Yaw FF", mt_turretYawFF);
+         double turretYawFF = Math.signum(positionChange) * kS_friction + (Math.signum(positionChange) * kSpring);
          System.err.println("Moving turret by position to " + position);
+         System.out.println("kFF: " + turretYawFF);
 
          // Clamp the value so we don't move past the safe boundaries
          double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
@@ -426,7 +437,7 @@ public class TurretSubsystem extends SubsystemBase {
 
    public Command trackHubCommand() {
       return Commands.run(
-         () -> this.trackHub(), this);
+         () -> this.trackHubNoSwerve(), this);
    }
 
    /**

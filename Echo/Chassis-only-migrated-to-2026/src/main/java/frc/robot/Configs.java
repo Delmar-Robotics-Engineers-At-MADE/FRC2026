@@ -85,7 +85,7 @@ public final class Configs {
     static {
     // Configure basic settings of the intake motor
     intakeConfig
-      .inverted(false)
+      .inverted(true)
       .idleMode(IdleMode.kCoast)
       .openLoopRampRate(1.0)
       .smartCurrentLimit(40);
@@ -141,9 +141,9 @@ public final class Configs {
       turretYawConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(9000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
+          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
           .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
-          .allowedProfileError(TurretSetpoints.kYawPositionTolerance) // degrees
+          .allowedProfileError(TurretSetpoints.kYawPositionTolerance + 35.0) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s
@@ -154,13 +154,12 @@ public final class Configs {
       turretYawConfig.closedLoop
         .feedForward
           .kS(0.0, ClosedLoopSlot.kSlot0)
-          .kV(0.01, ClosedLoopSlot.kSlot0);
+          .kV(0.0, ClosedLoopSlot.kSlot0);
 
       turretPitchConfig
         .inverted(false)
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
-        .closedLoopRampRate(1.0)
         .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent - 5, Neo550MotorConstants.kMaxAllowedCurrent)
         .secondaryCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent, 20);
 

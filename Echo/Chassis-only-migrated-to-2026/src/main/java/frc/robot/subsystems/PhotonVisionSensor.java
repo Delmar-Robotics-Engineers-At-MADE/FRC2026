@@ -29,14 +29,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public final class PhotonVisionSensor extends SubsystemBase {
 
   // The name of the network table here MUST match the name specified for the camera in the UI
-  static PhotonCamera m_cameraFront = new PhotonCamera("Arducam_OV9281_8077_A");
-  static PhotonCamera m_cameraBack = new PhotonCamera("Arducam_OV9281_USB_Camera");
+  static PhotonCamera m_cameraFront = new PhotonCamera("Arducam_OV9281_8077_Front");
+  static PhotonCamera m_cameraBack = new PhotonCamera("Arducam_OV9281_8077_Rear");
 
-  /// @todo Fill this in with the correct measurements later
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-  static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.15, -.35, 0.2), 
+  static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.3048, 0.1778, 0.3048), 
       new Rotation3d(0,0,0));
-  static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.15, .35, 0.2), 
+  static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.3302, 0.1016, 0.3048), 
       new Rotation3d(0,0,Math.PI));
 
   static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);    
