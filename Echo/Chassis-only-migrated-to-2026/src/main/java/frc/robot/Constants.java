@@ -63,6 +63,11 @@ public final class Constants {
 
          public static final double kTurretYawNotMovingSafeThresholdDegreesPerSec = 5.0 * kYawVelocityConversionFactor; // 5 RPM with conversion factor applied
          public static final double kTurretPitchNotMovingSafeThresholdDegreesPerSec = 5.0 * kPitchVelocityConversionFactor; // 5 RPM with conversion factor applied
+
+         public static final double kYawFF = 0.0;
+         public static final double kYawP = 0.2;
+         public static final double kYawI = 0.0;
+         public static final double kYawD = 0.001;
       }
 
       public static final class TurretSetpoints {
@@ -84,11 +89,6 @@ public final class Constants {
          public static final double kYawMotorMaxSetpoint = 330.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
          public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
-
-         public static final double kYawFF = 0.1;
-         public static final double kYawP = 0.4; // .25 also good
-         public static final double kYawI = 0.00005; // to overcome binding
-         public static final double kYawD = 0.0;
       }
    }
 
@@ -106,25 +106,24 @@ public final class Constants {
       public static final int kClimberLeftMotorCanId = 41; // CTRE Talon FX CAN ID (port-side motor)
       public static final int kClimberRightMotorCanId = 42; // CTRE Talon FX CAN ID (star-side motor)
 
+      public static final double kClimberArmSyncGain = 12.0;
+      public static final double kCliberArmMaxDelta = 0.02; // 7 degrees of arm rotation; emergency cutoff
+
       public static final class ClimberUnits {
          public static final double kClimberMotorOutputGearRatio = 1.0; // TODO: Update these later with values from Ryan or verify if there is no reduction
-         public static final double kClimberPositionConversionFactor = 360.0 / kClimberMotorOutputGearRatio; // degrees
-         public static final double kClimberVelocityConversionFactor = 360.0 / (60.0 * kClimberMotorOutputGearRatio); // degrees per second
-
-         public static final double kClimberNotMovingSafeThresholdDegreesPerSec = 5.0 * kClimberVelocityConversionFactor; // 5 RPM with conversion factor applied
+         public static final double kClimberNotMovingSafeThresholdDegreesPerSec = 5 / kClimberMotorOutputGearRatio; // 5 motor RPM/s
       }
 
       public static final class ClimberSetpoints {
-         public static final double kLeftClimberPositionTolerance = 1.0; // degrees; TODO: Adjust this later
-         public static final double kRightClimberPositionTolerance = 1.0; // degrees; TODO: Adjust this later
+         public static final double kClimberPositionTolerance = 0.01; // arm rotations; TODO: Adjust this later
 
          // TODO: Set these later with values from Ryan
          public static final double kClimberMotorHomingSetpoint = 0.0; // degrees
 
          public static final double kClimberStowedSetpoint = kClimberMotorHomingSetpoint;
-         public static final double kClimberExtendedLevelZeroSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
-         public static final double kClimberExtendedLevelOnePlusSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
-         public static final double kClimberRetractedSetpoint = 0.0; // degrees; TODO: Set this to the correct value later
+         public static final double kClimberExtendedLevelZeroSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
+         public static final double kClimberExtendedLevelOnePlusSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
+         public static final double kClimberRetractedSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
       }
    }
 

@@ -14,7 +14,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,10 +27,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants.Neo550MotorConstants;
-import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
@@ -55,9 +52,9 @@ public class TurretSubsystem extends SubsystemBase {
 
    // REMOVE LATER: Tuning Constants
    private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
-   private double mt_turretClosedLoopP = TurretSetpoints.kYawP;
-   private double mt_turretClosedLoopI = TurretSetpoints.kYawI;
-   private double mt_turretClosedLoopD = TurretSetpoints.kYawD;
+   private double mt_turretClosedLoopP = TurretUnits.kYawP;
+   private double mt_turretClosedLoopI = TurretUnits.kYawI;
+   private double mt_turretClosedLoopD = TurretUnits.kYawD;
 
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
@@ -68,7 +65,7 @@ public class TurretSubsystem extends SubsystemBase {
    double m_targetPosition = 0;
 
    // for pid tuning
-   double mt_turretYawFF = TurretSetpoints.kYawFF;
+   double mt_turretYawFF = TurretUnits.kYawFF;
 
    public TurretSubsystem(SwerveDrivePoseEstimator robot_odometry) {
 
@@ -121,9 +118,9 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretPitchEncoder.setPosition(0.0);
 
       // TODO: Remove these later; tuning constants
-      SmartDashboard.putNumber("Set Turret/kP", TurretSetpoints.kYawP);
-      SmartDashboard.putNumber("Set Turret/kI", TurretSetpoints.kYawI);
-      SmartDashboard.putNumber("Set Turret/kD", TurretSetpoints.kYawD);
+      SmartDashboard.putNumber("Set Turret/kP", TurretUnits.kYawP);
+      SmartDashboard.putNumber("Set Turret/kI", TurretUnits.kYawI);
+      SmartDashboard.putNumber("Set Turret/kD", TurretUnits.kYawD);
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
       SmartDashboard.putNumber("Set Turret Yaw kS", m_turretYawkS);
       SmartDashboard.putNumber("Set Turret Yaw kV", m_turretYawkV);
@@ -533,10 +530,7 @@ public class TurretSubsystem extends SubsystemBase {
             .closedLoop
                .p(newTurretkP)
                .i(newTurretkI)
-               .d(newTurretkD)
-               .p(newTurretkP, ClosedLoopSlot.kSlot2)
-               .i(newTurretkI, ClosedLoopSlot.kSlot2)
-               .d(newTurretkD, ClosedLoopSlot.kSlot2);
+               .d(newTurretkD);
 
          m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
@@ -551,9 +545,7 @@ public class TurretSubsystem extends SubsystemBase {
          mt_turretConfig
             .closedLoop
                .feedForward
-                  .kV(newTurretYawkV)
-                  .kV(newTurretYawkV, ClosedLoopSlot.kSlot2)
-                  .kS(newTurretYawkS, ClosedLoopSlot.kSlot2);
+                  .kV(newTurretYawkV);
 
          m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 

@@ -14,6 +14,7 @@ import frc.robot.Constants.ModuleConstants;
 import frc.robot.Constants.Neo550MotorConstants;
 import frc.robot.Constants.NeoMotorConstants;
 import frc.robot.Constants.ShooterSubsystemConstants;
+import frc.robot.Constants.ClimberSubsystemConstants.ClimberSetpoints;
 import frc.robot.Constants.ClimberSubsystemConstants.ClimberUnits;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
@@ -132,12 +133,9 @@ public final class Configs {
         .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
           // Set PID values for velocity control
-          .p(0.2)
-          .i(0)
-          .d(0.001)
-          .p(0.2, ClosedLoopSlot.kSlot2)
-          .i(0, ClosedLoopSlot.kSlot2)
-          .d(0.001, ClosedLoopSlot.kSlot2)
+          .p(TurretUnits.kYawP)
+          .i(TurretUnits.kYawI)
+          .d(TurretUnits.kYawD)
           .outputRange(-1, 1);
 
       turretYawConfig.closedLoop
@@ -146,10 +144,6 @@ public final class Configs {
           .cruiseVelocity(9000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
           .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance) // degrees
-          // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec
-          .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot2) // degrees per sec/s
-          .allowedProfileError(TurretSetpoints.kYawPositionTolerance, ClosedLoopSlot.kSlot2) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s
@@ -160,8 +154,7 @@ public final class Configs {
       turretYawConfig.closedLoop
         .feedForward
           .kS(0.0, ClosedLoopSlot.kSlot0)
-          .kV(0.01, ClosedLoopSlot.kSlot0)
-          .kS(0.0, ClosedLoopSlot.kSlot2); // TODO: Set these after tuning
+          .kV(0.01, ClosedLoopSlot.kSlot0);
 
       turretPitchConfig
         .inverted(false)
@@ -307,10 +300,31 @@ public final class Configs {
          .CurrentLimits
             .withSupplyCurrentLimit(40)
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLowerLimit(30)
-            .withSupplyCurrentLowerTime(1.5)
             .withStatorCurrentLimit(60)
             .withStatorCurrentLimitEnable(true); // Amps
+
+      leftConfig
+        .SoftwareLimitSwitch
+          .withForwardSoftLimitEnable(true)
+          .withForwardSoftLimitThreshold(ClimberSetpoints.kClimberExtendedLevelOnePlusSetpoint)
+          .withReverseSoftLimitEnable(true)
+          .withReverseSoftLimitThreshold(ClimberSetpoints.kClimberStowedSetpoint);
+
+      leftConfig
+        .Slot0 
+          .withKP(0.0)
+          .withKI(0.0)
+          .withKD(0.0)
+          .withKS(0.0)
+          .withKV(0.0)
+          .withKG(0.0)
+          .withGravityType(GravityTypeValue.Arm_Cosine);
+
+      leftConfig
+        .MotionMagic
+          .withMotionMagicCruiseVelocity(0.25) // arm rotations per sec; full extension in ~1.5s
+          .withMotionMagicAcceleration(0.5) // arm rotations per sec^2
+          .withMotionMagicJerk(0.0);
 
       // Apply the same configuration on the right config
       rightConfig = leftConfig.clone();

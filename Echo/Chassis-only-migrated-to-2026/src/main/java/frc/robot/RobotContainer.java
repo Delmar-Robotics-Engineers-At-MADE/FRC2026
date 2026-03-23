@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
+import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
 import frc.robot.commands.UtilityCommands;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
@@ -110,7 +111,7 @@ public class RobotContainer {
     // TODO: REMOVE LATER: Tuning PID turret
     SmartDashboard.putNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees);
     SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
-    SmartDashboard.putNumber("Set Turret Yaw FF", TurretSetpoints.kYawFF);
+    SmartDashboard.putNumber("Set Turret Yaw FF", TurretUnits.kYawFF);
   }
 
   // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
