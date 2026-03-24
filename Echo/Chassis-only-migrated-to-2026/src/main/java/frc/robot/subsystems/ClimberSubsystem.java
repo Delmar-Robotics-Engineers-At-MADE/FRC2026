@@ -63,6 +63,8 @@ public class ClimberSubsystem extends SubsystemBase{
       SmartDashboard.putNumber("Set Climber kG", mt_climberkG);
       SmartDashboard.putNumber("Set Climber kS", mt_climberkS);
       SmartDashboard.putNumber("Set Climber kV", mt_climberkV);
+
+      setClimberArmsHomed();
    }
 
    /**
@@ -185,6 +187,11 @@ public class ClimberSubsystem extends SubsystemBase{
     public boolean isSyncFaulted() {
         return m_isClimberArmFaulted;
     }
+
+   public Command homeArms() {
+      return Commands.run(() -> homeClimberArms(), this)
+         .withName("Setting arms as homed");
+   }
 
    /** Extend both arms up to grab the chain/bar. */
    public Command extendCommand() {
