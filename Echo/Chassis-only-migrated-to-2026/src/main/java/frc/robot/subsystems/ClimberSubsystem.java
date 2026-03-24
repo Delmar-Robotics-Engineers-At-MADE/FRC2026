@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants.ClimberSubsystemConstants;
 import frc.robot.Constants.Falcon500MotorConstants;
+import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
 import frc.robot.Constants.ClimberSubsystemConstants.ClimberSetpoints;
 import frc.robot.Constants.ClimberSubsystemConstants.ClimberUnits;
 
@@ -37,6 +38,14 @@ public class ClimberSubsystem extends SubsystemBase{
    // Most recently commanded climber setpoint
    double m_climberPositionSetpoint = ClimberSetpoints.kClimberStowedSetpoint;
 
+   // Tuning constants
+   private double mt_climberkP = ClimberUnits.kClimberkP;
+   private double mt_climberkI = ClimberUnits.kClimberkI;
+   private double mt_climberkD = ClimberUnits.kClimberkD;
+   private double mt_climberkG = ClimberUnits.kClimberkG;
+   private double mt_climberkS = ClimberUnits.kClimberkS;
+   private double mt_climberkV = ClimberUnits.kClimberkV;
+
    ClimberSubsystem() {
 
       TalonFXConfiguration leftConfig = Configs.ClimberSubsystem.leftConfig;
@@ -46,6 +55,14 @@ public class ClimberSubsystem extends SubsystemBase{
       m_rightClimberMotor.getConfigurator().apply(rightConfig);
 
       SmartDashboard.putNumber("Set Climber Position (deg)", m_climberPositionSetpoint);
+
+      // TODO: Remove these later; tuning constants
+      SmartDashboard.putNumber("Set Climber/kP", mt_climberkP);
+      SmartDashboard.putNumber("Set Climber/kI", mt_climberkI);
+      SmartDashboard.putNumber("Set Climber/kD", mt_climberkD);
+      SmartDashboard.putNumber("Set Climber kG", mt_climberkG);
+      SmartDashboard.putNumber("Set Climber kS", mt_climberkS);
+      SmartDashboard.putNumber("Set Climber kV", mt_climberkV);
    }
 
    /**
@@ -73,7 +90,7 @@ public class ClimberSubsystem extends SubsystemBase{
     */
    private BooleanSupplier getLeftArmAtHome() {
       return () ->((m_leftClimberMotor.getStatorCurrent().getValueAsDouble() > Falcon500MotorConstants.kMaxAllowedCurrent / 3) && 
-                   Math.abs(m_leftClimberMotor.getVelocity().getValueAsDouble()) < ClimberUnits.kClimberNotMovingSafeThresholdDegreesPerSec);
+                   Math.abs(m_leftClimberMotor.getVelocity().getValueAsDouble()) < ClimberUnits.kClimberNotMovingSafeThreshold);
    }
 
    /**

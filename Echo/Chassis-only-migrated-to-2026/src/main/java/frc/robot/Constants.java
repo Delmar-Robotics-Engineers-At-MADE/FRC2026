@@ -110,20 +110,27 @@ public final class Constants {
       public static final double kCliberArmMaxDelta = 0.02; // 7 degrees of arm rotation; emergency cutoff
 
       public static final class ClimberUnits {
-         public static final double kClimberMotorOutputGearRatio = 1.0; // TODO: Update these later with values from Ryan or verify if there is no reduction
-         public static final double kClimberNotMovingSafeThresholdDegreesPerSec = 5 / kClimberMotorOutputGearRatio; // 5 motor RPM/s
+         public static final double kClimberMotorOutputGearRatio = 200.0; // 200:1 gear ratio from motor to output
+         public static final double kClimberNotMovingSafeThreshold = 5 / kClimberMotorOutputGearRatio; // 5 motor RPM/s
+
+         public static final double kClimberkP = 0.0;
+         public static final double kClimberkI = 0.0;
+         public static final double kClimberkD = 0.0;
+         public static final double kClimberkG = 0.0;
+         public static final double kClimberkS = 0.0;
+         public static final double kClimberkV = 0.0;
       }
 
       public static final class ClimberSetpoints {
-         public static final double kClimberPositionTolerance = 0.01; // arm rotations; TODO: Adjust this later
+         public static final double kClimberPositionTolerance = 0.01; // arm rotations; about 3.6 output degrees
 
          // TODO: Set these later with values from Ryan
-         public static final double kClimberMotorHomingSetpoint = 0.0; // degrees
+         public static final double kClimberMotorHomingSetpoint = -0.25; // output rotations; -90 degrees
 
          public static final double kClimberStowedSetpoint = kClimberMotorHomingSetpoint;
-         public static final double kClimberExtendedLevelZeroSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
-         public static final double kClimberExtendedLevelOnePlusSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
-         public static final double kClimberRetractedSetpoint = 0.0; // rotations; TODO: Set this to the correct value later
+         public static final double kClimberExtendedLevelZeroSetpoint = 0.1; // rotations;
+         public static final double kClimberExtendedLevelOnePlusSetpoint = 0.3; // rotations;
+         public static final double kClimberRetractedSetpoint = -0.20; // rotations; not quite all the way down
       }
    }
 

@@ -141,8 +141,8 @@ public final class Configs {
       turretYawConfig.closedLoop
         .maxMotion
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
-          .cruiseVelocity(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
-          .maxAcceleration(3000 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
+          .cruiseVelocity(7700 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
+          .maxAcceleration(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
           .allowedProfileError(TurretSetpoints.kYawPositionTolerance + 35.0) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
@@ -155,6 +155,11 @@ public final class Configs {
         .feedForward
           .kS(0.0, ClosedLoopSlot.kSlot0)
           .kV(0.0, ClosedLoopSlot.kSlot0);
+
+      // Bump up status signals to hopefully get snappier responses
+      turretYawConfig.signals
+        .primaryEncoderPositionPeriodMs(10)
+        .primaryEncoderVelocityPeriodMs(20);
 
       turretPitchConfig
         .inverted(false)
@@ -287,7 +292,6 @@ public final class Configs {
             .withInverted(InvertedValue.Clockwise_Positive);
 
       // Clamp the open loop ramp rate
-      // TODO: Re-evaluate this later
       leftConfig
          .OpenLoopRamps
             .withDutyCycleOpenLoopRampPeriod(1.0);
@@ -311,12 +315,12 @@ public final class Configs {
 
       leftConfig
         .Slot0 
-          .withKP(0.0)
-          .withKI(0.0)
-          .withKD(0.0)
-          .withKS(0.0)
-          .withKV(0.0)
-          .withKG(0.0)
+          .withKP(ClimberUnits.kClimberkP)
+          .withKI(ClimberUnits.kClimberkI)
+          .withKD(ClimberUnits.kClimberkD)
+          .withKS(ClimberUnits.kClimberkS)
+          .withKV(ClimberUnits.kClimberkV)
+          .withKG(ClimberUnits.kClimberkG)
           .withGravityType(GravityTypeValue.Arm_Cosine);
 
       leftConfig
@@ -327,6 +331,10 @@ public final class Configs {
 
       // Apply the same configuration on the right config
       rightConfig = leftConfig.clone();
+
+      rightConfig
+        .MotorOutput
+          .withInverted(InvertedValue.CounterClockwise_Positive); // set to opposite of the leftConfig
     }
   }
 

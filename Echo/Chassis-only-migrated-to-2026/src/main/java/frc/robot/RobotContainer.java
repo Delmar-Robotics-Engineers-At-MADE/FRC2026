@@ -99,11 +99,20 @@ public class RobotContainer {
             m_robotDrive));
 
     // Brake the rotation of the turret by default unless the turret has not been homed yet
+    // Also make sure the hood is constantly down unless being actively commanded
+    // and that it is home immediately
     m_turret.setDefaultCommand(
       Commands.either(
         m_turret.stopTurretYaw(), 
         m_turret.homeTurretYaw(() -> m_operCmdController.getRightX()),
         m_turret.isTurretYawHomed())
+        .andThen(
+      Commands.either(
+        m_turret.commandTurretPitchToPosition(() -> TurretSetpoints.kPitchMotorMinSetpoint)
+          .until(m_turret.isPitchAtPosition(TurretSetpoints.kPitchMotorMinSetpoint))
+          .andThen(m_turret.stopTurretPitch()),
+        m_turret.homeTurretPitch(),
+        m_turret.isTurretPitchHomed()))
     );
 
     m_lights.test();
@@ -113,24 +122,6 @@ public class RobotContainer {
     SmartDashboard.putNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees);
     SmartDashboard.putNumber("Set Turret Yaw FF", TurretUnits.kYawFF);
   }
-
-  // private Command driveToAprilTagCommand (int id, HornSelection hornSelect) {
-  //   // System.out.println("New command to tag " + id);
-  //   return m_robotDrive.setTrajectoryToAprilTargetCmd(id, hornSelect, m_photon)
-  //   .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
-  //   .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
-  // }
-
-  // private Command rotateDownfieldCommand () {
-  //   return m_robotDrive.setTrajectoryToRotateDownfieldCmd(m_photon)
-  //   .andThen(m_robotDrive.getSwerveControllerCmdForTeleop(m_photon))
-  //   .andThen(() -> m_robotDrive.drive(0, 0, 0, false));
-  // }
-
-  // int[] redReefPositionToAprilTag = {0, 11, 10, 9, 6, 7, 8};
-  // private Command driveToReefPositionCmd (int pos, HornSelection hornSelect) {
-  //       return driveToAprilTagCommand (redReefPositionToAprilTag[pos], hornSelect);
-  // }
 
 
   private void configureNonButtonTriggers() {
@@ -142,26 +133,6 @@ public class RobotContainer {
   static final int FlightButtonRIGHT = 4;
   private void configureButtonBindings() {
 
-    // *************************** DRIVER *****************************
-
-    // reef positions
-    // m_buttonPadCmd.button(3).and(m_photon::getPoseEstimateAcquired)
-    //     .whileTrue(driveToReefPositionCmd(4, HornSelection.Between));
-
-    // Coral stations and Processor
-    // m_buttonPadCmd.button(1).and(m_photon::getPoseEstimateAcquired) // processor
-    //     .whileTrue(driveToCoralStationCmd(HornSelection.L));
-
-    // drive robot relative in cardinal directions
-    //m_buttonPadCmd.povUp().whileTrue(new RunCommand(
-    //    () -> m_robotDrive.drive(PovSpeed, 0, 0, false), m_robotDrive));
-    //m_buttonPadCmd.povDown().whileTrue(new RunCommand(
-    //    () -> m_robotDrive.drive(-PovSpeed, 0, 0, false), m_robotDrive));
-    //m_buttonPadCmd.povLeft().whileTrue(new RunCommand(
-    //    () -> m_robotDrive.drive(0, PovSpeed, 0, false), m_robotDrive));
-    //m_buttonPadCmd.povRight().whileTrue(new RunCommand(
-    //    () -> m_robotDrive.drive(0, -PovSpeed, 0, false), m_robotDrive));
-                    
     // ******************************** OPERATOR *********************************
   
     // reset pose to vision

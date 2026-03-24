@@ -137,8 +137,6 @@ public class TurretSubsystem extends SubsystemBase {
       Translation2d robotPos = pose.getTranslation();
       Rotation2d fieldRelativeAngleToTarget = m_hub.minus(robotPos).getAngle();
 
-      System.out.println("Field relative angle to target: " + fieldRelativeAngleToTarget.getDegrees());
-
       // Get the current robot heading and subtract it from the field-relative number to get the
       // angle relative to the robot's local reference frame (where 0 degrees is straight forward)
       // This provides a valid in the range [-180, 180]
@@ -146,7 +144,7 @@ public class TurretSubsystem extends SubsystemBase {
       double robotRelativeDeg = fieldRelativeAngleToTarget.minus(robotHeading).getDegrees();
 
       // Add the offset to the output value to get the angle representing straight forward on the turret
-      double turretSetpointDeg = robotRelativeDeg + TurretSetpoints.kYawCenterOffsetFromHome;
+      double turretSetpointDeg = -robotRelativeDeg + TurretSetpoints.kYawCenterOffsetFromHome;
 
       // Normalize the value in degrees so it falls in the range [0,360]
       turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
@@ -275,14 +273,6 @@ public class TurretSubsystem extends SubsystemBase {
       m_turretYawMotor.set(actualAppliedDutyCycle);
    }
 
-   public void moveTurretYawVelocity(double velocity) {
-      m_turretYawClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
-   }
-
-   private void moveTurretPitchVelocity(double velocity) {
-      m_turretPitchClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot1);
-   }
-
    /**
     * Used to command the turret's yaw motor to a particular position in
     * degrees relative to the turret's local reference frame in the range [0,300]
@@ -302,8 +292,9 @@ public class TurretSubsystem extends SubsystemBase {
          double kS_friction = (v_against + v_with) / 2;
          double kSpring = (v_against - v_with) / 2;
 
-         // apply FF only above 180 degrees;  seems like the spring is limp below that
-         double turretYawFF = Math.signum(positionChange) * kS_friction + (Math.signum(positionChange) * kSpring);
+         // apply FF only above 180 degrees; seems like the spring is limp below that
+         double springFF = (m_turretYawEncoder.getPosition() > 180.0) ? kSpring : 0.0;
+         double turretYawFF = Math.signum(positionChange) * kS_friction + springFF;
          System.err.println("Moving turret by position to " + position);
          System.out.println("kFF: " + turretYawFF);
 
@@ -324,11 +315,6 @@ public class TurretSubsystem extends SubsystemBase {
    public BooleanSupplier isTurretYawHomed() {
       return () -> m_isTurretYawHomed;
    }
-
-   // public final Trigger isTurret = new Trigger(
-   //       () -> isFlywheelAt(this.m_flywheelTargetVelocity) ||
-   //             m_flywheelEncoder.getVelocity() > this.m_flywheelTargetVelocity);   
-
 
 
    /**
@@ -398,7 +384,7 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @return Whether the pitch turret has been homed
     */
-   private BooleanSupplier isTurretPitchHomed() {
+   public BooleanSupplier isTurretPitchHomed() {
       return () -> m_isTurretPitchHomed;
    }
 
@@ -475,6 +461,13 @@ public class TurretSubsystem extends SubsystemBase {
     */
    public Command stopTurretYaw() {
       return this.run(() -> m_turretYawMotor.stopMotor());
+   }
+
+      /**
+    * Command to stop the turret from rotating in general and to fall back to its brake mode to hold its current position
+    */
+   public Command stopTurretPitch() {
+      return this.run(() -> m_turretPitchMotor.stopMotor());
    }
 
    /**
