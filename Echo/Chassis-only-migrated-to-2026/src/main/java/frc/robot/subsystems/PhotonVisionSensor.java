@@ -38,7 +38,7 @@ public final class PhotonVisionSensor extends SubsystemBase {
   static Transform3d robotToCamBack = new Transform3d(new Translation3d(-0.3302, 0.1016, 0.3048), 
       new Rotation3d(0,0,Math.PI));
 
-  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);    
+  static AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);  
   static PhotonPoseEstimator m_EstimatorFront = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamFront);
   static PhotonPoseEstimator m_EstimatorBack = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCamBack);
 

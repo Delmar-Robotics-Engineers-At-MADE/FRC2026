@@ -23,14 +23,15 @@ public final class UtilityCommands {
     * @return A simple command that spins the flywheel and feeds fuel at a constant rate
     */
    public static Command runShooterCommand(FuelShooterSubsystem shooter, FeederSubsystem feeder, 
-                                           TurretSubsystem turret, IntakeSubsystem intake) {
+                                           TurretSubsystem turret, IntakeSubsystem intake, Translation2d targetPos) {
       return Commands.deadline(
                Commands.sequence(
                   Commands.waitUntil(shooter.isFlywheelSpinning),
                   Commands.waitUntil(turret.isYawAtTargetPosition()),
                   feeder.runFeederCommand().alongWith(intake.runIntakeCommand())
                ),
-               shooter.runFlywheelCommand()
+               shooter.trackHubCommand(),
+               turret.trackHubCommand()
             );
    }
 
@@ -50,7 +51,7 @@ public final class UtilityCommands {
                Commands.sequence(
                      // First, wait until the turret is at the desired position (control of the turret is happening continuously in the "otherCommands")
                   Commands.waitUntil(
-                     () -> turret.isYawAtPosition(0.0).getAsBoolean() && (turret.isPitchAtPosition(0.0).getAsBoolean()) 
+                     () -> turret.isYawAtTargetPosition().getAsBoolean() && (turret.isPitchAtPosition(40.0).getAsBoolean()) 
                   ), 
 
                   // Then, wait for the flywheel to get up to speed (also being commanded to spin up in the "otherCommands")
@@ -61,11 +62,8 @@ public final class UtilityCommands {
                ),
 
                // Run the flywheel and set the turret and hood positions continuously while the other sequence is occurring
-               // TODO: These turret position commands are ignoring the value being passed in currently. Update these once values are actually being passed
-               // in (from vision or other)
-               shooter.runFlywheelCommand(),
-               turret.commandTurretYawToPosition(() -> 0.0),
-               turret.commandTurretPitchToPosition(() -> 0.0)
+               shooter.trackHubCommand(),
+               turret.trackHubCommand()
             );
    }
 }

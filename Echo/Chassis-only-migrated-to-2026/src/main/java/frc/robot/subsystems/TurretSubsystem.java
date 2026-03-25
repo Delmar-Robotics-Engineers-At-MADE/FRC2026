@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
@@ -18,8 +20,10 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -39,6 +43,8 @@ public class TurretSubsystem extends SubsystemBase {
    private SparkMax m_turretYawMotor, m_turretPitchMotor; // rotation and hood control motors
    private SparkClosedLoopController m_turretYawClosedLoopController, m_turretPitchClosedLoopController;
    private RelativeEncoder m_turretYawEncoder, m_turretPitchEncoder;
+
+   private final TreeMap<Double, Double> m_hoodMap = new TreeMap<Double, Double>();
 
    // Sensors
    private final DigitalInput m_hallEffectYaw = new DigitalInput(0);
@@ -62,7 +68,10 @@ public class TurretSubsystem extends SubsystemBase {
    private Translation2d m_hub;
 
    // for remembering target so we know when we're at it
-   double m_targetPosition = 0;
+   double m_targetYawPosition = 0;
+   double m_targetPitchPosition = 0;
+   static double m_turretYawSetpointDeadband = 0.5; // degrees
+   static double m_turretPitchSetpointDeadband = 0.5; // degrees
 
    // for pid tuning
    double mt_turretYawFF = TurretUnits.kYawFF;
@@ -80,6 +89,11 @@ public class TurretSubsystem extends SubsystemBase {
          m_hub = new Translation2d(4.63, 4.03);
       }
 
+      // Key = distance in feet, Value = hood angle in degrees
+      m_hoodMap.put(4.0, 69.5); //2500
+      m_hoodMap.put(8.0, 58.0);
+      m_hoodMap.put(24.0, 58.0);
+      m_hoodMap.put(24.0001, 29.5);
 
       // Initialize shooter pointing motors (yaw motor controls the shooter's
       // direction while the pitch motor controls hood position)
@@ -122,13 +136,19 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Set Turret/kI", TurretUnits.kYawI);
       SmartDashboard.putNumber("Set Turret/kD", TurretUnits.kYawD);
       SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
-      SmartDashboard.putNumber("Set Turret Yaw kS", m_turretYawkS);
-      SmartDashboard.putNumber("Set Turret Yaw kV", m_turretYawkV);
    }
 
-   // TODO: Move most of this logic to a separate class/subsystem for getting the angle to a particular target
-   // Need to decide if this class should be handling conversion from field-relative to robot-relative/turret relative
-    public void trackHubNoSwerve() {
+   public double lookupHoodAngle(double distance) {
+      Map.Entry<Double, Double> entry = m_hoodMap.floorEntry(distance);
+      if (entry == null) {
+         // Distance is below the smallest key, fall back to first entry
+         return m_hoodMap.firstEntry().getValue();
+      }
+
+      return entry.getValue();
+   }
+
+   public void calculateTargetAngles() {
 
       // calculate angle to red target, and then pretend joystick is pointing that way
       Pose2d pose = m_odometry.getEstimatedPosition();
@@ -149,71 +169,16 @@ public class TurretSubsystem extends SubsystemBase {
       // Normalize the value in degrees so it falls in the range [0,360]
       turretSetpointDeg = ((turretSetpointDeg % 360.0) + 360.0) % 360.0;
 
-      System.out.println("Setting turret yaw to " + turretSetpointDeg);
-
-      moveTurretYawToPosition(turretSetpointDeg);
-   }
-
-   public void trackHub() {
-
-      // calculate angle to red target, and then pretend joystick is pointing that way
-      Pose2d pose = m_odometry.getEstimatedPosition();
-      double deltaX = m_hub.getX() - pose.getX();
-      double deltaY = m_hub.getY() - pose.getY();
-
-      // normalize so one is 1 and the other is < 1
-      double maxxy = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-      double xSpeed = deltaX / maxxy;
-      double ySpeed = deltaY / maxxy;
-
-      System.out.println("trackHub" + xSpeed + " " + ySpeed);
-      rotateByOdometry(xSpeed, ySpeed);
-   }
-   
-   public void rotateByOdometry(double xComponent, double yComponent) {
-      // Convert the commanded speeds/components into the correct units for the shooter
-
-      var swerveModuleStates = TurretSubsystemConstants.kDriveKinematics.toSwerveModuleStates(
-         ChassisSpeeds.fromFieldRelativeSpeeds(xComponent, yComponent, 0,
-                  m_odometry.getEstimatedPosition().getRotation()));
-      // SwerveDriveKinematics.desaturateWheelSpeeds(
-      //     swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
-      setDesiredState(swerveModuleStates[0]);
-   }   
-
-   public void setDesiredState(SwerveModuleState desiredState) {
-      // Apply chassis angular offset to the desired state.
-      SwerveModuleState correctedDesiredState = new SwerveModuleState();
-      correctedDesiredState.angle = desiredState.angle.plus(Rotation2d.fromRadians(TurretSubsystemConstants.kChassisAngularOffset));
-
-      // Optimize the reference state to avoid spinning further than 90 degrees.
-      // No, instead, just change this function to prevent turret from turning through its stops
-      // correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
-      correctedDesiredState = optimize(correctedDesiredState);
-
-      // Command driving and turning SPARKS towards their respective setpoints.
-      System.err.println("Setting turret setpoint to " + correctedDesiredState.angle.getDegrees());
-      m_turretYawClosedLoopController.setSetpoint(correctedDesiredState.angle.getDegrees(), ControlType.kPosition);
-   }
-
-   private SwerveModuleState optimize(SwerveModuleState state) {
-   // original function allows module to always turn less than 180 degrees
-   // var delta = angle.minus(currentAngle);
-   // if (Math.abs(delta.getDegrees()) > 90.0) {
-   //     speedMetersPerSecond *= -1;
-   //     angle = angle.rotateBy(Rotation2d.kPi);
-   // }
-   
-   // for the turret, simply stop the turret from moving through the stops
-      SwerveModuleState result = state; // return unmodified state if it's not past stops
-      if (state.angle.getDegrees() > TurretSetpoints.kYawMotorMaxSetpoint) {
-         result = new SwerveModuleState(state.speedMetersPerSecond, 
-                                       Rotation2d.fromDegrees(TurretSetpoints.kYawMotorMaxSetpoint));
-      } else if (state.angle.getDegrees() < TurretSetpoints.kYawMotorMinSetpoint) {
-         result = new SwerveModuleState(state.speedMetersPerSecond, 
-                                       Rotation2d.fromDegrees(TurretSetpoints.kYawMotorMinSetpoint));
+      if (Math.abs(m_targetYawPosition - turretSetpointDeg) > m_turretYawSetpointDeadband)
+      {
+         m_targetYawPosition = turretSetpointDeg;
       }
-      return result;
+
+      double newPitchPos = lookupHoodAngle(m_hub.getDistance(robotPos) * 3.28084);
+      if (Math.abs(m_targetPitchPosition - newPitchPos) > m_turretPitchSetpointDeadband)
+      {
+         m_targetPitchPosition = newPitchPos;
+      }
    }
        
    /**
@@ -250,7 +215,7 @@ public class TurretSubsystem extends SubsystemBase {
       return () -> isYawAt(position);
    }
    public final BooleanSupplier isYawAtTargetPosition() {
-      return () -> isYawAt(m_targetPosition);
+      return () -> isYawAt(m_targetYawPosition);
    }
 
    /**
@@ -258,6 +223,9 @@ public class TurretSubsystem extends SubsystemBase {
     */
    public final BooleanSupplier isPitchAtPosition(double position) {
       return () -> isPitchAt(position);
+   }
+   public final BooleanSupplier isPitchAtTargetPosition() {
+      return () -> isPitchAt(m_targetPitchPosition);
    }
 
    /**
@@ -284,8 +252,6 @@ public class TurretSubsystem extends SubsystemBase {
 
          double positionChange = position - m_turretYawEncoder.getPosition();
 
-         m_targetPosition = position; // remember for knowing when we're there
-
          double v_against = 0.3; // V
          double v_with = -0.2; // V
 
@@ -302,6 +268,10 @@ public class TurretSubsystem extends SubsystemBase {
          double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
          m_turretYawClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretYawFF);
       }
+   }
+
+   private void moveTurretYawToTarget() {
+      moveTurretYawToPosition(m_targetYawPosition);
    }
 
    /**
@@ -327,9 +297,7 @@ public class TurretSubsystem extends SubsystemBase {
     *         setpoint
     */
    private BooleanSupplier getTurretYawAtHome() {
-      return () -> !m_hallEffectYaw.get() || 
-                   ((m_turretYawMotor.getOutputCurrent() > Neo550MotorConstants.kMaxAllowedCurrent / 3) && 
-                   Math.abs(m_turretYawEncoder.getVelocity()) < TurretUnits.kTurretYawNotMovingSafeThresholdDegreesPerSec);
+      return () -> !m_hallEffectYaw.get();
    }
 
    /**
@@ -376,6 +344,15 @@ public class TurretSubsystem extends SubsystemBase {
       }
    }
 
+   private void moveTurretPitchToTarget() {
+      moveTurretPitchToPosition(m_targetPitchPosition);
+   }
+
+   private void moveTurretToTarget() {
+      moveTurretYawToTarget();
+      moveTurretPitchToTarget();
+   }
+
    /**
     * Used to return whether or not the pitch turret motor has been homed and is
     * ready to be commaned to a particular position
@@ -415,15 +392,12 @@ public class TurretSubsystem extends SubsystemBase {
       // TODO: Add logic here to enable soft limits in the motor controller
    }
 
-   // TODO: remove this later!!
-   private void testSetTurretHomed() {
-      setTurretPitchHomed();
-      setTurretYawHomed();
-   }
-
    public Command trackHubCommand() {
-      return Commands.run(
-         () -> this.trackHubNoSwerve(), this);
+    return Commands.run(() -> {
+            calculateTargetAngles();
+            moveTurretToTarget();
+         })
+      .withName("Track the commanded target");
    }
 
    /**
@@ -447,10 +421,10 @@ public class TurretSubsystem extends SubsystemBase {
     * 
     * @param positionDegrees The desired absolute rotational position of the turret
     */
-   public Command commandTurretYawToPosition(DoubleSupplier positionDegrees) {
+   public Command commandTurretYawToPosition(double positionDegrees) {
       return this.startEnd(
             () -> {
-               this.moveTurretYawToPosition(positionDegrees.getAsDouble());
+               this.moveTurretYawToPosition(positionDegrees);
             }, () -> {
                this.m_turretYawMotor.stopMotor();
             }).withName("Rotating turret yaw to position");
@@ -475,7 +449,7 @@ public class TurretSubsystem extends SubsystemBase {
     * parameters to allow closed loop position control
     */
    public Command homeTurretPitch() {
-      return run(() -> this.moveTurretPitch(0.1))
+      return run(() -> this.moveTurretPitch(-0.1))
             .until(getTurretPitchAtHome())
             .andThen(() -> this.m_turretPitchMotor.stopMotor())
             .andThen(() -> this.setTurretPitchHomed())
@@ -494,10 +468,6 @@ public class TurretSubsystem extends SubsystemBase {
             }, () -> {
                this.m_turretPitchMotor.stopMotor();
             }).withName("Rotating turret pitch to position");
-   }
-
-   public Command testCommandSetTurretHomed() {
-      return this.runOnce(() -> this.testSetTurretHomed());
    }
 
    // TODO: Remove this or move it to a shared place later. There is a matching function in the shooter class

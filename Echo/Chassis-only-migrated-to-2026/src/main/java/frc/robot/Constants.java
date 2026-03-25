@@ -16,13 +16,13 @@ public final class Constants {
       public static final int kConveyorMotorCanId = 32; // SPARK MAX CAN ID
 
       public static final class IntakeSetpoints {
-         public static final double kIntake = 0.6;
-         public static final double kExtake = -0.6;
+         public static final double kIntake = 1.0;
+         public static final double kExtake = -1.0;
       }
 
       public static final class ConveyorSetpoints {
-         public static final double kIntake = 0.3;
-         public static final double kExtake = -0.3;
+         public static final double kIntake = 1.0;
+         public static final double kExtake = -1.0;
       }
    }
 
@@ -30,7 +30,8 @@ public final class Constants {
       public static final int kFeederMotorCanId = 31; // SPARK MAX CAN ID
 
       public static final class FeederSetpoints {
-         public static final double kFeed = 0.6; // duty cycle
+         public static final double kFeed = 1.0; // duty cycle
+         public static final double kUnfeed = -0.6; // duty cycle
       }
    }
 
@@ -65,14 +66,14 @@ public final class Constants {
          public static final double kTurretPitchNotMovingSafeThresholdDegreesPerSec = 5.0 * kPitchVelocityConversionFactor; // 5 RPM with conversion factor applied
 
          public static final double kYawFF = 0.0;
-         public static final double kYawP = 0.2;
+         public static final double kYawP = 0.15;
          public static final double kYawI = 0.0;
          public static final double kYawD = 0.001;
       }
 
       public static final class TurretSetpoints {
-         public static final double kYawPositionTolerance = 1.0; // degrees; TODO: Adjust this later
-         public static final double kPitchPositionTolerance = 1.0; // degrees; TODO: Adjust this later
+         public static final double kYawPositionTolerance = 1.0; // degrees
+         public static final double kPitchPositionTolerance = 1.0; // degrees
 
          public static final double kYawVelocityTolerance = 1; // degrees per second
          public static final double kPitchVelocityTolerance = 1; // degrees per second
@@ -82,13 +83,13 @@ public final class Constants {
          public static final double kYawMotorHomingSetpoint = 226.0; // degrees
          public static final double kPitchMotorHomingSetpoint = 28.0; // degrees
 
-         public static final double kYawOutputRotationSafeBuffer = 3.0; // 2 degrees
-         public static final double kPitchOutputAngleSafeBuffer = 3.0; // 2 degrees
+         public static final double kYawOutputRotationSafeBuffer = 5.0; // 5.0 degrees
+         public static final double kPitchOutputAngleSafeBuffer = 0.5; // 0.5 degrees
 
          public static final double kYawMotorMinSetpoint = 0.0 + kYawOutputRotationSafeBuffer; // 2 degrees; the hard stop is at 0 degrees so add a couple extra degrees of buffer
          public static final double kYawMotorMaxSetpoint = 330.0 - kYawOutputRotationSafeBuffer; // 300 degrees with a safe buffer; hard stop at 300 degrees so remove a couple degrees for a safety net
          public static final double kPitchMotorMinSetpoint = kPitchMotorHomingSetpoint + kPitchOutputAngleSafeBuffer; // use the  homing setpoint as the min value and remove a couple degrees for a safety net
-         public static final double kPitchMotorMaxSetpoint = 68.0 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
+         public static final double kPitchMotorMaxSetpoint = 69.45 - kPitchOutputAngleSafeBuffer; // 28 degrees with a safe buffer; hard stop at 28 degrees so remove a couple degrees for a safety net
       }
    }
 

@@ -2,8 +2,10 @@ package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -31,6 +33,8 @@ public class ClimberSubsystem extends SubsystemBase{
    private final MotionMagicVoltage rightMMRequest = new MotionMagicVoltage(0);
    private final NeutralOut neutralRequest = new NeutralOut();
 
+   private final DutyCycleOut dutyCycleOut = new DutyCycleOut(0);
+
    // Member state variables
    boolean m_areClimbersHomed = false;
    boolean m_isClimberArmFaulted = false;
@@ -45,8 +49,10 @@ public class ClimberSubsystem extends SubsystemBase{
    private double mt_climberkG = ClimberUnits.kClimberkG;
    private double mt_climberkS = ClimberUnits.kClimberkS;
    private double mt_climberkV = ClimberUnits.kClimberkV;
+   private double mt_climberSyncGain = ClimberSubsystemConstants.kClimberArmSyncGain;
+   private double mt_climberMaxDelta = ClimberSubsystemConstants.kCliberArmMaxDelta;
 
-   ClimberSubsystem() {
+   public ClimberSubsystem() {
 
       TalonFXConfiguration leftConfig = Configs.ClimberSubsystem.leftConfig;
       TalonFXConfiguration rightConfig = Configs.ClimberSubsystem.rightConfig;
@@ -60,9 +66,11 @@ public class ClimberSubsystem extends SubsystemBase{
       SmartDashboard.putNumber("Set Climber/kP", mt_climberkP);
       SmartDashboard.putNumber("Set Climber/kI", mt_climberkI);
       SmartDashboard.putNumber("Set Climber/kD", mt_climberkD);
-      SmartDashboard.putNumber("Set Climber kG", mt_climberkG);
-      SmartDashboard.putNumber("Set Climber kS", mt_climberkS);
-      SmartDashboard.putNumber("Set Climber kV", mt_climberkV);
+      SmartDashboard.putNumber("Set Climber/kG", mt_climberkG);
+      SmartDashboard.putNumber("Set Climber/kS", mt_climberkS);
+      SmartDashboard.putNumber("Set Climber/kV", mt_climberkV);
+      SmartDashboard.putNumber("Set Climber/Sync Gain", mt_climberSyncGain);
+      SmartDashboard.putNumber("Set Climber/Max Delta", mt_climberMaxDelta);
 
       setClimberArmsHomed();
    }
@@ -162,6 +170,16 @@ public class ClimberSubsystem extends SubsystemBase{
         }
     }
 
+    public void moveArmsDown() {
+      m_leftClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
+      m_rightClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
+    }
+
+    public void moveArmsUp() {
+      m_leftClimberMotor.setControl(dutyCycleOut.withOutput(-0.25));
+      m_rightClimberMotor.setControl(dutyCycleOut.withOutput(-0.25));
+    }
+
     private void stop() {
         m_leftClimberMotor.setControl(neutralRequest);
         m_rightClimberMotor.setControl(neutralRequest);
@@ -218,6 +236,22 @@ public class ClimberSubsystem extends SubsystemBase{
       ).withName("Climb Sequence");
    }
 
+   public Command moveArmsUpCommand() {
+      return Commands.run(() -> moveArmsUp(), this)
+         .withName("Move arms up");
+   }
+
+
+   public Command moveArmsDownCommand() {
+      return Commands.run(() -> moveArmsDown(), this)
+         .withName("Move arms down");
+   }
+
+   // TODO: Remove this or move it to a shared place later. There is a matching function in the shooter class
+   private boolean hasChanged(double a, double b) {
+      return Math.abs(a - b) > 1e-6;
+   }
+
    @Override
    public void periodic() {
       double leftPos = getLeftPosition();
@@ -239,6 +273,40 @@ public class ClimberSubsystem extends SubsystemBase{
       SmartDashboard.putBoolean("Climber/SyncFault", m_isClimberArmFaulted);
       SmartDashboard.putNumber("Climber/TargetPosition", m_climberPositionSetpoint);
 
+      double newClimberkP = SmartDashboard.getNumber("Set Climber/kP", mt_climberkP);
+      double newClimberkI = SmartDashboard.getNumber("Set Climber/kI", mt_climberkI);
+      double newClimberkD = SmartDashboard.getNumber("Set Climber/kD", mt_climberkD);
+      double newClimberkG = SmartDashboard.getNumber("Set Climber/kG", mt_climberkG);
+      double newClimberkS = SmartDashboard.getNumber("Set Climber/kS", mt_climberkS);
+      double newClimberkV = SmartDashboard.getNumber("Set Climber/kV", mt_climberkV);
+
+      if (hasChanged(newClimberkP, mt_climberkP) || hasChanged(newClimberkI, mt_climberkI) || hasChanged(newClimberkD, mt_climberkD) ||
+          hasChanged(newClimberkG, mt_climberkG) || hasChanged(newClimberkS, mt_climberkS) || hasChanged(newClimberkV, mt_climberkV)) {
+            
+            Slot0Configs leftSlot0 = new Slot0Configs();
+            m_leftClimberMotor.getConfigurator().refresh(leftSlot0);
+
+            leftSlot0
+               .withKP(newClimberkP)
+               .withKI(newClimberkI)
+               .withKD(newClimberkD)
+               .withKG(newClimberkG)
+               .withKS(newClimberkS)
+               .withKV(newClimberkV);
+
+            m_leftClimberMotor.getConfigurator().apply(leftSlot0);
+            m_rightClimberMotor.getConfigurator().apply(leftSlot0);
+
+            mt_climberkP = newClimberkP;
+            mt_climberkI = newClimberkI;
+            mt_climberkD = newClimberkD;
+            mt_climberkG = newClimberkG;
+            mt_climberkS = newClimberkS;
+            mt_climberkV = newClimberkV;
+          }
+
       m_climberPositionSetpoint = SmartDashboard.getNumber("Set Climber Position (deg)", m_climberPositionSetpoint);
+      mt_climberSyncGain = SmartDashboard.getNumber("Set Climber/Sync Gain", mt_climberSyncGain);
+      mt_climberMaxDelta = SmartDashboard.getNumber("Set Climber/Max Delta", mt_climberMaxDelta);
     }
 }

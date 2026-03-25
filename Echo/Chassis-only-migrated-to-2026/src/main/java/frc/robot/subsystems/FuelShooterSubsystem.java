@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
 
+import java.util.Optional;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkMaxSim;
@@ -12,8 +14,14 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
@@ -21,6 +29,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
@@ -45,8 +54,17 @@ public class FuelShooterSubsystem extends SubsystemBase {
 
    private final SendableChooser<Double> m_flywheelVelocityChooser = new SendableChooser<Double>();
 
+   private final InterpolatingDoubleTreeMap m_flywheelMap = new InterpolatingDoubleTreeMap();
+
+   // Odometry class for tracking robot pose
+   SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
+
+   private Translation2d m_hub;
+
    // Member variables for subsystem state management
-   private double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
+   double m_flywheelTargetVelocity = ShooterSubsystemConstants.FlywheelSetpoints.kShootRpm;
+
+   private static double m_flywheelSetpointDeadband = 20.0; // RPM
 
    // TEMPORARY: Tuning Constants
    private SparkMaxConfig mt_flywheelConfig = Configs.ShooterSubsystem.flywheelConfig;
@@ -54,7 +72,18 @@ public class FuelShooterSubsystem extends SubsystemBase {
    private double mt_flywheelClosedLoopI = 0.0;
    private double mt_flywheelClosedLoopD = 0.0;
 
-   public FuelShooterSubsystem() {
+   public FuelShooterSubsystem(SwerveDrivePoseEstimator robot_odometry) {
+
+      // for tracking hub by odometry
+      m_odometry = robot_odometry;
+
+      Optional<Alliance> allianceOptional = DriverStation.getAlliance();
+      // target position on field
+      if(allianceOptional.isPresent() && allianceOptional.get() == Alliance.Red) {
+         m_hub = new Translation2d(11.92, 4.03);
+      } else {
+         m_hub = new Translation2d(4.63, 4.03);
+      }
 
       // Initialize flywheel motors
       m_motorPort = new SparkMax(ShooterSubsystemConstants.kFlywheelMotorCanId, MotorType.kBrushless);
@@ -64,6 +93,16 @@ public class FuelShooterSubsystem extends SubsystemBase {
       // controller and encoder for control
       m_flywheelClosedLoopController = m_motorPort.getClosedLoopController();
       m_flywheelEncoder = m_motorPort.getEncoder();
+
+      // Key = distance in feet, Value = hood angle in degrees
+      m_flywheelMap.put(4.0, 2500.0); //2500
+      m_flywheelMap.put(8.0, 2750.0);
+      m_flywheelMap.put(12.0, 3250.0);
+      m_flywheelMap.put(16.0, 3750.0); // 5000
+      m_flywheelMap.put(20.0, 4250.0); // 5000
+      m_flywheelMap.put(24.0, 4825.0); // 5000
+      m_flywheelMap.put(24.000001, 3500.0); // 5000
+      m_flywheelMap.put(43.0, 5000.0); // 5000
 
       /*
        * Apply the appropriate configurations to the SPARKs.
@@ -123,6 +162,23 @@ public class FuelShooterSubsystem extends SubsystemBase {
     */
    public final Trigger isFlywheelStopped = new Trigger(() -> isFlywheelAt(0));
 
+   public void calculateFlywheelSpeed() {
+
+      // calculate angle to red target, and then pretend joystick is pointing that way
+      Pose2d pose = m_odometry.getEstimatedPosition();
+
+      // Calculate the rotation the field relative angle to the target from the robot's center
+      Translation2d robotPos = pose.getTranslation();
+
+      double newVelocity = m_flywheelMap.get(m_hub.getDistance(robotPos) * 3.28084);
+
+      // Update the target flywheel velocity
+      if (Math.abs(m_flywheelTargetVelocity - newVelocity) > m_flywheelSetpointDeadband)
+      {
+         m_flywheelTargetVelocity = newVelocity;
+      }
+   }
+
    /**
     * Drive the flywheels to their set velocity. This will use MAXMotion
     * velocity control which will allow for a smooth acceleration and deceleration
@@ -131,6 +187,22 @@ public class FuelShooterSubsystem extends SubsystemBase {
     */
    private void setFlywheelVelocity(double velocity) {
       m_flywheelClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl);
+   }
+
+   private void setToTargetVelocity() {
+      setFlywheelVelocity(m_flywheelTargetVelocity);
+   }
+
+   /**
+    * Command to run the flywheel motors to track speed of based on its current target distance
+    */
+   public Command trackHubCommand() {
+      return Commands.run(() -> {
+         calculateFlywheelSpeed();
+         setToTargetVelocity();
+      }, this)
+      .finallyDo(() -> m_motorPort.stopMotor())
+      .withName("Track Hub Flywheel");
    }
 
    /**

@@ -289,7 +289,7 @@ public final class Configs {
       leftConfig
          .MotorOutput
             .withNeutralMode(NeutralModeValue.Brake)
-            .withInverted(InvertedValue.Clockwise_Positive);
+            .withInverted(InvertedValue.CounterClockwise_Positive);
 
       // Clamp the open loop ramp rate
       leftConfig
@@ -334,7 +334,7 @@ public final class Configs {
 
       rightConfig
         .MotorOutput
-          .withInverted(InvertedValue.CounterClockwise_Positive); // set to opposite of the leftConfig
+          .withInverted(InvertedValue.Clockwise_Positive); // set to opposite of the leftConfig
     }
   }
 

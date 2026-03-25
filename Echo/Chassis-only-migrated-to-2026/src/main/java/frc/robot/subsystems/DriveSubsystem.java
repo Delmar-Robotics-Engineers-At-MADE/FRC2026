@@ -46,7 +46,7 @@ public class DriveSubsystem extends SubsystemBase {
 
    // Constants
    static final double SlideToTheHornDistance = 0.12; // meters to slide left or right
-   public static final double DriveSpeedDivider = 4;
+   public static final double DriveSpeedDivider = 2;
 
    // Create MAXSwerveModules
    private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
