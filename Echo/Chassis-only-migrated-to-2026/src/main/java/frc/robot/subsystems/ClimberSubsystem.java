@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,6 +32,7 @@ public class ClimberSubsystem extends SubsystemBase{
    // Re-usable control requests
    private final MotionMagicVoltage leftMMRequest = new MotionMagicVoltage(0);
    private final MotionMagicVoltage rightMMRequest = new MotionMagicVoltage(0);
+   private final StaticBrake brakeRequest = new StaticBrake();
    private final NeutralOut neutralRequest = new NeutralOut();
 
    private final DutyCycleOut dutyCycleOut = new DutyCycleOut(0);
@@ -237,13 +239,22 @@ public class ClimberSubsystem extends SubsystemBase{
    }
 
    public Command moveArmsUpCommand() {
-      return Commands.run(() -> moveArmsUp(), this)
+      return Commands.startEnd(() -> {
+            moveArmsUp();
+         }, () ->  {
+            m_leftClimberMotor.setControl(neutralRequest);
+            m_rightClimberMotor.setControl(neutralRequest);
+         }, this)
          .withName("Move arms up");
    }
 
-
    public Command moveArmsDownCommand() {
-      return Commands.run(() -> moveArmsDown(), this)
+      return Commands.startEnd(() -> {
+            moveArmsDown();
+         }, () ->  {
+            m_leftClimberMotor.setControl(neutralRequest);
+            m_rightClimberMotor.setControl(neutralRequest);
+         }, this)
          .withName("Move arms down");
    }
 
