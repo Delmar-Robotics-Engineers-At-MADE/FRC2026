@@ -106,16 +106,9 @@ public class RobotContainer {
     // and that it is home immediately
     m_turret.setDefaultCommand(
       Commands.either(
-        m_turret.stopTurretYaw(), 
-        m_turret.homeTurretYaw(() -> m_operCmdController.getRightX()),
-        m_turret.isTurretYawHomed())
-        .andThen(
-      Commands.either(
-        m_turret.commandTurretPitchToPosition(() -> TurretSetpoints.kPitchMotorMaxSetpoint)
-          .until(m_turret.isPitchAtPosition(TurretSetpoints.kPitchMotorMaxSetpoint))
-          .andThen(m_turret.stopTurretPitch()),
-        m_turret.homeTurretPitch(),
-        m_turret.isTurretPitchHomed()))
+        m_turret.setTurretIdle(),
+        m_turret.homeFullTurret(() -> m_operCmdController.getRightX()),
+        m_turret.isTurretFullyHomed())
     );
 
     m_lights.test();

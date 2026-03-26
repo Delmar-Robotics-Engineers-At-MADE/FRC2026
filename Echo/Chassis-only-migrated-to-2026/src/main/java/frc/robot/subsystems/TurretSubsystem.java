@@ -14,16 +14,11 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -53,14 +48,6 @@ public class TurretSubsystem extends SubsystemBase {
    private boolean m_isTurretPitchHomed = false;
 
    private double m_turretPitchkG = 1.0;
-   private double m_turretYawkS = 0.0;
-   private double m_turretYawkV = 0.0;
-
-   // REMOVE LATER: Tuning Constants
-   private SparkMaxConfig mt_turretConfig = Configs.TurretSubsystem.turretYawConfig;
-   private double mt_turretClosedLoopP = TurretUnits.kYawP;
-   private double mt_turretClosedLoopI = TurretUnits.kYawI;
-   private double mt_turretClosedLoopD = TurretUnits.kYawD;
 
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
@@ -90,7 +77,7 @@ public class TurretSubsystem extends SubsystemBase {
       }
 
       // Key = distance in feet, Value = hood angle in degrees
-      m_hoodMap.put(4.0, 69.5); //2500
+      m_hoodMap.put(4.0, 69.5);
       m_hoodMap.put(8.0, 58.0);
       m_hoodMap.put(24.0, 58.0);
       m_hoodMap.put(24.0001, 29.5);
@@ -130,12 +117,6 @@ public class TurretSubsystem extends SubsystemBase {
       // Zero encoders on initialization
       m_turretYawEncoder.setPosition(0.0);
       m_turretPitchEncoder.setPosition(0.0);
-
-      // TODO: Remove these later; tuning constants
-      SmartDashboard.putNumber("Set Turret/kP", TurretUnits.kYawP);
-      SmartDashboard.putNumber("Set Turret/kI", TurretUnits.kYawI);
-      SmartDashboard.putNumber("Set Turret/kD", TurretUnits.kYawD);
-      SmartDashboard.putNumber("Set Turret Pitch kG", m_turretPitchkG);
    }
 
    public double lookupHoodAngle(double distance) {
@@ -401,6 +382,18 @@ public class TurretSubsystem extends SubsystemBase {
    }
 
    /**
+    * Used to return whether or not the pitch turret motor has been homed and is
+    * ready to be commaned to a particular position
+    * This function must always be return true before utilizing closed-loop
+    * position control on the pitch motor
+    * 
+    * @return Whether the pitch turret has been homed
+    */
+   public BooleanSupplier isTurretFullyHomed() {
+      return () -> (m_isTurretPitchHomed && m_isTurretYawHomed);
+   }
+
+   /**
     * Command to manually home the turret's rotation. While being commanded, the turret
     * will be allowed to move via manual stick motion until the hall effect sensor is reached
     */
@@ -457,6 +450,29 @@ public class TurretSubsystem extends SubsystemBase {
    }
 
    /**
+    * Command to home the entire turret subsystem
+    * In an ideal world, the turret is always sitting on the hall effect sensor at the beginning of the match
+    * meaning we only need to wait for the hood to move up. We can also stage it high to start the match.
+    * @param axisSupplier The joystick axis being used for manual yaw homing
+    */
+   public Command homeFullTurret(DoubleSupplier axisSupplier) {
+      return Commands.sequence( // run these in sequence so the rotation has no interference on the hood hitting its physical stop
+         homeTurretYaw(axisSupplier),
+         homeTurretPitch());
+   }
+
+   /**
+    * Command the turret to stop rotating and hold the hood at its lowest position
+    * This allows movement under the trench when not shooting
+    */
+   public Command setTurretIdle() {
+      return Commands.run(() -> {
+         m_turretYawMotor.stopMotor();
+         moveTurretPitchToPosition(TurretSetpoints.kPitchMotorMaxSetpoint);
+      }, this);
+   }
+
+   /**
     * Commands the turret hood to move to an absolute position
     * 
     * @param position The desired absolute position of the turret hood
@@ -468,11 +484,6 @@ public class TurretSubsystem extends SubsystemBase {
             }, () -> {
                this.m_turretPitchMotor.stopMotor();
             }).withName("Rotating turret pitch to position");
-   }
-
-   // TODO: Remove this or move it to a shared place later. There is a matching function in the shooter class
-   private boolean hasChanged(double a, double b) {
-      return Math.abs(a - b) > 1e-6;
    }
 
    @Override
@@ -487,49 +498,7 @@ public class TurretSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Hood/Current (A)", m_turretPitchMotor.getOutputCurrent());
       SmartDashboard.putNumber("Hood/Temperature (deg C)", m_turretPitchMotor.getMotorTemperature());
 
-      m_turretPitchkG = SmartDashboard.getNumber("Set Turret Pitch kG", m_turretPitchkG);
-      double newTurretYawkS = SmartDashboard.getNumber("Set Turret Yaw kS", m_turretYawkS);
-      double newTurretYawkV = SmartDashboard.getNumber("Set Turret Yaw kV", m_turretYawkV);
-
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
-
-      // REMOVE LATER: Tuning PID for the yaw
-      double newTurretkP = SmartDashboard.getNumber("Set Turret/kP", mt_turretClosedLoopP);
-      double newTurretkI = SmartDashboard.getNumber("Set Turret/kI", mt_turretClosedLoopI);
-      double newTurretkD = SmartDashboard.getNumber("Set Turret/kD", mt_turretClosedLoopD);
-
-      if (hasChanged(newTurretkP, mt_turretClosedLoopP)|| hasChanged(newTurretkI, mt_turretClosedLoopI) || hasChanged(newTurretkD, mt_turretClosedLoopD)) {
-         mt_turretConfig
-            .closedLoop
-               .p(newTurretkP)
-               .i(newTurretkI)
-               .d(newTurretkD);
-
-         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
-         mt_turretClosedLoopP = newTurretkP;
-         mt_turretClosedLoopI = newTurretkI;
-         mt_turretClosedLoopD = newTurretkD;
-      }
-
-      if (hasChanged(m_turretYawkS, newTurretYawkS) || hasChanged(newTurretYawkV, m_turretYawkV))
-      {
-         // Configure only closed loop slot 2 with the kS constant since it is working against the energy chain and constant force spring
-         mt_turretConfig
-            .closedLoop
-               .feedForward
-                  .kV(newTurretYawkV);
-
-         m_turretYawMotor.configure(mt_turretConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
-         m_turretYawkS = newTurretYawkS;
-         m_turretYawkV = newTurretYawkV;
-      }
-
-      // Push current values so they appear on startup
-      SmartDashboard.putNumber("Turret/kP", mt_turretClosedLoopP);
-      SmartDashboard.putNumber("Turret/kI", mt_turretClosedLoopI);
-      SmartDashboard.putNumber("Turret/kD", mt_turretClosedLoopD);
    }
 }
