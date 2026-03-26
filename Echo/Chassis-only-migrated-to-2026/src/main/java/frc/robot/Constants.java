@@ -4,12 +4,20 @@
 
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public final class Constants {
+
+   private static final AprilTagFieldLayout LAYOUT = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+   private static final double FIELD_LENGTH = LAYOUT.getFieldLength();
+   private static final double FIELD_WIDTH = LAYOUT.getFieldWidth();
 
    public static final class IntakeSubsystemConstants {
       public static final int kIntakeMotorCanId = 33; // SPARK MAX CAN ID
@@ -125,7 +133,6 @@ public final class Constants {
       public static final class ClimberSetpoints {
          public static final double kClimberPositionTolerance = 0.01; // arm rotations; about 3.6 output degrees
 
-         // TODO: Set these later with values from Ryan
          public static final double kClimberMotorHomingSetpoint = -0.25; // output rotations; -90 degrees
 
          public static final double kClimberStowedSetpoint = kClimberMotorHomingSetpoint;
@@ -258,5 +265,27 @@ public final class Constants {
       public static final double red = -0.31;
       public static final double blue = -0.29;
       public static final double grey = -0.33;
+   }
+
+   public enum FieldLocation {
+      LEFT_CORNER(new Translation2d(4.021836, 5.064443 )),
+      HUB(new Translation2d(4.63, FIELD_WIDTH / 2)),
+      RIGHT_CORNER(new Translation2d(4.021836, 1.6881475));
+
+      private final Translation2d bluePosition;
+
+      FieldLocation(Translation2d bluePosition) {
+         this.bluePosition = bluePosition;
+      }
+
+      public Translation2d getPosition() {
+         if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+               return new Translation2d(
+                  FIELD_LENGTH - bluePosition.getX(),
+                  FIELD_WIDTH - bluePosition.getY()
+               );
+         }
+         return bluePosition;
+      }
    }
 }

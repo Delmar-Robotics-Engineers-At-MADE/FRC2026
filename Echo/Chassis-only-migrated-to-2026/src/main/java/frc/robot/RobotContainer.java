@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.FieldLocation;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.TurretSubsystemConstants.TurretSetpoints;
 import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
@@ -143,14 +144,10 @@ public class RobotContainer {
 
     // Driver Trigger -> Shoot! By default at hub, or left or right offense zones with extra button press
     new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
-         .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, new Translation2d()));
+         .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
 
     new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller
         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
-
-    // m_operCmdController
-    //   .rightTrigger(TriggerThreshold)
-    //     .whileTrue(m_fuelShoot.runFlywheelCommand());
 
     // A button -> Spin feeder/loader motor into shooter
     m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
@@ -163,7 +160,7 @@ public class RobotContainer {
     // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
     m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
 
-    m_operCmdController.y().whileTrue(m_turret.trackHubCommand());
+    m_operCmdController.y().whileTrue(m_turret.trackHubCommand(FieldLocation.HUB.getPosition()));
 
     m_operCmdController.rightBumper().whileTrue(m_climber.moveArmsUpCommand());
     m_operCmdController.leftBumper().whileTrue(m_climber.moveArmsDownCommand());

@@ -1,10 +1,10 @@
 package frc.robot.subsystems;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -19,9 +19,8 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -52,8 +51,6 @@ public class TurretSubsystem extends SubsystemBase {
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
 
-   private Translation2d m_hub;
-
    // for remembering target so we know when we're at it
    double m_targetYawPosition = 0;
    double m_targetPitchPosition = 0;
@@ -67,14 +64,6 @@ public class TurretSubsystem extends SubsystemBase {
 
      // for tracking hub by odometry
       m_odometry = robot_odometry;
-
-      Optional<Alliance> allianceOptional = DriverStation.getAlliance();
-      // target position on field
-      if(allianceOptional.isPresent() && allianceOptional.get() == Alliance.Red) {
-         m_hub = new Translation2d(11.92, 4.03);
-      } else {
-         m_hub = new Translation2d(4.63, 4.03);
-      }
 
       // Key = distance in feet, Value = hood angle in degrees
       m_hoodMap.put(4.0, 69.5);
@@ -129,14 +118,14 @@ public class TurretSubsystem extends SubsystemBase {
       return entry.getValue();
    }
 
-   public void calculateTargetAngles() {
+   public void calculateTargetAngles(Translation2d targetPos) {
 
       // calculate angle to red target, and then pretend joystick is pointing that way
       Pose2d pose = m_odometry.getEstimatedPosition();
 
       // Calculate the rotation the field relative angle to the target from the robot's center
       Translation2d robotPos = pose.getTranslation();
-      Rotation2d fieldRelativeAngleToTarget = m_hub.minus(robotPos).getAngle();
+      Rotation2d fieldRelativeAngleToTarget = targetPos.minus(robotPos).getAngle();
 
       // Get the current robot heading and subtract it from the field-relative number to get the
       // angle relative to the robot's local reference frame (where 0 degrees is straight forward)
@@ -155,7 +144,7 @@ public class TurretSubsystem extends SubsystemBase {
          m_targetYawPosition = turretSetpointDeg;
       }
 
-      double newPitchPos = lookupHoodAngle(m_hub.getDistance(robotPos) * 3.28084);
+      double newPitchPos = lookupHoodAngle(Units.metersToFeet(targetPos.getDistance(robotPos)));
       if (Math.abs(m_targetPitchPosition - newPitchPos) > m_turretPitchSetpointDeadband)
       {
          m_targetPitchPosition = newPitchPos;
@@ -243,7 +232,6 @@ public class TurretSubsystem extends SubsystemBase {
          double springFF = (m_turretYawEncoder.getPosition() > 180.0) ? kSpring : 0.0;
          double turretYawFF = Math.signum(positionChange) * kS_friction + springFF;
          System.err.println("Moving turret by position to " + position);
-         System.out.println("kFF: " + turretYawFF);
 
          // Clamp the value so we don't move past the safe boundaries
          double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
@@ -373,9 +361,9 @@ public class TurretSubsystem extends SubsystemBase {
       // TODO: Add logic here to enable soft limits in the motor controller
    }
 
-   public Command trackHubCommand() {
+   public Command trackHubCommand(Translation2d targetPos) {
     return Commands.run(() -> {
-            calculateTargetAngles();
+            calculateTargetAngles(targetPos);
             moveTurretToTarget();
          })
       .withName("Track the commanded target");
