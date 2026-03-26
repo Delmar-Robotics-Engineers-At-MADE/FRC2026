@@ -16,8 +16,8 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 public final class Constants {
 
    private static final AprilTagFieldLayout LAYOUT = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-   private static final double FIELD_LENGTH = LAYOUT.getFieldLength();
-   private static final double FIELD_WIDTH = LAYOUT.getFieldWidth();
+   public static final double FIELD_LENGTH = LAYOUT.getFieldLength();
+   public static final double FIELD_WIDTH = LAYOUT.getFieldWidth();
 
    public static final class IntakeSubsystemConstants {
       public static final int kIntakeMotorCanId = 33; // SPARK MAX CAN ID

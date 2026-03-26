@@ -46,7 +46,7 @@ public class FeederSubsystem extends SubsystemBase {
    }
 
    /**
-    * Command to run the feeder and flywheel motors. When the command is
+    * Command to run the feeder motor. When the command is
     * interrupted, e.g. the button is released,
     * the motors will stop.
     */
@@ -57,6 +57,20 @@ public class FeederSubsystem extends SubsystemBase {
             }, () -> {
                this.m_feederMotor.stopMotor();;
             }).withName("Feeding");
+   }
+
+   /**
+    * Command to run the feeder motor in reverse. When the command is
+    * interrupted, e.g. the button is released,
+    * the motors will stop.
+    */
+   public Command runFeederReverseCommand() {
+      return this.startEnd(
+            () -> {
+               this.setFeederPower(-mt_feederDutyCycle);
+            }, () -> {
+               this.m_feederMotor.stopMotor();;
+            }).withName("Feeding in Reverse");
    }
 
    @Override

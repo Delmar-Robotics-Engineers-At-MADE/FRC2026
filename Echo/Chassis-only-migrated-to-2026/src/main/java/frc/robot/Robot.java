@@ -27,9 +27,9 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
 
-    DataLogManager.start();
-    // Optional: Also mirror NetworkTables data to the log file
-    edu.wpi.first.wpilibj.DriverStation.startDataLog(DataLogManager.getLog());
+    // DataLogManager.start();
+    // // Optional: Also mirror NetworkTables data to the log file
+    // edu.wpi.first.wpilibj.DriverStation.startDataLog(DataLogManager.getLog());
 
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
@@ -100,7 +100,8 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+  }
 
   @Override
   public void testInit() {

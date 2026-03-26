@@ -7,8 +7,8 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
@@ -63,8 +64,10 @@ public class RobotContainer {
   private final SendableChooser<Command> m_autoChooser;
 
   // Driver
-  GenericHID m_driverController = new GenericHID(OIConstants.kDriverControllerPort);
-  CommandGenericHID m_driverCmdController = new CommandGenericHID (OIConstants.kDriverControllerPort);
+  Joystick m_driverController = new Joystick(OIConstants.kDriverControllerPort);
+  CommandJoystick m_driverCmdController = new CommandJoystick(OIConstants.kDriverControllerPort);
+  // GenericHID m_driverController = new GenericHID(OIConstants.kDriverControllerPort);
+  // CommandGenericHID m_driverCmdController = new CommandGenericHID (OIConstants.kDriverControllerPort);
 
   // Operator
   XboxController m_operController = new XboxController(OIConstants.kOperatorControllerPort);
@@ -128,6 +131,8 @@ public class RobotContainer {
   static final int FlightButtonTHUMB = 2;
   static final int FlightButtonLEFT = 3;
   static final int FlightButtonRIGHT = 4;
+  static final int FlightButtonUPPERLEFT = 5;
+  static final int FlightButtonUPPERRIGHT = 6;
   private void configureButtonBindings() {
 
     // ******************************** OPERATOR *********************************
@@ -137,30 +142,67 @@ public class RobotContainer {
     //     .and(m_operCmdController.y())
     //     .onTrue(new InstantCommand (() -> m_robotDrive.debugResetOdometryToVision(m_photon), m_robotDrive, m_photon));
 
-    //Left Trigger -> Run fuel intake
-    m_operCmdController
-     .leftTrigger(TriggerThreshold)
-      .whileTrue(m_intake.runIntakeCommand());
+    // // Driver Trigger -> Shoot! By default at hub, or left or right offense zones with extra button press
+    // new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
+    //      .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
 
-    // Driver Trigger -> Shoot! By default at hub, or left or right offense zones with extra button press
-    new JoystickButton(m_driverController, FlightButtonTRIGGER) // thumb button on flight controller
-         .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
+    // new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller
+    //     .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
 
-    new JoystickButton(m_driverController, FlightButtonLEFT) // thumb button on flight controller
-        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading(), m_robotDrive));
+    // Trigger alone (no modifiers held) → shoot at default target (e.g. HUB)
+    m_driverCmdController.trigger()
+        .and(m_driverCmdController.button(FlightButtonLEFT).negate())
+        .and(m_driverCmdController.button(FlightButtonRIGHT).negate())
+        .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
 
-    // A button -> Spin feeder/loader motor into shooter
-    m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
+    // Trigger + button 3 (left bottom) → shoot at Left corner of own alliance zone from driver perspective
+    m_driverCmdController.trigger()
+        .and(m_driverCmdController.button(FlightButtonLEFT))
+        .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.LEFT_CORNER.getPosition()));
 
-    // B button -> Turn turret pitch to a set point
-    // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(() -> SmartDashboard.getNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees)));
+    // Trigger + button 4 → shoot at Right corner of own alliance zone from driver perspective
+    m_driverCmdController.trigger()
+        .and(m_driverCmdController.button(FlightButtonRIGHT))
+        .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.RIGHT_CORNER.getPosition()));
 
-    // X button -> turn turret yaw to a set point
-    // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
-    m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
+    // Top right button on flight stick; runs intake
+    m_driverCmdController.button(FlightButtonUPPERRIGHT)
+      .whileTrue(m_intake.runCombinedCommand());
 
-    m_operCmdController.y().whileTrue(m_turret.trackHubCommand(FieldLocation.HUB.getPosition()));
+    // A button -> run the intake 
+    m_operCmdController.a().whileTrue(m_intake.runIntakeCommand());
+
+    // D-pad down; mirror of 'a' button -> run the intake in reverse
+    m_operCmdController.povDown().whileTrue(m_intake.runExtakeCommand());
+
+    // B button -> run the roller floor in reverse
+    m_operCmdController.b().whileTrue(m_intake.runConveyerCommand());
+
+    // D-pad left; mirror of 'b' button -> run the intake and roller floor in reverse
+    m_operCmdController.povLeft().whileTrue(m_intake.runConveyerReverseCommand());
+
+    // Y button -> run the feeder forwards
+    m_operCmdController.y().whileTrue(m_feeder.runFeederCommand());
+
+    // D-pad up; mirror of 'y' button -> run the feeder in reverse
+    m_operCmdController.povUp().whileTrue(m_feeder.runFeederReverseCommand());
+
+    // Alternate shooting trigger to mirror at hub ability of driver controller
+    m_operCmdController.rightTrigger(TriggerThreshold)
+      .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
+    
+    // // A button -> Spin feeder/loader motor into shooter
+    // m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
+
+    // // B button -> Turn turret pitch to a set point
+    // // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
+    // m_operCmdController.b().whileTrue(m_turret.commandTurretPitchToPosition(() -> SmartDashboard.getNumber("Set Turret Pitch Position", mt_turretPitchSetpointDegrees)));
+
+    // // X button -> turn turret yaw to a set point
+    // // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
+    // m_operCmdController.x().whileTrue(m_turret.commandTurretYawToPosition(SmartDashboard.getNumber("Set Turret Yaw Position", mt_turretYawSetpointDegrees)));
+
+    // m_operCmdController.y().whileTrue(m_turret.trackHubCommand(FieldLocation.HUB.getPosition()));
 
     m_operCmdController.rightBumper().whileTrue(m_climber.moveArmsUpCommand());
     m_operCmdController.leftBumper().whileTrue(m_climber.moveArmsDownCommand());

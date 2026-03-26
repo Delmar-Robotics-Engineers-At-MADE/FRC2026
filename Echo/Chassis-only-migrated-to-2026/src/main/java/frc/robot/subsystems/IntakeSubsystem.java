@@ -57,22 +57,33 @@ public class IntakeSubsystem extends SubsystemBase{
   }
 
   /**
-   * Command to run the intake and conveyor motors. When the command is interrupted, e.g. the button is released,
+   * Command to run the intake motor. When the command is interrupted, e.g. the button is released,
    * the motors will stop.
    */
   public Command runIntakeCommand() {
     return this.startEnd(
         () -> {
           this.setIntakePower(mt_intakeDutyCycle);
-          this.setConveyorPower(mt_conveyorDutyCycle);
         }, () -> {
           this.setIntakePower(0.0);
-          this.setConveyorPower(0.0);
         }).withName("Intaking");
   }
 
+    /**
+   * Command to run the intake motor in reverse. When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runExtakeCommand() {
+    return this.startEnd(
+        () -> {
+          this.setIntakePower(IntakeSetpoints.kExtake);
+        }, () -> {
+          this.setIntakePower(0.0);
+        }).withName("Extaking");
+  }
+
   /**
-   * Command to run just the conveyer during shooting; When the command is interrupted, e.g. the button is released,
+   * Command to run just the conveyor; When the command is interrupted, e.g. the button is released,
    * the motors will stop.
    */
   public Command runConveyerCommand() {
@@ -82,13 +93,41 @@ public class IntakeSubsystem extends SubsystemBase{
         }, () -> {
           this.setConveyorPower(0.0);
         }).withName("Conveying");
-  }  
+  }
+
+  /**
+   * Command to run just the conveyer in reverse; When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runConveyerReverseCommand() {
+    return this.startEnd(
+        () -> {
+          this.setConveyorPower(ConveyorSetpoints.kExtake);
+        }, () -> {
+          this.setConveyorPower(0.0);
+        }).withName("Conveying Reverse");
+  }
+
+  /**
+   * Command to run the intake and conveyor together; When the command is interrupted, e.g. the button is released,
+   * the motors will stop.
+   */
+  public Command runCombinedCommand() {
+    return this.startEnd(
+        () -> {
+          this.setIntakePower(mt_intakeDutyCycle);
+          this.setConveyorPower(mt_conveyorDutyCycle);
+        }, () -> {
+          this.setIntakePower(0.0);
+          this.setConveyorPower(0.0);
+        }).withName("Running Intake and Conveyor");
+  }
 
   /**
    * Command to reverse the intake motor and coveyor motors. When the command is interrupted, e.g. the button is
    * released, the motors will stop.
    */
-  public Command runExtakeCommand() {
+  public Command runCombinedReverseCommand() {
     return this.startEnd(
         () -> {
           this.setIntakePower(IntakeSetpoints.kExtake);
@@ -96,7 +135,7 @@ public class IntakeSubsystem extends SubsystemBase{
         }, () -> {
           this.setIntakePower(0.0);
           this.setConveyorPower(0.0);
-        }).withName("Extaking");
+        }).withName("Running Intake and Conveyor in Reverse");
   }
 
   @Override

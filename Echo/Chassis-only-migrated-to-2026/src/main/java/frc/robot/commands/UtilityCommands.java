@@ -30,10 +30,10 @@ public final class UtilityCommands {
                   Commands.waitUntil(turret.isYawAtTargetPosition()),
                   Commands.parallel(
                      feeder.runFeederCommand(),
-                     intake.runIntakeCommand()
+                     intake.runCombinedCommand()
                   )
                ),
-               shooter.trackHubCommand(),
+               shooter.trackHubCommand(targetPos),
                turret.trackHubCommand(targetPos)
             );
    }
@@ -65,7 +65,7 @@ public final class UtilityCommands {
                ),
 
                // Run the flywheel and set the turret and hood positions continuously while the other sequence is occurring
-               shooter.trackHubCommand(),
+               shooter.trackHubCommand(targetPos),
                turret.trackHubCommand(targetPos)
             );
    }
