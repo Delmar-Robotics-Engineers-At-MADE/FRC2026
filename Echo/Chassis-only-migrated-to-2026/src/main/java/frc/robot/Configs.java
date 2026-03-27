@@ -95,7 +95,7 @@ public final class Configs {
       .inverted(false)
       .idleMode(IdleMode.kCoast)
       .openLoopRampRate(1.0)
-      .smartCurrentLimit(Neo550MotorConstants.kMaxAllowedCurrent);
+      .smartCurrentLimit(30, 40);
     }
   }
 
@@ -222,7 +222,7 @@ public final class Configs {
         .inverted(true)
         .idleMode(IdleMode.kBrake)
         .openLoopRampRate(1.0)
-        .smartCurrentLimit(30, 60);
+        .smartCurrentLimit(40, 60);
 
     }
   }

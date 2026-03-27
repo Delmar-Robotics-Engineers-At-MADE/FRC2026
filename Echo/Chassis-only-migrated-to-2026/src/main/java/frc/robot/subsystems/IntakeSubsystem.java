@@ -53,7 +53,15 @@ public class IntakeSubsystem extends SubsystemBase{
 
   /** Set the conveyor motor power in the range of [-1, 1]. */
   private void setConveyorPower(double power) {
-    m_conveyorMotor.set(power);
+    if (m_conveyorMotor.getMotorTemperature() < 70.0)
+    {
+      m_conveyorMotor.set(power);
+    }
+    else
+    {
+      // If the motor gets too hot, disable it for the rest of the match
+      m_conveyorMotor.disable();
+    }
   }
 
   /**

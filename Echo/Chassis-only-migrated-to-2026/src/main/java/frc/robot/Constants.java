@@ -39,7 +39,7 @@ public final class Constants {
 
       public static final class FeederSetpoints {
          public static final double kFeed = 1.0; // duty cycle
-         public static final double kUnfeed = -0.6; // duty cycle
+         public static final double kUnfeed = -1.0; // duty cycle
       }
    }
 
@@ -195,7 +195,7 @@ public final class Constants {
       // This changes the drive speed of the module (a pinion gear with more teeth
       // will result in a
       // robot that drives faster).
-      public static final int kDrivingMotorPinionTeeth = 12;
+      public static final int kDrivingMotorPinionTeeth = 14;
 
       // Invert the turning encoder, since the output shaft rotates in the opposite
       // direction of
