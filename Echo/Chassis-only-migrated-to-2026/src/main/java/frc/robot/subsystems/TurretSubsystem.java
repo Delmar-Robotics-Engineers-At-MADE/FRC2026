@@ -13,6 +13,7 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -270,7 +271,15 @@ public class TurretSubsystem extends SubsystemBase {
       m_isTurretYawHomed = true;
       m_turretYawEncoder.setPosition(TurretSetpoints.kYawMotorHomingSetpoint);
 
-      // TODO: Add logic here to enable soft limits in the motor controller
+      SparkMaxConfig config = frc.robot.Configs.TurretSubsystem.turretYawConfig;
+
+      config.softLimit
+         .forwardSoftLimit(TurretSetpoints.kYawMotorMaxSetpoint)
+         .forwardSoftLimitEnabled(true)
+         .reverseSoftLimit(TurretSetpoints.kYawMotorMinSetpoint)
+         .reverseSoftLimitEnabled(true);
+
+      m_turretYawMotor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
    }
 
    /**
@@ -349,7 +358,15 @@ public class TurretSubsystem extends SubsystemBase {
       m_isTurretPitchHomed = true;
       m_turretPitchEncoder.setPosition(TurretSetpoints.kPitchMotorHomingSetpoint);
 
-      // TODO: Add logic here to enable soft limits in the motor controller
+      SparkMaxConfig config = frc.robot.Configs.TurretSubsystem.turretPitchConfig;
+
+      config.softLimit
+         .forwardSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
+         .forwardSoftLimitEnabled(true)
+         .reverseSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
+         .reverseSoftLimitEnabled(true);
+
+      m_turretPitchMotor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
    }
 
    public Command trackHubCommand(Translation2d targetPos) {
