@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -90,6 +91,8 @@ public class RobotContainer {
     m_autoChooser = AutoBuilder.buildAutoChooser();
     // setup dashboard
     setupDashboard();
+
+    setupCommands();
 
     
 
@@ -223,5 +226,19 @@ public class RobotContainer {
       SmartDashboard.putData("Auto Chooser", m_autoChooser);
     }
 
+  }
+
+  private void setupCommands() {
+      NamedCommands.registerCommand(
+          "Shoot",
+          UtilityCommands
+              .runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition())
+              .withTimeout(5.0)
+      );
+
+      NamedCommands.registerCommand(
+          "Intake",
+          m_intake.runCombinedCommand().withTimeout(5.0)
+      );
   }
 }
