@@ -36,8 +36,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 
-import java.util.Optional;
-
 import org.photonvision.EstimatedRobotPose;
 
 import com.studica.frc.AHRS;
@@ -71,9 +69,6 @@ public class DriveSubsystem extends SubsystemBase {
 
    // The gyro sensor
    private final AHRS m_gyro = new AHRS(AHRS.NavXComType.kMXP_SPI, AHRS.NavXUpdateRate.k50Hz);
-
-   // photon vision subsystemhoton
-   PhotonVisionSensor m_photon;
 
    // Odometry class for tracking robot pose
    public SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(
@@ -138,8 +133,7 @@ public class DriveSubsystem extends SubsystemBase {
    }
 
    /** Creates a new DriveSubsystem. */ // constructor
-   public DriveSubsystem(PhotonVisionSensor photon) {
-      m_photon = photon;
+   public DriveSubsystem() {
 
       // Usage reporting for MAXSwerve template
       HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
@@ -211,20 +205,6 @@ public class DriveSubsystem extends SubsystemBase {
       m_odometry.update(
             Rotation2d.fromDegrees(m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0)),
             getCurrentPositions());
-
-      // add vision data
-      Optional<EstimatedRobotPose> visionOptional = m_photon.getEstimatedPoseFront(m_odometry.getEstimatedPosition());
-      if (visionOptional.isPresent()) {
-         EstimatedRobotPose visionPose = visionOptional.get();
-         // System.out.println("Front X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
-         m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
-      }
-      visionOptional = m_photon.getEstimatedPoseBack(m_odometry.getEstimatedPosition());
-      if (visionOptional.isPresent()) {
-         EstimatedRobotPose visionPose = visionOptional.get();
-         // System.out.println("Rear X: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getX()) + " Y: " + String.format("%.6f", visionPose.estimatedPose.toPose2d().getY()));
-         m_odometry.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), visionPose.timestampSeconds);
-      }
    }
 
    /**
@@ -386,89 +366,6 @@ public class DriveSubsystem extends SubsystemBase {
 
    // }
 
-   static final double FieldLength = 17.55; // meters
-   static final double FieldWidth = 8.05; // meters
-
-   // public void setTrajectoryToAprilTarget(int id, HornSelection hornSelect,
-   //       oldPhotonVisionSensor photon) {
-   //    // resetOdometryToVision(photon);
-   //    m_aprilTargetForTeleop = id;
-   //    double targetX = 0.0;
-   //    double targetY = 0.0;
-   //    double rot = 0.0;
-   //    switch (id) {
-   //       // case 1: targetX = 16.47987442; targetY = 0.962976864; rot =
-   //       // Math.toRadians(-54); break;
-   //       case 1:
-   //          targetX = 15.68;
-   //          targetY = 0;
-   //          rot = Math.toRadians(120);
-   //          break; // for summer
-   //       case 2:
-   //          targetX = 16.47987442;
-   //          targetY = 7.097023136;
-   //          rot = Math.toRadians(54);
-   //          break;
-   //       case 3:
-   //          targetX = 11.56;
-   //          targetY = 7.6855;
-   //          rot = Math.toRadians(90);
-   //          break;
-   //       case 4:
-   //          targetX = 9.6545;
-   //          targetY = 6.14;
-   //          rot = Math.toRadians(-180);
-   //          break;
-   //       case 5:
-   //          targetX = 9.6545;
-   //          targetY = 1.91;
-   //          rot = Math.toRadians(-180);
-   //          break;
-   //       // case 6: targetX = 13.65725; targetY = 2.98; rot = Math.toRadians(120); break;
-   //       case 6:
-   //          targetX = 13.77;
-   //          targetY = 2.69;
-   //          rot = Math.toRadians(-60);
-   //          break; // for summer
-   //       case 7:
-   //          targetX = 14.26;
-   //          targetY = 4.03;
-   //          rot = Math.toRadians(180);
-   //          break;
-   //       case 8:
-   //          targetX = 13.65725;
-   //          targetY = 5.074326514;
-   //          rot = Math.toRadians(-120);
-   //          break;
-   //       case 9:
-   //          targetX = 12.45275;
-   //          targetY = 5.074326514;
-   //          rot = Math.toRadians(-60);
-   //          break;
-   //       case 10:
-   //          targetX = 11.8555;
-   //          targetY = 4.03;
-   //          rot = Math.toRadians(0);
-   //          break;
-   //       case 11:
-   //          targetX = 12.45;
-   //          targetY = 2.99;
-   //          rot = Math.toRadians(60);
-   //          break;
-   //    }
-   //    if (hornSelect == HornSelection.R) {
-   //       targetX += Math.sin(rot) * SlideToTheHornDistance;
-   //       targetY -= Math.cos(rot) * SlideToTheHornDistance;
-   //    } else if (hornSelect == HornSelection.L) {
-   //       targetX -= Math.sin(rot) * SlideToTheHornDistance;
-   //       targetY += Math.cos(rot) * SlideToTheHornDistance;
-   //    }
-   //    if (DriverStation.getAlliance().get() == Alliance.Blue) {
-   //       // flip to cousin on other side of field
-   //       targetX = FieldLength - targetX;
-   //       targetY = FieldWidth - targetY;
-   //       rot = (rot < 0) ? rot + Math.PI : rot - Math.PI;
-   //    }
    //    Pose2d currentPose = getPose();
    //    m_trajectoryForTeleop = TrajectoryGenerator.generateTrajectory(
    //          currentPose,

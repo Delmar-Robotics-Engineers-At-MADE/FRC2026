@@ -46,8 +46,8 @@ public class RobotContainer {
   static final double PovSpeed = 0.1 * DriveSubsystem.DriveSpeedDivider;  // speed divider slows it down, but we really want this speed not slowed down
 
   // The robot's subsystems
-  private final PhotonVisionSensor m_photon = new PhotonVisionSensor();
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_photon);
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final PhotonVisionSensor m_photon = new PhotonVisionSensor(m_robotDrive.m_odometry);
 
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final FeederSubsystem m_feeder = new FeederSubsystem();
@@ -190,14 +190,11 @@ public class RobotContainer {
     // D-pad up; mirror of 'y' button -> run the feeder in reverse
     m_operCmdController.povUp().whileTrue(m_feeder.runFeederReverseCommand());
 
-    m_operCmdController.x().whileTrue(m_hook.captureHookCommand());
-
     // Alternate shooting trigger to mirror at hub ability of driver controller
     m_operCmdController.rightTrigger(TriggerThreshold)
       .whileTrue(UtilityCommands.runShooterCommand(m_fuelShoot, m_feeder, m_turret, m_intake, FieldLocation.HUB.getPosition()));
-    
-    // // A button -> Spin feeder/loader motor into shooter
-    // m_operCmdController.a().whileTrue(m_feeder.runFeederCommand());
+
+    //m_operCmdController.x().whileTrue(m_hook.captureHookCommand());
 
     // // B button -> Turn turret pitch to a set point
     // // TODO: Update this later after testing its movement; it is currently using a member variable that is editable in the dashboard
