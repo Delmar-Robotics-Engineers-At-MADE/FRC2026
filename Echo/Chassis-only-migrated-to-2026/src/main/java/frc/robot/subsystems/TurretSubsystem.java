@@ -434,7 +434,7 @@ public class TurretSubsystem extends SubsystemBase {
    }
 
    /**
-    * Command to home the turret yaw motor at a low duty cycle and set its starting
+    * Command to home the turret pitch motor at a low duty cycle and set its starting
     * parameters to allow closed loop position control
     */
    public Command homeTurretPitch() {
