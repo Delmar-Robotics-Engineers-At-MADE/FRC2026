@@ -20,6 +20,7 @@ import frc.robot.commands.UtilityCommands;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.FuelShooterSubsystem;
+import frc.robot.subsystems.HookSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LightsSubsystem;
 import frc.robot.subsystems.PhotonVisionSensor;
@@ -27,12 +28,10 @@ import frc.robot.subsystems.TurretSubsystem;
 import frc.robot.subsystems.ClimberSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -55,6 +54,7 @@ public class RobotContainer {
   private final FuelShooterSubsystem m_fuelShoot = new FuelShooterSubsystem(m_robotDrive.m_odometry);
   private final LightsSubsystem m_lights = new LightsSubsystem();
   private final ClimberSubsystem m_climber = new ClimberSubsystem();
+  private final HookSubsystem m_hook = new HookSubsystem(52);
 
   // TODO: Remove later; tuning constants
   private final double mt_turretYawSetpointDegrees = TurretSetpoints.kYawMotorHomingSetpoint;
@@ -186,6 +186,8 @@ public class RobotContainer {
 
     // D-pad up; mirror of 'y' button -> run the feeder in reverse
     m_operCmdController.povUp().whileTrue(m_feeder.runFeederReverseCommand());
+
+    m_operCmdController.x().whileTrue(m_hook.captureHookCommand());
 
     // Alternate shooting trigger to mirror at hub ability of driver controller
     m_operCmdController.rightTrigger(TriggerThreshold)

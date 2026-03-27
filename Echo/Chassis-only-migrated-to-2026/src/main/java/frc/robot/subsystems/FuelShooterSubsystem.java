@@ -26,6 +26,8 @@ import frc.robot.Constants.ShooterSubsystemConstants.FlywheelSetpoints;
 
 public class FuelShooterSubsystem extends SubsystemBase {
 
+   private static double kStaticSpeedAddition = 200.0; // RPM; add a little bit of additional velocity to the flywheel to account for short shots
+
    // Flywheel components
    private SparkMax m_motorPort, m_motorStar;
    private SparkClosedLoopController m_flywheelClosedLoopController;
@@ -122,7 +124,7 @@ public class FuelShooterSubsystem extends SubsystemBase {
       // Calculate the rotation the field relative angle to the target from the robot's center
       Translation2d robotPos = pose.getTranslation();
 
-      double newVelocity = m_flywheelMap.get(Units.metersToFeet(targetPos.getDistance(robotPos)));
+      double newVelocity = m_flywheelMap.get(Units.metersToFeet(targetPos.getDistance(robotPos))) + kStaticSpeedAddition;
 
       // Update the target flywheel velocity
       if (Math.abs(m_flywheelTargetVelocity - newVelocity) > m_flywheelSetpointDeadband)
@@ -138,7 +140,8 @@ public class FuelShooterSubsystem extends SubsystemBase {
     * setpoint.
     */
    private void setFlywheelVelocity(double velocity) {
-      m_flywheelClosedLoopController.setSetpoint(velocity, ControlType.kMAXMotionVelocityControl);
+      double actualAppliedVelocity = Math.max(-5000.0, Math.min(5000.0, velocity));
+      m_flywheelClosedLoopController.setSetpoint(actualAppliedVelocity, ControlType.kMAXMotionVelocityControl);
    }
 
    private void setToTargetVelocity() {

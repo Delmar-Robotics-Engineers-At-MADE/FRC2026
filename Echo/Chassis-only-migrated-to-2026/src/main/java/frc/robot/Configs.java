@@ -143,7 +143,7 @@ public final class Configs {
           // Set MAXMotion parameters for MAXMotion Position control working with the spring
           .cruiseVelocity(7700 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec
           .maxAcceleration(4500 * TurretUnits.kYawVelocityConversionFactor) // degrees per sec/s
-          .allowedProfileError(TurretSetpoints.kYawPositionTolerance + 35.0) // degrees
+          .allowedProfileError(TurretSetpoints.kYawPositionTolerance + 5.0) // degrees
           // Set MAXMotion parameters for MAXMotion Velocity control
           // CruiseVelocity is not included here as it is specifically called out in the docs to only affect position control
           .maxAcceleration(1000 * TurretUnits.kYawVelocityConversionFactor, ClosedLoopSlot.kSlot1) // degrees per sec/s

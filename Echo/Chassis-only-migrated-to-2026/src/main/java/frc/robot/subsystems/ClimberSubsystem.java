@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -19,11 +18,16 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Configs;
 import frc.robot.Constants.ClimberSubsystemConstants;
 import frc.robot.Constants.Falcon500MotorConstants;
-import frc.robot.Constants.TurretSubsystemConstants.TurretUnits;
 import frc.robot.Constants.ClimberSubsystemConstants.ClimberSetpoints;
 import frc.robot.Constants.ClimberSubsystemConstants.ClimberUnits;
 
 public class ClimberSubsystem extends SubsystemBase{
+
+   private static double kSeatCycleCount = 10;
+
+   private double m_actualRetractPosition = ClimberSetpoints.kClimberRetractedSetpoint;
+   private boolean m_hasSeatedRetract = false;
+   private int m_seatCounter = 0;
 
    // Climber components
    TalonFX m_leftClimberMotor = new TalonFX(ClimberSubsystemConstants.kClimberLeftMotorCanId);
@@ -118,23 +122,6 @@ public class ClimberSubsystem extends SubsystemBase{
    }
 
    /**
-    * Used to return whether or not the climber motors have been homed and are
-    * ready to be commanded to a particular position
-    * This function must always be return true before utilizing closed-loop
-    * position control on the yaw motor
-    * 
-    * @return Whether the climber arms have been homed
-    */
-   private boolean areClimbersArmsHomed() {
-      return m_areClimbersHomed;
-   }
-
-   // TODO: Remove later. Temporary usage for testing climber motor functionality
-   private void testSetClimberHomed() {
-      setClimberArmsHomed();
-   }
-
-   /**
     * Command to home the climber arms to prep them for closed loop control
     */
    public Command homeClimberArms() {
@@ -142,9 +129,18 @@ public class ClimberSubsystem extends SubsystemBase{
             .withName("Home Left Climber Arm");
    }
 
-   //  TODO: Remove this later. Expose for now so we can manually set the left climber to "homed"
-   public Command testCommandSetClimberHomed() {
-      return this.runOnce(() -> this.testSetClimberHomed());
+   public void updateRetractCurrentDetection() {
+      if (m_leftClimberMotor.getStatorCurrent().getValueAsDouble() > 30.0 
+       && m_rightClimberMotor.getStatorCurrent().getValueAsDouble() > 30.0) {
+         m_seatCounter++;
+      } else {
+         m_seatCounter = 0;
+      }
+
+      if (m_seatCounter >= kSeatCycleCount) {
+         m_actualRetractPosition = m_leftClimberMotor.getPosition().getValueAsDouble(); // capture actual position
+         m_hasSeatedRetract = true;
+      }
    }
 
        /**
@@ -172,19 +168,28 @@ public class ClimberSubsystem extends SubsystemBase{
         }
     }
 
-    public void moveArmsDown() {
-      m_leftClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
-      m_rightClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
-    }
+   private boolean hasSeatedRetract() {
+      return m_hasSeatedRetract;
+   }
 
-    public void moveArmsUp() {
+    public void moveArmsDown() {
       m_leftClimberMotor.setControl(dutyCycleOut.withOutput(-0.25));
       m_rightClimberMotor.setControl(dutyCycleOut.withOutput(-0.25));
     }
 
+    public void moveArmsUp() {
+      m_leftClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
+      m_rightClimberMotor.setControl(dutyCycleOut.withOutput(0.25));
+    }
+
     private void stop() {
-        m_leftClimberMotor.setControl(neutralRequest);
-        m_rightClimberMotor.setControl(neutralRequest);
+      m_leftClimberMotor.setControl(neutralRequest);
+      m_rightClimberMotor.setControl(neutralRequest);
+    }
+
+    private void hold()  {
+      m_leftClimberMotor.setControl(brakeRequest);
+      m_rightClimberMotor.setControl(brakeRequest);
     }
 
     public double getLeftPosition() {
@@ -195,9 +200,9 @@ public class ClimberSubsystem extends SubsystemBase{
         return m_rightClimberMotor.getPosition().getValueAsDouble();
     }
 
-    public boolean atSetpoint() {
-        return Math.abs(getLeftPosition() - m_climberPositionSetpoint) < ClimberSetpoints.kClimberPositionTolerance
-            && Math.abs(getRightPosition() - m_climberPositionSetpoint) < ClimberSetpoints.kClimberPositionTolerance;
+    public BooleanSupplier atSetpoint() {
+        return () -> Math.abs(getLeftPosition() - m_climberPositionSetpoint) < ClimberSetpoints.kClimberPositionTolerance
+                  && Math.abs(getRightPosition() - m_climberPositionSetpoint) < ClimberSetpoints.kClimberPositionTolerance;
     }
 
     public boolean isHomed() {
@@ -216,28 +221,50 @@ public class ClimberSubsystem extends SubsystemBase{
    /** Extend both arms up to grab the chain/bar. */
    public Command extendCommand() {
       return Commands.run(() -> driveToPosition(ClimberSetpoints.kClimberExtendedLevelZeroSetpoint), this)
-         .until(this::atSetpoint)
+         .until(atSetpoint())
          .finallyDo(interrupted -> { if (interrupted) stop(); })
          .withName("Climber Extend");
    }
 
-   /** Retract both arms to pull the robot up. */
-   public Command retractCommand() {
-      return Commands.run(() -> driveToPosition(ClimberSetpoints.kClimberRetractedSetpoint), this)
-         .until(this::atSetpoint)
+   /** Simple retract both arms to pull the robot up. */
+   public Command simpleRetractCommand() {
+      return Commands.run(() -> driveToPosition(ClimberSetpoints.kClimberRetractedSetpoint + 0.2), this)
+         .until(atSetpoint())
          .finallyDo(interrupted -> { if (interrupted) stop(); })
          .withName("Climber Retract");
    }
 
+   /**
+    * Full-on retract command with curret detection and saving off of actual robot arm position
+    */
+   public Command retractCommand() {
+    return Commands.sequence(
+        Commands.runOnce(() -> {
+         m_hasSeatedRetract = false; 
+         m_seatCounter = 0;
+        }, this),
+        Commands.run(() -> {
+            driveToPosition(ClimberSetpoints.kClimberRetractedSetpoint);
+            updateRetractCurrentDetection();
+        }, this)
+        .until(this::hasSeatedRetract),
+        Commands.run(this::hold, this)
+    ).finallyDo(interrupted -> { if (interrupted) stop(); })
+     .withName("Climber Retract");
+}
+
    /** Full climb sequence: extend → wait for driver confirm → retract. */
-   public Command climbSequenceCommand(java.util.function.BooleanSupplier confirmRetract) {
+   public Command climbSequenceCommand(BooleanSupplier confirmRetract) {
       return Commands.sequence(
          extendCommand(),
          Commands.waitUntil(confirmRetract),
-         retractCommand()
+         simpleRetractCommand()
       ).withName("Climb Sequence");
    }
 
+   /**
+    * Simple command for moving robot arms up
+    */
    public Command moveArmsUpCommand() {
       return Commands.startEnd(() -> {
             moveArmsUp();
@@ -248,6 +275,9 @@ public class ClimberSubsystem extends SubsystemBase{
          .withName("Move arms up");
    }
 
+   /**
+    * Simple command for moving robot arms up
+    */
    public Command moveArmsDownCommand() {
       return Commands.startEnd(() -> {
             moveArmsDown();

@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -160,14 +159,6 @@ public class TurretSubsystem extends SubsystemBase {
       return Math.abs(m_turretYawEncoder.getPosition() - desiredPosition) < TurretSetpoints.kYawPositionTolerance;
    }
 
-   /**
-    * Checks whether the input position falls within the valid range of positions that the turret can be commanded to
-    * @param position The input position to verify against the turret bounds
-    * @return Whether the turret position is a valid setpoint
-    */
-   private boolean isYawPositionReachable(double position) {
-      return position >= TurretSetpoints.kYawMotorMinSetpoint && position <= TurretSetpoints.kYawMotorMaxSetpoint;
-   }
 
    /**
     * Helper function to determining if the turret's hood is within a small margin of error from the desired position
@@ -365,7 +356,7 @@ public class TurretSubsystem extends SubsystemBase {
     return Commands.run(() -> {
             calculateTargetAngles(targetPos);
             moveTurretToTarget();
-         })
+         }, this)
       .withName("Track the commanded target");
    }
 
@@ -430,7 +421,7 @@ public class TurretSubsystem extends SubsystemBase {
     * parameters to allow closed loop position control
     */
    public Command homeTurretPitch() {
-      return run(() -> this.moveTurretPitch(-0.1))
+      return this.run(() -> this.moveTurretPitch(-0.1))
             .until(getTurretPitchAtHome())
             .andThen(() -> this.m_turretPitchMotor.stopMotor())
             .andThen(() -> this.setTurretPitchHomed())
@@ -455,7 +446,6 @@ public class TurretSubsystem extends SubsystemBase {
     */
    public Command setTurretIdle() {
       return Commands.run(() -> {
-         m_turretYawMotor.stopMotor();
          moveTurretPitchToPosition(TurretSetpoints.kPitchMotorMaxSetpoint);
       }, this);
    }
