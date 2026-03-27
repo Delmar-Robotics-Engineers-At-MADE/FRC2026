@@ -19,6 +19,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -46,7 +47,7 @@ public class TurretSubsystem extends SubsystemBase {
    private boolean m_isTurretYawHomed = false;
    private boolean m_isTurretPitchHomed = false;
 
-   private double m_turretPitchkG = 1.0;
+   private double m_turretPitchkG = 2.0;
 
    // Odometry class for tracking robot pose
    SwerveDrivePoseEstimator m_odometry = null;  // filled in by constructor
@@ -67,9 +68,10 @@ public class TurretSubsystem extends SubsystemBase {
 
       // Key = distance in feet, Value = hood angle in degrees
       m_hoodMap.put(4.0, 69.5);
-      m_hoodMap.put(8.0, 58.0);
-      m_hoodMap.put(24.0, 58.0);
+      m_hoodMap.put(8.0, 62.0);
+      m_hoodMap.put(24.0, 62.0);
       m_hoodMap.put(24.0001, 29.5);
+      m_hoodMap.put(60.0, 29.5);
 
       // Initialize shooter pointing motors (yaw motor controls the shooter's
       // direction while the pitch motor controls hood position)
@@ -106,6 +108,8 @@ public class TurretSubsystem extends SubsystemBase {
       // Zero encoders on initialization
       m_turretYawEncoder.setPosition(0.0);
       m_turretPitchEncoder.setPosition(0.0);
+
+      SmartDashboard.putNumber("Set Turret kG", m_turretPitchkG);
    }
 
    public double lookupHoodAngle(double distance) {
@@ -115,7 +119,7 @@ public class TurretSubsystem extends SubsystemBase {
          return m_hoodMap.firstEntry().getValue();
       }
 
-      return entry.getValue();
+      return entry.getValue().doubleValue();
    }
 
    public void calculateTargetAngles(Translation2d targetPos) {
@@ -144,11 +148,11 @@ public class TurretSubsystem extends SubsystemBase {
          m_targetYawPosition = turretSetpointDeg;
       }
 
+      System.out.println("Distance to target: " + Units.metersToFeet(targetPos.getDistance(robotPos)));
       double newPitchPos = lookupHoodAngle(Units.metersToFeet(targetPos.getDistance(robotPos)));
-      if (Math.abs(m_targetPitchPosition - newPitchPos) > m_turretPitchSetpointDeadband)
-      {
-         m_targetPitchPosition = newPitchPos;
-      }
+      System.out.println("Calculated pitch: " + newPitchPos);
+      System.out.println("Setting target pitch: " + newPitchPos);
+      m_targetPitchPosition = newPitchPos;
    }
        
    /**
@@ -223,7 +227,7 @@ public class TurretSubsystem extends SubsystemBase {
          // apply FF only above 180 degrees; seems like the spring is limp below that
          double springFF = (m_turretYawEncoder.getPosition() > 180.0) ? kSpring : 0.0;
          double turretYawFF = Math.signum(positionChange) * kS_friction + springFF;
-         System.err.println("Moving turret by position to " + position);
+         //System.err.println("Moving turret by position to " + position);
 
          // Clamp the value so we don't move past the safe boundaries
          double actualAppliedPosition = Math.max(TurretSetpoints.kYawMotorMinSetpoint, Math.min(TurretSetpoints.kYawMotorMaxSetpoint, position));
@@ -309,6 +313,8 @@ public class TurretSubsystem extends SubsystemBase {
          double actualAppliedPosition = Math.max(TurretSetpoints.kPitchMotorMinSetpoint, Math.min(TurretSetpoints.kPitchMotorMaxSetpoint, positionDegrees));
 
          double arbFF = m_turretPitchkG * Math.sin(Math.toRadians(positionDegrees));
+
+         System.out.println("Setting pitch to: " + positionDegrees);
          m_turretPitchClosedLoopController.setSetpoint(actualAppliedPosition, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, arbFF);
       }
    }
@@ -361,19 +367,17 @@ public class TurretSubsystem extends SubsystemBase {
       SparkMaxConfig config = frc.robot.Configs.TurretSubsystem.turretPitchConfig;
 
       config.softLimit
-         .forwardSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
-         .forwardSoftLimitEnabled(true)
-         .reverseSoftLimit(TurretSetpoints.kPitchMotorMaxSetpoint)
-         .reverseSoftLimitEnabled(true);
+         .forwardSoftLimitEnabled(false)
+         .reverseSoftLimitEnabled(false);
 
       m_turretPitchMotor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
    }
 
    public Command trackHubCommand(Translation2d targetPos) {
-    return Commands.run(() -> {
+    return this.run(() -> {
             calculateTargetAngles(targetPos);
             moveTurretToTarget();
-         }, this)
+         })
       .withName("Track the commanded target");
    }
 
@@ -462,9 +466,9 @@ public class TurretSubsystem extends SubsystemBase {
     * This allows movement under the trench when not shooting
     */
    public Command setTurretIdle() {
-      return Commands.run(() -> {
+      return this.run(() -> {
          moveTurretPitchToPosition(TurretSetpoints.kPitchMotorMaxSetpoint);
-      }, this);
+      });
    }
 
    /**
@@ -495,5 +499,18 @@ public class TurretSubsystem extends SubsystemBase {
 
       // Sensors
       SmartDashboard.putBoolean("Hall Effect Sensor Detection", !m_hallEffectYaw.get());
+
+      double newkG = SmartDashboard.getNumber("Set Turret kG", m_turretPitchkG);
+
+      if (Math.abs(newkG - m_turretPitchkG) > 0.000001)
+      {
+         SparkMaxConfig config = frc.robot.Configs.TurretSubsystem.turretPitchConfig;
+
+         config.closedLoop.feedForward.kG(newkG);
+
+         m_turretPitchMotor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+         m_turretPitchkG = newkG;
+      }
    }
 }

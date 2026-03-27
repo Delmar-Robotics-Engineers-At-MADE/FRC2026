@@ -30,7 +30,7 @@ public final class PhotonVisionSensor extends SubsystemBase {
 
   // The name of the network table here MUST match the name specified for the camera in the UI
   static PhotonCamera m_cameraFront = new PhotonCamera("Arducam_OV9281_8077_Front");
-  static PhotonCamera m_cameraBack = new PhotonCamera("Arducam_OV9281_8077_Rear");
+  //static PhotonCamera m_cameraBack = new PhotonCamera("Arducam_OV9281_8077_Rear");
 
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
   static Transform3d robotToCamFront = new Transform3d(new Translation3d(0.3048, 0.1778, 0.3048), 
@@ -153,9 +153,9 @@ public final class PhotonVisionSensor extends SubsystemBase {
     return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorFront, m_cameraFront);
   }
 
-  public Optional<EstimatedRobotPose> getEstimatedPoseBack(Pose2d prevEstimatedRobotPose) {
-    return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
-  }
+  // public Optional<EstimatedRobotPose> getEstimatedPoseBack(Pose2d prevEstimatedRobotPose) {
+  //   return getEstimatedGlobalPose(prevEstimatedRobotPose, m_EstimatorBack, m_cameraBack);
+  // }
 
   // do this at least twice, until the pose snapshot is not changing anymore
   EstimatedRobotPose debugGetLatestEstimatedPose (Pose2d prevEstimatedRobotPose) {

@@ -94,8 +94,6 @@ public class RobotContainer {
 
     setupCommands();
 
-    
-
     // Configure default commands
     m_robotDrive.setDefaultCommand(
         // The left stick controls translation of the robot.
@@ -190,7 +188,7 @@ public class RobotContainer {
     // D-pad up; mirror of 'y' button -> run the feeder in reverse
     m_operCmdController.povUp().whileTrue(m_feeder.runFeederReverseCommand());
 
-    m_operCmdController.x().whileTrue(m_hook.captureHookCommand());
+    m_operCmdController.x().onTrue(m_turret.commandTurretPitchToPosition(() -> TurretSetpoints.kPitchMotorMaxSetpoint));
 
     // Alternate shooting trigger to mirror at hub ability of driver controller
     m_operCmdController.rightTrigger(TriggerThreshold)
