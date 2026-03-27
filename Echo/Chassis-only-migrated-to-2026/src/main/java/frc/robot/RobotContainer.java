@@ -65,7 +65,7 @@ public class RobotContainer {
   private final SendableChooser<Command> m_autoChooser;
 
   // Driver
-  Joystick m_driverController = new Joystick(OIConstants.kDriverControllerPort);
+  GenericHID m_driverController = new Joystick(OIConstants.kDriverControllerPort);
   CommandJoystick m_driverCmdController = new CommandJoystick(OIConstants.kDriverControllerPort);
   // GenericHID m_driverController = new GenericHID(OIConstants.kDriverControllerPort);
   // CommandGenericHID m_driverCmdController = new CommandGenericHID (OIConstants.kDriverControllerPort);
